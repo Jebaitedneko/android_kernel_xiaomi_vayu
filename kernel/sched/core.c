@@ -5250,6 +5250,7 @@ int __cond_resched_lock(spinlock_t *lock)
 }
 EXPORT_SYMBOL(__cond_resched_lock);
 
+#ifndef CONFIG_PREEMPT_RT_FULL
 int __sched __cond_resched_softirq(void)
 {
 	BUG_ON(!in_softirq());
@@ -5263,6 +5264,7 @@ int __sched __cond_resched_softirq(void)
 	return 0;
 }
 EXPORT_SYMBOL(__cond_resched_softirq);
+#endif
 
 /**
  * yield - yield the current processor to other threads.
