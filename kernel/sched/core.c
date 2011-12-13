@@ -2191,8 +2191,10 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags,
 			 * if the wakeup condition is true.
 			 */
 			if (!(wake_flags & WF_LOCK_SLEEPER)) {
-				if (p->saved_state & state)
+				if (p->saved_state & state) {
 					p->saved_state = TASK_RUNNING;
+					success = 1;
+				}
 			}
 			goto out;
 		}
@@ -2220,8 +2222,10 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags,
 		 * if the wakeup condition is true.
 		 */
 		if (!(wake_flags & WF_LOCK_SLEEPER)) {
-			if (p->saved_state & state)
+			if (p->saved_state & state) {
 				p->saved_state = TASK_RUNNING;
+				success = 1;
+			}
 		}
 		goto unlock;
 	}
