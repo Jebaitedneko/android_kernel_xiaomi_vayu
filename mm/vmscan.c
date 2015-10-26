@@ -171,7 +171,7 @@ int vm_swappiness = 190;
 unsigned long vm_total_pages;
 
 #ifdef CONFIG_KSWAPD_CPU_AFFINITY_MASK
-char *kswapd_cpu_mask = CONFIG_KSWAPD_CPU_AFFINITY_MASK;
+char *kswapd_cpu_mask = CONFIG_KSWAPD_CPU_AFFINITY_MASK_VALUE;
 #else
 char *kswapd_cpu_mask = NULL;
 #endif
