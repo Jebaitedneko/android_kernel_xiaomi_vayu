@@ -119,7 +119,6 @@ typedef int (*initcall_t)(void);
 typedef void (*exitcall_t)(void);
 
 extern initcall_t __con_initcall_start[], __con_initcall_end[];
-extern initcall_t __start_lsm_info[], __end_lsm_info[];
 
 /* Used for contructor calls. */
 typedef void (*ctor_fn_t)(void);
@@ -238,7 +237,6 @@ extern bool initcall_debug;
 	static exitcall_t __exitcall_##fn __exit_call = fn
 
 #define console_initcall(fn)	___define_initcall(fn, con, .con_initcall)
-#define security_initcall(fn)	___define_initcall(fn, security, .lsm_info)
 
 struct obs_kernel_param {
 	const char *str;
