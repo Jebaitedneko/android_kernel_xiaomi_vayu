@@ -1988,6 +1988,13 @@ struct security_hook_list {
 } __randomize_layout;
 
 /*
+ * Security blob size or offset data.
+ */
+struct lsm_blob_sizes {
+	int	lbs_cred;
+};
+
+/*
  * Initializing a security_hook_list structure takes
  * up a lot of space in a source file. This macro takes
  * care of the common case and reduces the amount of
@@ -2005,6 +2012,7 @@ extern void security_add_hooks(struct security_hook_list *hooks, int count,
 struct lsm_info {
 	const char *name;	/* Required. */
 	int (*init)(void);	/* Required. */
+	struct lsm_blob_sizes *blobs; /* Optional: for blob sharing. */
 };
 
 extern struct lsm_info __start_lsm_info[], __end_lsm_info[];
@@ -2055,6 +2063,10 @@ static inline void __init yama_add_hooks(void) { }
 void __init loadpin_add_hooks(void);
 #else
 static inline void loadpin_add_hooks(void) { };
+#endif
+
+#ifdef CONFIG_SECURITY
+void __init lsm_early_cred(struct cred *cred);
 #endif
 
 #endif /* ! __LINUX_LSM_HOOKS_H */
