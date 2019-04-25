@@ -210,6 +210,7 @@ endif
 CDEFINES += -DCONFIG_SND_SOC_HEADSET_2700MV
 
 ifeq ($(KERNEL_BUILD), 1)
+	obj-y	+= bolero/
 	obj-y	+= wcd934x/
 	obj-y	+= sdm660_cdc/
 	obj-y	+= msm_sdw/
