@@ -1927,6 +1927,7 @@ static struct platform_driver dsi_ctrl_driver = {
 	},
 };
 
+#if 0
 
 void dsi_ctrl_debug_dump(u32 *entries, u32 size)
 {
