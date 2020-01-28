@@ -78,6 +78,7 @@ enum {
 	POLICYDB_CAPABILITY_ALWAYSNETWORK,
 	POLICYDB_CAPABILITY_CGROUPSECLABEL,
 	POLICYDB_CAPABILITY_NNP_NOSUID_TRANSITION,
+	POLICYDB_CAPABILITY_GENFS_SECLABEL_SYMLINKS,
 	__POLICYDB_CAPABILITY_MAX
 };
 #define POLICYDB_CAPABILITY_MAX (__POLICYDB_CAPABILITY_MAX - 1)
@@ -224,6 +225,13 @@ static inline bool selinux_android_nlroute_getneigh(void)
 	struct selinux_state *state = &selinux_state;
 
 	return state->android_netlink_getneigh;
+}
+
+static inline bool selinux_policycap_genfs_seclabel_symlinks(void)
+{
+	struct selinux_state *state = &selinux_state;
+
+	return state->policycap[POLICYDB_CAPABILITY_GENFS_SECLABEL_SYMLINKS];
 }
 
 int security_mls_enabled(struct selinux_state *state);
