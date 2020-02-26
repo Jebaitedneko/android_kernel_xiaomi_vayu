@@ -325,8 +325,6 @@ extern int policydb_role_isvalid(struct policydb *p, unsigned int role);
 extern int policydb_read(struct policydb *p, void *fp);
 extern int policydb_write(struct policydb *p, void *fp);
 
-#define PERM_SYMTAB_SIZE 32
-
 #define POLICYDB_CONFIG_MLS    1
 #define POLICYDB_CONFIG_ANDROID_NETLINK_ROUTE    (1 << 31)
 #define POLICYDB_CONFIG_ANDROID_NETLINK_GETNEIGH (1 << 30)
