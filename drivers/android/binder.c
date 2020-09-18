@@ -4990,7 +4990,7 @@ static int binder_ioctl_get_freezer_info(
 		if (target_proc->pid == info->pid) {
 			found = true;
 			binder_inner_proc_lock(target_proc);
-			target_proc->tmp_ref++;
+			atomic_inc(&target_proc->tmp_ref);
 			binder_inner_proc_unlock(target_proc);
 			break;
 		}
@@ -5142,7 +5142,7 @@ static long binder_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			if (target_proc->pid == info.pid) {
 				found = true;
 				binder_inner_proc_lock(target_proc);
-				target_proc->tmp_ref++;
+				atomic_inc(&target_proc->tmp_ref);
 				binder_inner_proc_unlock(target_proc);
 				break;
 			}
