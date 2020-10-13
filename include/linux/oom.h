@@ -47,6 +47,7 @@ struct oom_control {
 #if !defined(CONFIG_DISABLE_OOM_KILLER)
 extern struct mutex oom_lock;
 #endif
+extern struct mutex oom_adj_mutex;
 
 static inline void set_current_oom_origin(void)
 {
