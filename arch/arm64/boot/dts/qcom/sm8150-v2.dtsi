@@ -609,7 +609,7 @@
 		<26 512 0 5407000>,    // 8 bus=1353
 		<26 512 0 6215000>,    // 9 bus=1555
 		<26 512 0 7211000>,    // 10 bus=1804
-		<26 512 0 8363000>;    // 11 bus=2092
+		<26 512 0 8532000>;    // 11 bus=2133
 
 	/delete-property/qcom,initial-pwrlevel;
 
@@ -969,7 +969,7 @@
 		BW_OPP_ENTRY(1353, 4); /* 5161 MB/s */
 		BW_OPP_ENTRY(1555, 4); /* 5931 MB/s */
 		BW_OPP_ENTRY(1804, 4); /* 6881 MB/s */
-		BW_OPP_ENTRY(2092, 4); /* 7980 MB/s */
+		BW_OPP_ENTRY(2133, 4); /* 8136 MB/s */
 	};
 
 	suspendable_ddr_bw_opp_table: suspendable-ddr-bw-opp-table {
@@ -985,14 +985,14 @@
 		BW_OPP_ENTRY(1353, 4); /* 5161 MB/s */
 		BW_OPP_ENTRY(1555, 4); /* 5931 MB/s */
 		BW_OPP_ENTRY(1804, 4); /* 6881 MB/s */
-		BW_OPP_ENTRY(2092, 4); /* 7980 MB/s */
+		BW_OPP_ENTRY(2133, 4); /* 8136 MB/s */
 	};
 };
 &cpu4_computemon {
 	qcom,core-dev-table =
 		< 1920000 MHZ_TO_MBPS( 200, 4) >,
 		< 2793600 MHZ_TO_MBPS(1017, 4) >,
-		< 3000000 MHZ_TO_MBPS(2092, 4) >;
+		< 3000000 MHZ_TO_MBPS(2133, 4) >;
 };
 
 &cpu0_llcc_ddr_latmon {
@@ -1014,7 +1014,7 @@
 		< 1612800 MHZ_TO_MBPS(1353, 4) >,
 		< 1804800 MHZ_TO_MBPS(1555, 4) >,
 		< 2649600 MHZ_TO_MBPS(1804, 4) >,
-		< 3000000 MHZ_TO_MBPS(2092, 4) >;
+		< 3000000 MHZ_TO_MBPS(2133, 4) >;
 };
 
 &cpu0_cpu_l3_latmon {
