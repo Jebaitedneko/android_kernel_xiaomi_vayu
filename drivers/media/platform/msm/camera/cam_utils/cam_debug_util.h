@@ -73,7 +73,10 @@ void cam_debug_log(unsigned int module_id, const char *func, const int line,
  *
  * @module_id :  Module ID which is using this function
  */
-const char *cam_get_module_name(unsigned int module_id);
+static inline const char *cam_get_module_name(unsigned int module_id)
+{
+	return NULL;
+}
 
 /*
  * CAM_ERR
