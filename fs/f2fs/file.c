@@ -28,7 +28,6 @@
 #include "xattr.h"
 #include "acl.h"
 #include "gc.h"
-#include "trace.h"
 #include <trace/events/f2fs.h>
 #include <trace/events/android_fs.h>
 #include <uapi/linux/f2fs.h>
@@ -378,7 +377,6 @@ flush_out:
 	f2fs_update_time(sbi, REQ_TIME);
 out:
 	trace_f2fs_sync_file_exit(inode, cp_reason, datasync, ret);
-	f2fs_trace_ios(NULL, 1);
 	trace_android_fs_fsync_end(inode, start, end - start);
 
 	return ret;

@@ -23,7 +23,6 @@
 #include "f2fs.h"
 #include "node.h"
 #include "segment.h"
-#include "trace.h"
 #include <trace/events/f2fs.h>
 #include <trace/events/android_fs.h>
 
@@ -715,7 +714,6 @@ int f2fs_submit_page_bio(struct f2fs_io_info *fio)
 		return -EFSCORRUPTED;
 
 	trace_f2fs_submit_page_bio(page, fio);
-	f2fs_trace_ios(fio, 0);
 
 	/* Allocate a new bio */
 	bio = __bio_alloc(fio, 1);
@@ -922,7 +920,6 @@ int f2fs_merge_page_bio(struct f2fs_io_info *fio)
 		return -EFSCORRUPTED;
 
 	trace_f2fs_submit_page_bio(page, fio);
-	f2fs_trace_ios(fio, 0);
 
 alloc_new:
 	if (!bio) {
@@ -1017,7 +1014,6 @@ alloc_new:
 		wbc_account_io(fio->io_wbc, bio_page, PAGE_SIZE);
 
 	io->last_block_in_bio = fio->new_blkaddr;
-	f2fs_trace_ios(fio, 0);
 
 	trace_f2fs_submit_page_write(fio->page, fio);
 skip:
