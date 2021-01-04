@@ -4029,7 +4029,7 @@ static int check_swap_activate_fast(struct swap_info_struct *sis,
 
 		/* hole */
 		if (!(map.m_flags & F2FS_MAP_FLAGS)) {
-			f2fs_err(sbi, "Swapfile has holes\n");
+			f2fs_err(sbi, "Swapfile has holes");
 			ret = -ENOENT;
 			goto out;
 		}
@@ -4075,9 +4075,8 @@ static int check_swap_activate_fast(struct swap_info_struct *sis,
 	sis->highest_bit = cur_lblock - 1;
 
 	if (not_aligned)
-		f2fs_warn(sbi, "Swapfile (%u) is not align to section: \n"
-			"\t1) creat(), 2) ioctl(F2FS_IOC_SET_PIN_FILE), 3) fallocate()",
-			not_aligned);
+		f2fs_warn(sbi, "Swapfile (%u) is not align to section: 1) creat(), 2) ioctl(F2FS_IOC_SET_PIN_FILE), 3) fallocate()",
+			  not_aligned);
 out:
 	return ret;
 }
@@ -4185,7 +4184,7 @@ reprobe:
 out:
 	return ret;
 bad_bmap:
-	f2fs_err(sbi, "Swapfile has holes\n");
+	f2fs_err(sbi, "Swapfile has holes");
 	return -EINVAL;
 }
 
