@@ -199,17 +199,20 @@ static long __kgsl_ioctl(struct file *filep, unsigned int cmd,
 
 long kgsl_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 {
+	struct cpumask qos_cpus;
+	struct pm_qos_request req;
+	long ret;
 	/*
 	 * Optimistically assume the current task won't migrate to another CPU
 	 * and restrict the current CPU to shallow idle states so that it won't
 	 * take too long to finish running the ioctl whenever the ioctl runs a
 	 * command that sleeps, such as for memory allocation.
 	 */
-	struct pm_qos_request req = {
+	cpumask_copy(&qos_cpus, cpumask_of(raw_smp_processor_id()));
+	req = (typeof(req)){
 		.type = PM_QOS_REQ_AFFINE_CORES,
-		.cpus_affine = ATOMIC_INIT(BIT(raw_smp_processor_id()))
+		.cpus_affine = qos_cpus,
 	};
-	long ret;
 
 	pm_qos_add_request(&req, PM_QOS_CPU_DMA_LATENCY, 100);
 	ret = __kgsl_ioctl(filep, cmd, arg);
