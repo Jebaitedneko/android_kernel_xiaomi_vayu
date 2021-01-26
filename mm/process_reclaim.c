@@ -23,6 +23,7 @@
 
 #ifdef CONFIG_ANDROID_PR_KILL
 #include <linux/delay.h>
+#include <linux/sched/cputime.h>
 #endif
 
 #ifndef CONFIG_ANDROID_PR_KILL
@@ -187,7 +188,7 @@ static int is_low_mem(void)
 	const int lru_base = NR_LRU_BASE - LRU_BASE;
 
 	unsigned long cur_file_mem =
-			global_page_state(lru_base + LRU_ACTIVE_FILE);
+			global_zone_page_state(lru_base + LRU_ACTIVE_FILE);
 
 	unsigned long cur_swap_mem = (get_nr_swap_pages() << (PAGE_SHIFT - 10));
 	unsigned long swap_mem = free_swap_limit * 1024;
