@@ -1410,6 +1410,7 @@ void sde_rsc_debug_dump(u32 mux_sel)
 	if (rsc->hw_ops.debug_dump)
 		rsc->hw_ops.debug_dump(rsc, mux_sel);
 }
+#endif
 
 #if defined(CONFIG_DEBUG_FS)
 static int _sde_debugfs_status_show(struct seq_file *s, void *data)
