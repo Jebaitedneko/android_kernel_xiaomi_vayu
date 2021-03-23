@@ -1,4 +1,5 @@
 /* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -15,6 +16,11 @@
 #define CONFIG_SND_SOC_WCD9XXX_V2 1
 #define CONFIG_SND_SOC_WCD_MBHC 1
 #define CONFIG_SND_SOC_WSA881X 1
+#define CONFIG_SND_SOC_TAS256X 1
+#define CONFIG_TAS256X_CODEC 1
+#define CONFIG_TAS256X_REGMAP 1
+#define CONFIG_TAS25XX_ALGO 1
+#define CONFIG_TAS_SA_CHANNELS 2
 #define CONFIG_SND_SOC_WCD9360 1
 #define CONFIG_SND_SOC_WCD_DSP_MGR 1
 #define CONFIG_SND_SOC_WCD_SPI 1
@@ -51,3 +57,10 @@
 #define CONFIG_MSM_AVTIMER 1
 #define CONFIG_SND_SOC_MSM_HDMI_CODEC_RX 1
 #define CONFIG_VOICE_MHI 1
+#define CONFIG_SND_SOC_TAS2557 1
+#define CONFIG_TAS2557_REGMAP 1
+#define CONFIG_TAS2557_CODEC 1
+#define CONFIG_TAS2557_MISC 1
+#define CONFIG_SND_SOC_CS35L41 1
+#define CONFIG_SND_SOC_TFA9874 1
+#define CONFIG_MSM_CSPL 1

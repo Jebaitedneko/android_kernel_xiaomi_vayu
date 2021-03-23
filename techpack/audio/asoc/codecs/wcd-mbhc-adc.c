@@ -1,4 +1,5 @@
 /* Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -9,6 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+#define DEBUG
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>
@@ -31,10 +33,18 @@
 #include "wcd-mbhc-v2.h"
 #include "pdata.h"
 
+#ifndef CONFIG_SND_SOC_HEADSET_2700MV
 #define WCD_MBHC_ADC_HS_THRESHOLD_MV    1700
 #define WCD_MBHC_ADC_HPH_THRESHOLD_MV   75
 #define WCD_MBHC_ADC_MICBIAS_MV         1800
 #define WCD_MBHC_FAKE_INS_RETRY         4
+#else
+#define WCD_MBHC_ADC_HS_THRESHOLD_MV    2600
+#define WCD_MBHC_ADC_HPH_THRESHOLD_MV   50
+#define WCD_MBHC_ADC_MICBIAS_MV         2700
+#define WCD_MBHC_FAKE_INS_RETRY         4
+#endif
+
 
 static int wcd_mbhc_get_micbias(struct wcd_mbhc *mbhc)
 {
@@ -503,18 +513,15 @@ static bool wcd_is_special_headset(struct wcd_mbhc *mbhc)
 static void wcd_mbhc_adc_update_fsm_source(struct wcd_mbhc *mbhc,
 				       enum wcd_mbhc_plug_type plug_type)
 {
-	bool micbias2;
-
-	micbias2 = mbhc->mbhc_cb->micbias_enable_status(mbhc,
-							MIC_BIAS_2);
 	switch (plug_type) {
 	case MBHC_PLUG_TYPE_HEADPHONE:
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_BTN_ISRC_CTL, 3);
 		break;
 	case MBHC_PLUG_TYPE_HEADSET:
 	case MBHC_PLUG_TYPE_ANC_HEADPHONE:
-		if (!mbhc->is_hs_recording && !micbias2)
-			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_BTN_ISRC_CTL, 3);
+		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_BTN_ISRC_CTL, 0);
+		mbhc->mbhc_cb->mbhc_micbias_control(mbhc->codec,
+				MIC_BIAS_2, MICB_PULLUP_ENABLE);
 		break;
 	default:
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_BTN_ISRC_CTL, 0);
@@ -991,7 +998,7 @@ static irqreturn_t wcd_mbhc_adc_hs_rem_irq(int irq, void *data)
 				WCD_MBHC_REG_UPDATE_BITS(
 					WCD_MBHC_HPHL_PA_EN, 0);
 				WCD_MBHC_REG_UPDATE_BITS(
-					WCD_MBHC_HPH_PA_EN, 0);
+					WCD_MBHC_HPHR_PA_EN, 0);
 			}
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HPHR_GND, 1);
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HPHL_GND, 1);
@@ -1035,7 +1042,7 @@ static irqreturn_t wcd_mbhc_adc_hs_rem_irq(int irq, void *data)
 		if (hphpa_on) {
 			hphpa_on = false;
 			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HPHL_PA_EN, 1);
-			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HPH_PA_EN, 1);
+			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HPHR_PA_EN, 1);
 		}
 	}
 exit:
