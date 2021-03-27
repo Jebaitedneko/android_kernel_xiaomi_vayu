@@ -73,7 +73,7 @@ LINUX_INC +=	-Iinclude/linux
 INCS +=		$(COMMON_INC) \
 		$(UAPI_INC)
 
-EXTRA_CFLAGS += $(INCS)
+EXTRA_CFLAGS += -I$(src)/inc
 
 
 CDEFINES +=	-DANI_LITTLE_BYTE_ENDIAN \
