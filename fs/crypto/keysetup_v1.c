@@ -333,6 +333,7 @@ static int setup_v1_file_key_derived(struct fscrypt_info *ci,
 			ci->ci_hashed_ino = siphash_1u64(ci->ci_inode->i_ino,
 							 &ino_hash_key.k);
 		}
+
 		memcpy(key_new.bytes, raw_master_key, ci->ci_mode->keysize);
 
 		for (i = 0; i < ARRAY_SIZE(key_new.words); i++)
