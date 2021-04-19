@@ -64,6 +64,7 @@ static struct wakeup_source *ws;
 static struct rtc_timer		rtctimer;
 static struct rtc_device	*rtcdev;
 static DEFINE_SPINLOCK(rtcdev_lock);
+bool alarm_fired;
 
 static void alarmtimer_triggered_func(void *p)
 {
@@ -246,6 +247,7 @@ static enum hrtimer_restart alarmtimer_fired(struct hrtimer *timer)
 		ret = HRTIMER_RESTART;
 	}
 	spin_unlock_irqrestore(&base->lock, flags);
+	alarm_fired = true;
 
 	trace_alarmtimer_fired(alarm, base->gettime());
 	return ret;
