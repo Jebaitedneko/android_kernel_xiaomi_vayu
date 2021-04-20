@@ -3683,33 +3683,6 @@ void __noreturn do_task_dead(void)
 		cpu_relax();
 }
 
-void __noreturn do_task_dead(void)
-{
-	/*
-	 * The setting of TASK_RUNNING by try_to_wake_up() may be delayed
-	 * when the following two conditions become true.
-	 *   - There is race condition of mmap_sem (It is acquired by
-	 *     exit_mm()), and
-	 *   - SMI occurs before setting TASK_RUNINNG.
-	 *     (or hypervisor of virtual machine switches to other guest)
-	 *  As a result, we may become TASK_RUNNING after becoming TASK_DEAD
-	 *
-	 * To avoid it, we have to wait for releasing tsk->pi_lock which
-	 * is held by try_to_wake_up()
-	 */
-	smp_mb();
-	raw_spin_unlock_wait(&current->pi_lock);
-
-	/* causes final put_task_struct in finish_task_switch(). */
-	__set_current_state(TASK_DEAD);
-	current->flags |= PF_NOFREEZE;	/* tell freezer to ignore us */
-	__schedule(false);
-	BUG();
-	/* Avoid "noreturn function does return".  */
-	for (;;)
-		cpu_relax();	/* For when BUG is null */
-}
-
 static inline void sched_submit_work(struct task_struct *tsk)
 {
 	if (!tsk->state || tsk_is_pi_blocked(tsk))
