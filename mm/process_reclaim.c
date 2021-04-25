@@ -90,6 +90,8 @@ module_param_named(free_swap_limit, free_swap_limit, int, 0644);
 /* Minimum OOM score above which tasks should be killed */
 static short score_kill_limit = 300;
 module_param_named(score_kill_limit, score_kill_limit, short, 0644);
+
+static unsigned long reported_pressure;
 #endif
 
 static atomic_t skip_reclaim = ATOMIC_INIT(0);
@@ -239,6 +241,9 @@ static void sort_and_kill_tasks(struct selected_task selected[], int si)
 		if (is_low_mem() == LOWMEM_NONE)
 			break;
 
+		if (reported_pressure < pressure_max)
+			return;
+
 		task_lock(tsk);
 		send_sig(SIGKILL, tsk, 0);
 		if (tsk->mm) {
@@ -289,6 +294,9 @@ static void swap_fn(struct work_struct *work)
 	 */
 	if (is_low_mem() == LOWMEM_CRITICAL)
 		pagefault_out_of_memory();
+
+	if (reported_pressure < pressure_max)
+		return;
 #endif
 
 	rcu_read_lock();
@@ -353,8 +361,15 @@ static void swap_fn(struct work_struct *work)
 
 	rcu_read_unlock();
 
+#ifdef CONFIG_ANDROID_PR_KILL
+	sort(selected, si, sizeof(*selected), selected_cmp, NULL);
+#endif
+
 	while (si--) {
 #ifdef CONFIG_ANDROID_PR_KILL
+		if (reported_pressure < pressure_max)
+			return;
+
 		if (is_low_mem() > LOWMEM_NONE &&
 			selected[si].oom_score_adj > score_kill_limit) {
 
@@ -414,6 +429,8 @@ static int vmpressure_notifier(struct notifier_block *nb,
 #ifndef CONFIG_ANDROID_PR_KILL
 	if (!enable_process_reclaim)
 		return 0;
+#else
+	reported_pressure = pressure;
 #endif
 
 	if (!current_is_kswapd())
@@ -422,7 +439,11 @@ static int vmpressure_notifier(struct notifier_block *nb,
 	if (atomic_dec_if_positive(&skip_reclaim) >= 0)
 		return 0;
 
+#ifndef CONFIG_ANDROID_PR_KILL
 	if ((pressure >= pressure_min) && (pressure < pressure_max))
+#else
+	if (pressure >= pressure_max)
+#endif
 		if (!work_pending(&swap_work))
 			queue_work(system_unbound_wq, &swap_work);
 	return 0;
