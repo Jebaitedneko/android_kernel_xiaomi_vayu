@@ -26,10 +26,8 @@
 #include <linux/sched/cputime.h>
 #endif
 
-#ifndef CONFIG_ANDROID_PR_KILL
 #define CREATE_TRACE_POINTS
 #include <trace/events/process_reclaim.h>
-#endif
 
 #define MAX_SWAP_TASKS SWAP_CLUSTER_MAX
 
@@ -55,10 +53,8 @@ static unsigned long pressure_max = 90;
 module_param_named(pressure_min, pressure_min, ulong, 0644);
 module_param_named(pressure_max, pressure_max, ulong, 0644);
 
-#ifndef CONFIG_ANDROID_PR_KILL
 static short min_score_adj = 360;
 module_param_named(min_score_adj, min_score_adj, short, 0644);
-#endif
 
 /*
  * Scheduling process reclaim workqueue unecessarily
@@ -87,10 +83,6 @@ module_param_named(free_file_limit, free_file_limit, int, 0644);
 static int free_swap_limit = 40;
 module_param_named(free_swap_limit, free_swap_limit, int, 0644);
 
-/* Minimum OOM score above which tasks should be killed */
-static short score_kill_limit = 300;
-module_param_named(score_kill_limit, score_kill_limit, short, 0644);
-
 static unsigned long reported_pressure;
 #endif
 
@@ -104,14 +96,6 @@ struct selected_task {
 	short oom_score_adj;
 };
 
-#ifdef CONFIG_ANDROID_PR_KILL
-static const short never_reclaim[] = {
-	0, /* Foreground task */
-	50,
-	200 /* Running service */
-};
-#endif
-
 int selected_cmp(const void *a, const void *b)
 {
 	const struct selected_task *x = a;
@@ -122,22 +106,6 @@ int selected_cmp(const void *a, const void *b)
 
 	return ret;
 }
-
-#ifdef CONFIG_ANDROID_PR_KILL
-int txpd_cmp(const void *a, const void *b)
-{
-	struct selected_task *x = ((struct selected_task *)a);
-	struct selected_task *y = ((struct selected_task *)b);
-
-	if (x->p->acct_timexpd < y->p->acct_timexpd)
-		return 1;
-
-	if (x->p->acct_timexpd > y->p->acct_timexpd)
-		return -1;
-
-	return 0;
-}
-#endif
 
 static int test_task_flag(struct task_struct *p, int flag)
 {
@@ -159,6 +127,23 @@ static int test_task_flag(struct task_struct *p, int flag)
 }
 
 #ifdef CONFIG_ANDROID_PR_KILL
+static const short never_reclaim[] = {
+	0, /* Foreground task */
+	50,
+	200 /* Running service */
+};
+
+int txpd_cmp(const void *a, const void *b)
+{
+	struct selected_task *x = ((struct selected_task *)a);
+	struct selected_task *y = ((struct selected_task *)b);
+	int ret;
+
+	ret = x->p->acct_timexpd < y->p->acct_timexpd ? 1 : -1;
+
+	return ret;
+}
+
 static int score_adj_check(short oom_score_adj)
 {
 	int i;
@@ -230,7 +215,7 @@ static int is_low_mem(void)
 
 static void sort_and_kill_tasks(struct selected_task selected[], int si)
 {
-	int i, j, max = si;
+	int max = si;
 
 	/*
 	 * We sort tasks based on (stime+utime) since last accessed,
@@ -248,6 +233,9 @@ static void sort_and_kill_tasks(struct selected_task selected[], int si)
 		if (reported_pressure < pressure_max)
 			return;
 
+		if (selected[si].oom_score_adj < min_score_adj)
+			continue;
+
 		task_lock(tsk);
 		send_sig(SIGKILL, tsk, 0);
 		if (tsk->mm) {
@@ -258,7 +246,7 @@ static void sort_and_kill_tasks(struct selected_task selected[], int si)
 		}
 		task_unlock(tsk);
 
-		pr_debug("process_reclaim: total:%d[%d] comm:%s(%d) txpd:%llu KILLED!",
+		pr_debug("prlmk: total:%d[%d] comm:%s(%d) txpd:%llu KILLED!",
 				max,
 				(si + 1),
 				tsk->comm,
@@ -367,21 +355,17 @@ static void swap_fn(struct work_struct *work)
 
 #ifdef CONFIG_ANDROID_PR_KILL
 	sort(selected, si, sizeof(*selected), selected_cmp, NULL);
+
+	if (reported_pressure < pressure_max)
+		return;
+
+	if (is_low_mem() > LOWMEM_NONE) {
+		sort_and_kill_tasks(selected, si);
+		return;
+	}
 #endif
 
 	while (si--) {
-#ifdef CONFIG_ANDROID_PR_KILL
-		if (reported_pressure < pressure_max)
-			return;
-
-		if (is_low_mem() > LOWMEM_NONE &&
-			selected[si].oom_score_adj > score_kill_limit) {
-
-			sort_and_kill_tasks(selected, si);
-			break;
-
-		} else {
-#endif
 		nr_to_reclaim =
 			(selected[si].tasksize * per_swap_size) / total_sz;
 		/* scan atleast a page */
@@ -390,19 +374,13 @@ static void swap_fn(struct work_struct *work)
 
 		rp = reclaim_task_anon(selected[si].p, nr_to_reclaim);
 
-#ifndef CONFIG_ANDROID_PR_KILL
 		trace_process_reclaim(selected[si].tasksize,
 				selected[si].oom_score_adj, rp.nr_scanned,
 				rp.nr_reclaimed, per_swap_size, total_sz,
 				nr_to_reclaim);
-#endif
 		total_scan += rp.nr_scanned;
 		total_reclaimed += rp.nr_reclaimed;
 		put_task_struct(selected[si].p);
-
-#ifdef CONFIG_ANDROID_PR_KILL
-		}
-#endif
 	}
 
 	if (total_scan) {
@@ -419,9 +397,7 @@ static void swap_fn(struct work_struct *work)
 
 		reclaim_avg_efficiency =
 			(efficiency + reclaim_avg_efficiency) / 2;
-#ifndef CONFIG_ANDROID_PR_KILL
 		trace_process_reclaim_eff(efficiency, reclaim_avg_efficiency);
-#endif
 	}
 }
 
@@ -467,9 +443,8 @@ static int process_reclaim_init(const char *val, const struct kernel_param *kp)
 {
 	static atomic_t init_done = ATOMIC_INIT(0);
 
-	if (!atomic_cmpxchg(&init_done, 0, 1)) {
+	if (!atomic_cmpxchg(&init_done, 0, 1))
 		BUG_ON(vmpressure_notifier_register(&vmpr_nb));
-	}
 
 	return 0;
 }
