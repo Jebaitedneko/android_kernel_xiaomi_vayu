@@ -216,6 +216,10 @@ static int is_low_mem(void)
 	bool lowmem_critical = lowmem_normal &&
 				cur_file_mem < free_file_limit;
 
+	pr_debug("prlmk: file_pgs: %lu, swap_pgs: %lu, lowmem: %s",
+	   cur_file_mem, cur_swap_mem,
+	   lowmem_critical ? "critical" : (lowmem_normal ? "normal" : "none"));
+
 	if (lowmem_critical)
 		return LOWMEM_CRITICAL;
 	else if (lowmem_normal)
