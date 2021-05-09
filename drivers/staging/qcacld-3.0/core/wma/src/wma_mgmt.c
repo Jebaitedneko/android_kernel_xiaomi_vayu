@@ -836,6 +836,18 @@ void wma_set_sta_keep_alive(tp_wma_handle wma, uint8_t vdev_id,
 	wmi_unified_set_sta_keep_alive_cmd(wma->wmi_handle, &params);
 }
 
+void wma_register_install_key_complete_cb(wma_install_key_complete_cb cb)
+{
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma_handle) {
+		wma_err("wma handle is NULL");
+		return;
+	}
+
+	wma_handle->install_key_complete_cb = cb;
+}
+
 /**
  * wma_vdev_install_key_complete_event_handler() - install key complete handler
  * @handle: wma handle
@@ -852,6 +864,8 @@ int wma_vdev_install_key_complete_event_handler(void *handle,
 {
 	WMI_VDEV_INSTALL_KEY_COMPLETE_EVENTID_param_tlvs *param_buf = NULL;
 	wmi_vdev_install_key_complete_event_fixed_param *key_fp = NULL;
+	struct wma_install_key_complete_param param;
+	tp_wma_handle wma = (tp_wma_handle)handle;
 
 	if (!event) {
 		WMA_LOGE("%s: event param null", __func__);
@@ -872,7 +886,22 @@ int wma_vdev_install_key_complete_event_handler(void *handle,
 	/*
 	 * Do nothing for now. Completion of set key is already indicated to lim
 	 */
+
 	wma_debug("WMI_VDEV_INSTALL_KEY_COMPLETE_EVENTID");
+	if (wma->install_key_complete_cb) {
+		param.vdev_id = key_fp->vdev_id;
+		WMI_MAC_ADDR_TO_CHAR_ARRAY(&key_fp->peer_macaddr,
+					   param.mac_addr.bytes);
+		param.key_flags = key_fp->key_flags;
+		param.key_ix = key_fp->key_ix;
+		param.status = key_fp->status;
+
+		wma_debug("vdev %d [%pM] ix[%x] flags[%x] status[%d]",
+			  key_fp->vdev_id, param.mac_addr.bytes, param.key_ix,
+			  param.key_flags, param.status);
+		wma->install_key_complete_cb(&param);
+	}
+
 	return 0;
 }
 /*
