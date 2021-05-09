@@ -3768,6 +3768,9 @@ more_data:
 			num_processed += !(count & DP_TX_NAPI_BUDGET_DIV_MASK);
 			count++;
 
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					"%s tx_desc %px nbuf %px\n",
+					__func__, tx_desc, tx_desc->nbuf);
 			dp_tx_comp_free_buf(soc, tx_desc);
 			dp_tx_desc_release(tx_desc, tx_desc->pool_id);
 			continue;
@@ -4077,6 +4080,11 @@ void dp_tx_desc_flush(struct dp_pdev *pdev, struct dp_vdev *vdev,
 				 */
 				if (force_free) {
 					dp_tx_comp_free_buf(soc, tx_desc);
+					QDF_TRACE(QDF_MODULE_ID_DP,
+						QDF_TRACE_LEVEL_ERROR,
+						"%s tx_desc %px nbuf %px\n",
+						__func__, tx_desc,
+						tx_desc->nbuf);
 					dp_tx_desc_release(tx_desc, i);
 				} else {
 					tx_desc->vdev = NULL;
@@ -4140,6 +4148,11 @@ void dp_tx_desc_flush(struct dp_pdev *pdev, struct dp_vdev *vdev,
 			if (dp_is_tx_desc_flush_match(pdev, vdev, tx_desc)) {
 				if (force_free) {
 					dp_tx_comp_free_buf(soc, tx_desc);
+					QDF_TRACE(QDF_MODULE_ID_DP,
+						QDF_TRACE_LEVEL_ERROR,
+						"%s tx_desc %px nbuf %px\n",
+						__func__, tx_desc,
+						tx_desc->nbuf);
 					dp_tx_desc_release(tx_desc, i);
 				} else {
 					dp_tx_desc_reset_vdev(soc, tx_desc,
