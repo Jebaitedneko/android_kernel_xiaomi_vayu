@@ -50,4 +50,7 @@ obj-$(CONFIG_BCM2835_VCHIQ)	+= vc04_services/
 obj-$(CONFIG_CRYPTO_DEV_CCREE)	+= ccree/
 obj-$(CONFIG_DRM_VBOXVIDEO)	+= vboxvideo/
 obj-$(CONFIG_PI433)		+= pi433/
+
+ifeq ($(CONFIG_BUILD_OOT_DRIVERS),y)
 obj-$(CONFIG_QCA_CLD_WLAN)	+= qcacld-3.0/
+endif
