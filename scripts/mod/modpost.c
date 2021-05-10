@@ -2175,7 +2175,11 @@ static void add_header(struct buffer *b, struct module *mod)
 	buf_printf(b, "#include <linux/vermagic.h>\n");
 	buf_printf(b, "#include <linux/compiler.h>\n");
 	buf_printf(b, "\n");
+	#ifdef CONFIG_OVERRIDE_MODULE_VERMAGIC
+	buf_printf(b, "MODULE_INFO(vermagic, CONFIG_OVERRIDE_MODULE_VERMAGIC);\n");
+	#else
 	buf_printf(b, "MODULE_INFO(vermagic, VERMAGIC_STRING);\n");
+	#endif
 	buf_printf(b, "MODULE_INFO(name, KBUILD_MODNAME);\n");
 	buf_printf(b, "\n");
 	buf_printf(b, "__visible struct module __this_module\n");
