@@ -229,7 +229,6 @@ static bool hdd_loaded = false;
 #else
 #define WLAN_LOADER_NAME "boot_wlan"
 #endif
-#endif
 
 /* the Android framework expects this param even though we don't use it */
 #define BUF_LEN 20
