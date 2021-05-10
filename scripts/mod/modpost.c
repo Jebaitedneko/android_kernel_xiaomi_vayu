@@ -2191,7 +2191,11 @@ static void add_header(struct buffer *b, struct module *mod)
 	buf_printf(b, "};\n");
 }
 
+#ifdef CONFIG_BUILD_OOT_DRIVERS
+static void _add_intree_flag(struct buffer *b, int is_intree)
+#else
 static void add_intree_flag(struct buffer *b, int is_intree)
+#endif
 {
 	if (is_intree)
 		buf_printf(b, "\nMODULE_INFO(intree, \"Y\");\n");
@@ -2205,13 +2209,45 @@ static void add_retpoline(struct buffer *b)
 	buf_printf(b, "#endif\n");
 }
 
+#ifdef CONFIG_BUILD_OOT_DRIVERS
+static void _add_staging_flag(struct buffer *b, const char *name)
+#else
 static void add_staging_flag(struct buffer *b, const char *name)
+#endif
 {
 	static const char *staging_dir = "drivers/staging";
 
 	if (strncmp(staging_dir, name, strlen(staging_dir)) == 0)
 		buf_printf(b, "\nMODULE_INFO(staging, \"Y\");\n");
 }
+
+#ifdef CONFIG_BUILD_OOT_DRIVERS
+/**
+ * check whether a module is from an out of tree driver or not
+ **/
+static int is_oot_driver(struct buffer *b, const char *name)
+{
+	static const char *staging_dir = "drivers/staging";
+	static const char *techpack_dir = "techpack";
+	if (strncmp(staging_dir, name, strlen(staging_dir)) == 0 ||
+		strncmp(staging_dir, name, strlen(techpack_dir)) == 0)
+		return 1;
+	else
+		return 0;
+}
+
+static void add_staging_flag(struct buffer *b, const char *name)
+{
+	if(!is_oot_driver(b, name))
+		_add_staging_flag(b, name);
+}
+
+static void add_intree_flag(struct buffer *b, int is_intree, const char *name)
+{
+	if(is_oot_driver(b, name))
+		_add_intree_flag(b, is_intree);
+}
+#endif
 
 /**
  * Record CRCs for unresolved symbols
@@ -2545,7 +2581,11 @@ int main(int argc, char **argv)
 
 		err |= check_modname_len(mod);
 		add_header(&buf, mod);
+		#ifdef CONFIG_BUILD_OOT_DRIVERS
+		add_intree_flag(&buf, !external_module, mod->name);
+		#else
 		add_intree_flag(&buf, !external_module);
+		#endif
 		add_retpoline(&buf);
 		add_staging_flag(&buf, mod->name);
 		err |= add_versions(&buf, mod);
