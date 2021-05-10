@@ -53,6 +53,7 @@
 		qcom,mdss-dsi-panel-peak-brightness = <4200000>;
 		qcom,mdss-dsi-panel-blackness-level = <3230>;
 
+		qcom,esd-err-irq-gpio = <&tlmm 0x05 0x2002>;
 		/* qcom,mdss-dsi-qsync-min-refresh-rate = <60>; */
 		qcom,mdss-dsi-pan-enable-dynamic-fps;
 		qcom,mdss-dsi-pan-fps-update =
@@ -60,6 +61,19 @@
 		qcom,dsi-supported-dfps-list = <120 90 60 50 48 30>;
 
 		qcom,dispparam-enabled;
+		mi,feature-enabled;
+		mi,is-tddi-flag;
+		mi,mdss-panel-on-dimming-delay = <0x78>;
+		mi,esd-err-irq-gpio = <&tlmm 0x18 0x2002>;
+		mi,mdss-dsi-panel-xy-coordinate = <0x06 0x03>;
+		mi,mdss-dsi-panel-max-luminance = <0x06 0x04>;
+		mi,mdss-dsi-panel-status-value-ignore;
+		mi,esd-check-interval = <0xbb8>;
+		mi,mdss-panel-idle-time = <0x44c>;
+		mi,mdss-panel-idle-fps = <0x32>;
+		mi,mdss-dsi-dfps-dec-vfp-list = <0x14 0x00 0x14 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00>;
+		mi,mdss-dsi-dfps-dec-hfp-list = <0x00 0x00 0x00 0x00 0x00 0x00 0x04 0x00 0x04 0x00 0x00 0x00>;
+		mi,mdss-dsi-post-off-msleep = <0x14>;
 
 		qcom,mdss-dsi-display-timings {
 			timing@0{
@@ -239,6 +253,25 @@
 				qcom,mdss-dsc-bit-per-component = <8>;
 				qcom,mdss-dsc-bit-per-pixel = <8>;
 				qcom,mdss-dsc-block-prediction-enable;
+
+				mi,mdss-dsi-read-lockdown-info-command = [15 00 00 00 00 00 02 ff 21 06 01 00 00 00 00 01 f1];
+				mi,mdss-dsi-read-lockdown-info-command-state = "dsi_lp_mode";
+				mi,mdss-dsi-cabcuion-command = [15 00 00 00 00 00 02 ff 10 15 01 00 00 00 00 02 55 01];
+				mi,mdss-dsi-cabcuion-command-state = "dsi_hs_mode";
+				mi,mdss-dsi-cabcstillon-command = [15 00 00 00 00 00 02 ff 10 15 01 00 00 00 00 02 55 02];
+				mi,mdss-dsi-cabcstillon-command-state = "dsi_hs_mode";
+				mi,mdss-dsi-cabcmovieon-command = [15 00 00 00 00 00 02 ff 10 15 01 00 00 00 00 02 55 03];
+				mi,mdss-dsi-cabcmovieon-command-state = "dsi_hs_mode";
+				mi,mdss-dsi-cabcoff-command = [15 00 00 00 00 00 02 ff 10 15 01 00 00 00 00 02 55 00];
+				mi,mdss-dsi-cabcoff-command-state = "dsi_hs_mode";
+				mi,mdss-dsi-cabc-dimmming-command = [15 00 00 00 00 00 02 ff 10 15 01 00 00 00 00 02 53 2c];
+				mi,mdss-dsi-cabc-dimmming-command-state = "dsi_hs_mode";
+				mi,mdss-dsi-xy-coordinate-command = [15 00 00 00 00 00 02 ff 10 06 01 00 00 00 00 01 a1];
+				mi,mdss-dsi-xy-coordinate-command-state = "dsi_lp_mode";
+				mi,mdss-dsi-max-luminance-write-command = [15 01 00 00 00 00 02 ff 10];
+				mi,mdss-dsi-max-luminance-write-command-state = "dsi_lp_mode";
+				mi,mdss-dsi-max-luminance-read-command = <0x6010000 0x1a1>;
+				mi,mdss-dsi-max-luminance-read-command-state = "dsi_lp_mode";
 			};
 		};
 	};
