@@ -99,6 +99,9 @@ config ARM64_RELOC_TEST
 config ARM64_STRICT_BREAK_BEFORE_MAKE
 	bool "Enforce strict break-before-make on page table updates "
 
+config OVERRIDE_MODULE_VERMAGIC
+	string "Override VERMAGIC For Modules"
+
 source "drivers/hwtracing/coresight/Kconfig"
 
 endmenu
