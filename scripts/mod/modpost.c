@@ -2193,8 +2193,6 @@ static void add_header(struct buffer *b, struct module *mod)
 
 static void add_intree_flag(struct buffer *b, int is_intree)
 {
-	if (is_intree)
-		buf_printf(b, "\nMODULE_INFO(intree, \"Y\");\n");
 }
 
 /* Cannot check for assembler */
