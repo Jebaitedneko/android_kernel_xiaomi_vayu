@@ -2583,4 +2583,3 @@ module_exit(npu_exit);
 MODULE_DEVICE_TABLE(of, npu_dt_match);
 MODULE_DESCRIPTION("MSM NPU driver");
 MODULE_LICENSE("GPL v2");
-MODULE_INFO(intree, "Y");
