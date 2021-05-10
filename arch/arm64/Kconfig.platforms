@@ -373,4 +373,9 @@ config ARCH_ZYNQMP
 	help
 	  This enables support for Xilinx ZynqMP Family
 
+config BUILD_OOT_DRIVERS
+	bool "Build Out Of Tree Drivers"
+	help
+	  This enables support for building Out Of Tree Drivers
+
 endmenu
