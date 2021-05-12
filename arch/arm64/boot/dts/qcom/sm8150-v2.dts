@@ -20,3 +20,12 @@
 	qcom,pmic-name = "PM8150";
 	qcom,board-id = <0 0>;
 };
+
+/ {
+	reserved-memory {
+		ramoops@9ff00000 {
+			compatible = "ramoops";
+			reg = <0x0 0x9ff00000 0x0 0x100000>;
+		};
+	};
+};
