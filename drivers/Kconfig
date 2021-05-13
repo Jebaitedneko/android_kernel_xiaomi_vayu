@@ -229,6 +229,10 @@ source "drivers/halls/Kconfig"
 
 source "drivers/trusty/Kconfig"
 
+if BUILD_OOT_DRIVERS
+
 source "techpack/data/drivers/Kconfig"
+
+endif
 
 endmenu

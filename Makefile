@@ -601,7 +601,12 @@ scripts: scripts_basic include/config/auto.conf include/config/tristate.conf \
 
 # Objects we will link into vmlinux / subdirs we need to visit
 init-y		:= init/
-drivers-y	:= drivers/ sound/ firmware/ techpack/
+drivers-y	:= drivers/ sound/ firmware/
+
+ifeq ($(CONFIG_BUILD_OOT_DRIVERS),y)
+drivers-y	+= techpack/
+endif
+
 net-y		:= net/
 libs-y		:= lib/
 core-y		:= usr/
@@ -1404,7 +1409,9 @@ headers_install: __headers
 	  $(error Headers not exportable for the $(SRCARCH) architecture))
 	$(Q)$(MAKE) $(hdr-inst)=include/uapi dst=include
 	$(Q)$(MAKE) $(hdr-inst)=arch/$(hdr-arch)/include/uapi $(hdr-dst)
+	ifeq ($(CONFIG_BUILD_OOT_DRIVERS),y)
 	$(Q)$(MAKE) $(hdr-inst)=techpack/audio/include/uapi dst=techpack/audio/include
+	endif
 
 PHONY += headers_check_all
 headers_check_all: headers_install_all
@@ -1414,7 +1421,9 @@ PHONY += headers_check
 headers_check: headers_install
 	$(Q)$(MAKE) $(hdr-inst)=include/uapi dst=include HDRCHECK=1
 	$(Q)$(MAKE) $(hdr-inst)=arch/$(hdr-arch)/include/uapi $(hdr-dst) HDRCHECK=1
+	ifeq ($(CONFIG_BUILD_OOT_DRIVERS),y)
 	$(Q)$(MAKE) $(hdr-inst)=techpack/audio/include/uapi dst=techpack/audio/include HDRCHECK=1
+	endif
 
 # ---------------------------------------------------------------------------
 # Kernel selftest
