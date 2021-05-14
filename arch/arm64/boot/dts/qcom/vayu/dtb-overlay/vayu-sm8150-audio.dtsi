@@ -1,0 +1,34 @@
+/* Copyright (c) 2021, The Linux Foundation. All rights reserved.
+*  Copyright (c) 2021, Jebaitedneko <Jebaitedneko@gmail.com>.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License version 2 and
+* only version 2 as published by the Free Software Foundation.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*/
+
+/* sm8150-audio */
+
+&snd_934x {
+
+	qcom,msm-mbhc-usbc-audio-supported = <1>;
+
+	/delete-property/ fsa4480-i2c-handle;
+};
+
+&qupv3_se4_i2c {
+
+	/delete-node/ fsa4480@43;
+
+	fsa4480: fsa4480@42 {
+
+		compatible = "qcom,fsa4480-i2c";
+		reg = <0x42>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&fsa_usbc_ana_en>;
+	};
+};

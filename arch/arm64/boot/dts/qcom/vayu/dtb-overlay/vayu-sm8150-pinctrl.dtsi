@@ -1,0 +1,162 @@
+/* Copyright (c) 2021, The Linux Foundation. All rights reserved.
+*  Copyright (c) 2021, Jebaitedneko <Jebaitedneko@gmail.com>.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License version 2 and
+* only version 2 as published by the Free Software Foundation.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*/
+
+/* sm8150-pinctrl */
+
+&ts_int_suspend {
+
+	config {
+
+		input-enable;
+	};
+};
+
+&ts_reset_suspend {
+
+	config {
+
+		bias-disable;
+		output-low;
+		
+		/delete-property/ bias-pull-down;
+	};
+};
+
+&nfc_enable_active {
+
+	mux {
+
+		pins = "gpio41", "gpio48";
+	};
+
+	config {
+
+		pins = "gpio41", "gpio48";
+	};
+};
+
+&nfc_enable_suspend {
+
+	mux {
+
+		pins = "gpio41", "gpio48";
+	};
+
+	config {
+
+		pins = "gpio41", "gpio48";
+	};
+};
+
+&tlmm {
+
+	pcie0 {
+
+		/delete-node/ pcie0_perst_default;
+		/delete-node/ pcie0_wake_default;
+	};
+
+	tert_tdm {
+
+		cs35l41_int_default: cs35l41_int_default {
+
+			mux {
+
+				pins = "gpio10";
+				function = "gpio";
+			};
+
+			config {
+
+				pins = "gpio10";
+				bias-pull-up;
+				drive-strength = <8>;
+				input-enable;
+			};
+		};
+	};
+
+	/* USB C analog configuration */
+	wcd_usbc_analog_en1 {
+	
+		wcd_usbc_analog_en1_idle: wcd_usbc_ana_en1_idle {
+	
+			mux {
+	
+				pins = "gpio35";
+				function = "gpio";
+			};
+	
+			config {
+	
+				pins = "gpio35";
+				drive-strength = <2>;
+				bias-pull-down;
+				output-low;
+			};
+		};
+
+		wcd_usbc_analog_en1_active: wcd_usbc_ana_en1_active {
+	
+			mux {
+	
+				pins = "gpio35";
+				function = "gpio";
+			};
+	
+			config {
+	
+				pins = "gpio35";
+				drive-strength = <2>;
+				bias-disable;
+				output-high;
+			};
+		};
+	};
+
+	wcd_usbc_analog_en2 {
+	
+		wcd_usbc_analog_en2_idle: wcd_usbc_ana_en2_idle {
+	
+			mux {
+	
+				pins = "gpio58";
+				function = "gpio";
+			};
+	
+			config {
+				pins = "gpio58";
+				drive-strength = <2>;
+				bias-pull-down;
+				output-low;
+			};
+		};
+
+		wcd_usbc_analog_en2_active: wcd_usbc_ana_en2_active {
+
+			mux {
+
+				pins = "gpio58";
+				function = "gpio";
+			};
+
+			config {
+
+				pins = "gpio58";
+				drive-strength = <2>;
+				bias-disable;
+				output-high;
+			};
+		};
+	};
+};

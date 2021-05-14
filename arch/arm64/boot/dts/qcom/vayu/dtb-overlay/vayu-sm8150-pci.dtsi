@@ -1,0 +1,21 @@
+/* Copyright (c) 2021, The Linux Foundation. All rights reserved.
+*  Copyright (c) 2021, Jebaitedneko <Jebaitedneko@gmail.com>.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License version 2 and
+* only version 2 as published by the Free Software Foundation.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*/
+
+/* sm8150-pcie */
+&pcie0 {
+
+	pinctrl-0 = <&pcie0_clkreq_default>;
+	
+	/delete-property/ perst-gpio;
+	/delete-property/ wake-gpio;
+};
