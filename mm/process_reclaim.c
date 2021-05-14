@@ -21,11 +21,6 @@
 #include <linux/notifier.h>
 #include <linux/vmpressure.h>
 
-#ifdef CONFIG_ANDROID_PR_KILL
-#include <linux/delay.h>
-#include <linux/sched/cputime.h>
-#endif
-
 #define CREATE_TRACE_POINTS
 #include <trace/events/process_reclaim.h>
 
@@ -34,11 +29,9 @@
 static void swap_fn(struct work_struct *work);
 DECLARE_WORK(swap_work, swap_fn);
 
-#ifndef CONFIG_ANDROID_PR_KILL
 /* User knob to enable/disable process reclaim feature */
 static int enable_process_reclaim;
 module_param_named(enable_process_reclaim, enable_process_reclaim, int, 0644);
-#endif
 
 /* The max number of pages tried to be reclaimed in a single run */
 int per_swap_size = SWAP_CLUSTER_MAX * 32;
@@ -70,21 +63,6 @@ module_param_named(swap_eff_win, swap_eff_win, int, 0644);
 
 static int swap_opt_eff = 50;
 module_param_named(swap_opt_eff, swap_opt_eff, int, 0644);
-
-#ifdef CONFIG_ANDROID_PR_KILL
-/*
- * OOM Killer will be called if the total number of
- * file pages (active) reaches this limit
- */
-static int free_file_limit = 36000;
-module_param_named(free_file_limit, free_file_limit, int, 0644);
-
-/* Number of SWAP pages in MiB below which tasks should be killed */
-static int free_swap_limit = 40;
-module_param_named(free_swap_limit, free_swap_limit, int, 0644);
-
-static unsigned long reported_pressure;
-#endif
 
 static atomic_t skip_reclaim = ATOMIC_INIT(0);
 /* Not atomic since only a single instance of swap_fn run at a time */
@@ -126,141 +104,6 @@ static int test_task_flag(struct task_struct *p, int flag)
 	return 0;
 }
 
-#ifdef CONFIG_ANDROID_PR_KILL
-static const short never_reclaim[] = {
-	0, /* Foreground task */
-	50,
-	200 /* Running service */
-};
-
-int txpd_cmp(const void *a, const void *b)
-{
-	struct selected_task *x = ((struct selected_task *)a);
-	struct selected_task *y = ((struct selected_task *)b);
-	int ret;
-
-	ret = x->p->acct_timexpd < y->p->acct_timexpd ? 1 : -1;
-
-	return ret;
-}
-
-static int score_adj_check(short oom_score_adj)
-{
-	int i;
-	short never_reclaim_size = ARRAY_SIZE(never_reclaim);
-
-	for (i = 0; i < never_reclaim_size; i++)
-		if (oom_score_adj == never_reclaim[i] ||
-				oom_score_adj < 0)
-			return 1;
-
-	return 0;
-}
-
-static void mark_lmk_victim(struct task_struct *tsk)
-{
-	struct mm_struct *mm = tsk->mm;
-
-	if (!cmpxchg(&tsk->signal->oom_mm, NULL, mm)) {
-		atomic_inc(&tsk->signal->oom_mm->mm_count);
-		set_bit(MMF_OOM_VICTIM, &mm->flags);
-	}
-}
-
-/*
- * Low-memory notification levels
- *
- * LOWMEM_NONE: No low-memory scenario detected.
- *
- * LOWMEM_NORMAL: A scenario in which the SWAP
- * memory levels are below defined thresholds.
- * (swap_mem as defined below)
- *
- * LOWMEM_CRITICAL: A scenario in which the LOWMEM_NORMAL
- * condition is satisfied, as well as when the reclaimable
- * file pages (active) are below a certain threshold.
- * (free_file_limit as defined above)
- */
-enum lowmem_levels {
-	LOWMEM_NONE,
-	LOWMEM_NORMAL,
-	LOWMEM_CRITICAL,
-};
-
-static int is_low_mem(void)
-{
-	const int lru_base = NR_LRU_BASE - LRU_BASE;
-
-	unsigned long cur_file_mem =
-			global_zone_page_state(lru_base + LRU_ACTIVE_FILE);
-
-	unsigned long cur_swap_mem = (get_nr_swap_pages() << (PAGE_SHIFT - 10));
-	unsigned long swap_mem = free_swap_limit * 1024;
-
-	bool lowmem_normal = cur_swap_mem < swap_mem;
-	bool lowmem_critical = lowmem_normal &&
-				cur_file_mem < free_file_limit;
-
-	pr_debug("prlmk: file_pgs: %lu, swap_pgs: %lu, lowmem: %s",
-	   cur_file_mem, cur_swap_mem,
-	   lowmem_critical ? "critical" : (lowmem_normal ? "normal" : "none"));
-
-	if (lowmem_critical)
-		return LOWMEM_CRITICAL;
-	else if (lowmem_normal)
-		return LOWMEM_NORMAL;
-	else
-		return LOWMEM_NONE;
-}
-
-static void sort_and_kill_tasks(struct selected_task selected[], int si)
-{
-	int max = si;
-
-	/*
-	 * We sort tasks based on (stime+utime) since last accessed,
-	 * in descending order.
-	 */
-	sort(selected, si, sizeof(*selected), txpd_cmp, NULL);
-
-	/* We kill tasks with the lowest (stime+utime) */
-	while (si--) {
-		struct task_struct *tsk = selected[si].p;
-
-		if (is_low_mem() == LOWMEM_NONE)
-			break;
-
-		if (reported_pressure < pressure_max)
-			return;
-
-		if (selected[si].oom_score_adj < min_score_adj)
-			continue;
-
-		task_lock(tsk);
-		send_sig(SIGKILL, tsk, 0);
-		if (tsk->mm) {
-			if (!test_bit(MMF_OOM_SKIP, &tsk->mm->flags)) {
-				mark_lmk_victim(tsk);
-				wake_oom_reaper(tsk);
-			}
-		}
-		task_unlock(tsk);
-
-		pr_debug("prlmk: total:%d[%d] comm:%s(%d) txpd:%llu KILLED!",
-				max,
-				(si + 1),
-				tsk->comm,
-				tsk->signal->oom_score_adj,
-				cputime_to_nsecs(tsk->acct_timexpd));
-
-		msleep(20);
-		if (tsk)
-			put_task_struct(tsk);
-
-	}
-}
-#endif
-
 static void swap_fn(struct work_struct *work)
 {
 	struct task_struct *tsk;
@@ -276,20 +119,6 @@ static void swap_fn(struct work_struct *work)
 	int total_reclaimed = 0;
 	int nr_to_reclaim;
 	int efficiency;
-
-#ifdef CONFIG_ANDROID_PR_KILL
-	/*
-	 * In case memory is critically low, i.e at a
-	 * LOWMEM_CRITICAL level as defined above lowmem_levels,
-	 * we kill a memory-hogging task as fast as possible,
-	 * so as to prevent a system-freeze.
-	 */
-	if (is_low_mem() == LOWMEM_CRITICAL)
-		pagefault_out_of_memory();
-
-	if (reported_pressure < pressure_max)
-		return;
-#endif
 
 	rcu_read_lock();
 	for_each_process(tsk) {
@@ -307,11 +136,7 @@ static void swap_fn(struct work_struct *work)
 			continue;
 
 		oom_score_adj = p->signal->oom_score_adj;
-#ifdef CONFIG_ANDROID_PR_KILL
-		if (score_adj_check(oom_score_adj)) {
-#else
 		if (oom_score_adj < min_score_adj) {
-#endif
 			task_unlock(p);
 			continue;
 		}
@@ -352,18 +177,6 @@ static void swap_fn(struct work_struct *work)
 		get_task_struct(selected[i].p);
 
 	rcu_read_unlock();
-
-#ifdef CONFIG_ANDROID_PR_KILL
-	sort(selected, si, sizeof(*selected), selected_cmp, NULL);
-
-	if (reported_pressure < pressure_max)
-		return;
-
-	if (is_low_mem() > LOWMEM_NONE) {
-		sort_and_kill_tasks(selected, si);
-		return;
-	}
-#endif
 
 	while (si--) {
 		nr_to_reclaim =
@@ -406,12 +219,8 @@ static int vmpressure_notifier(struct notifier_block *nb,
 {
 	unsigned long pressure = action;
 
-#ifndef CONFIG_ANDROID_PR_KILL
 	if (!enable_process_reclaim)
 		return 0;
-#else
-	reported_pressure = pressure;
-#endif
 
 	if (!current_is_kswapd())
 		return 0;
@@ -419,11 +228,7 @@ static int vmpressure_notifier(struct notifier_block *nb,
 	if (atomic_dec_if_positive(&skip_reclaim) >= 0)
 		return 0;
 
-#ifndef CONFIG_ANDROID_PR_KILL
 	if ((pressure >= pressure_min) && (pressure < pressure_max))
-#else
-	if (pressure >= pressure_max)
-#endif
 		if (!work_pending(&swap_work))
 			queue_work(system_unbound_wq, &swap_work);
 	return 0;
@@ -432,32 +237,6 @@ static int vmpressure_notifier(struct notifier_block *nb,
 static struct notifier_block vmpr_nb = {
 	.notifier_call = vmpressure_notifier,
 };
-
-
-#ifdef CONFIG_ANDROID_PR_KILL
-/*
- * Needed to prevent Android from thinking there's no LMK and thus rebooting.
- * Taken from Simple LMK (@kerneltoast).
- */
-static int process_reclaim_init(const char *val, const struct kernel_param *kp)
-{
-	static atomic_t init_done = ATOMIC_INIT(0);
-
-	if (!atomic_cmpxchg(&init_done, 0, 1))
-		BUG_ON(vmpressure_notifier_register(&vmpr_nb));
-
-	return 0;
-}
-
-static const struct kernel_param_ops process_reclaim_ops = {
-	.set = process_reclaim_init
-};
-
-#undef MODULE_PARAM_PREFIX
-#define MODULE_PARAM_PREFIX "lowmemorykiller."
-module_param_cb(minfree, &process_reclaim_ops, NULL, 0200);
-
-#else /*CONFIG_ANDROID_PR_KILL*/
 
 static int __init process_reclaim_init(void)
 {
@@ -472,5 +251,3 @@ static void __exit process_reclaim_exit(void)
 
 module_init(process_reclaim_init);
 module_exit(process_reclaim_exit);
-
-#endif
