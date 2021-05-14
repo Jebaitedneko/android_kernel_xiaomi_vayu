@@ -796,9 +796,11 @@ config PERCPU_STATS
 	  information includes global and per chunk statistics, which can
 	  be used to help understand percpu memory usage.
 
-config ANDROID_PR_KILL
+config PRLMK
 	bool "Enable PRLMK"
-	depends on PROCESS_RECLAIM && TASK_XACCT && !PSI && !MEMCG && !ANDROID_LOW_MEMORY_KILLER && !ANDROID_SIMPLE_LMK
+	depends on TASK_XACCT && ZRAM
+	depends on !PSI && !MEMCG
+	depends on !PROCESS_RECLAIM && !ANDROID_LOW_MEMORY_KILLER && !ANDROID_SIMPLE_LMK
 	default n
 	help
 	  PRLMK is a custom low-memory-killer for Android, based on the process reclaim driver.
