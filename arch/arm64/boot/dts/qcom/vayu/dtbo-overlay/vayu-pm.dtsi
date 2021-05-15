@@ -93,16 +93,6 @@
 
 /* pm8150l */
 
-&pm8150l_flash2 {
-
-	status="okay";
-};
-
-&pm8150l_torch2 {
-
-	status="okay";
-};
-
 &flash_led {
 
 	pm8150l_flashlight: qcom,flashlight {
