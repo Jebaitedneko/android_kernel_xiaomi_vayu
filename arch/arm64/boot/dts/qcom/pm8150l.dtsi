@@ -383,7 +383,6 @@
 				label = "red";
 				pwms = <&pm8150l_lpg 0 1000000>;
 				led-sources = <0>;
-				linux,default-trigger = "timer";
 			};
 			green {
 				label = "green";
