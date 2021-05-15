@@ -15,7 +15,6 @@
 
 #include "vayu-sm8150-audio.dtsi"
 #include "vayu-sm8150-camera.dtsi"
-#include "vayu-sm8150-display.dtsi"
 #include "vayu-sm8150-pci.dtsi"
 #include "vayu-sm8150-pinctrl.dtsi"
 #include "vayu-sm8150-regulator.dtsi"

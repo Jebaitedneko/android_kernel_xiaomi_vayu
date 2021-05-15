@@ -15,6 +15,5 @@
 
 #include "include/oem/vayu-sm8150.dtsi"
 #include "include/oem/vayu-audio-overlay.dtsi"
-#include "vayu-display.dtsi"
 #include "vayu-audio.dtsi"
 #include "vayu-pm.dtsi"
