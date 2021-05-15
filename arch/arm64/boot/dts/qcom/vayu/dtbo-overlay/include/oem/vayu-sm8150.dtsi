@@ -1506,27 +1506,20 @@ And public attribution of xiaomi platforms(like J20S and so and)
 				13 11 9 7 5 4 3 2 1 0>;
 };
 
-&pwm_lpg1 {
-	qcom,lpg-chan-id = <1>;
-	qcom,ramp-step-ms = <100>;
-	qcom,ramp-pause-hi-count = <2>;
-	qcom,ramp-pause-lo-count = <2>;
-	qcom,ramp-low-index = <0>;
-	qcom,ramp-high-index = <20>;
-	qcom,ramp-from-low-to-high;
-	qcom,ramp-pattern-repeat;
-};
+&pm8150l_rgb_led {
 
-&red_led {
-	label = "white";
-};
+	red {
+		label = "white";
+	};
 
-&green_led {
-	status = "disabled";
-};
+	green {
+		status = "disabled";
+	};
 
-&blue_led {
-	status = "disabled";
+	blue {
+		status = "disabled";
+	};
+
 };
 
 &mdss_mdp {

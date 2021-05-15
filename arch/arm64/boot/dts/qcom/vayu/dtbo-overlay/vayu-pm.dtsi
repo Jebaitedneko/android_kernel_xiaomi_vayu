@@ -120,82 +120,9 @@
 	};
 };
 
-&pm8150l_lpg {
-
-	/delete-node/ lpg1;
-	/delete-node/ lpg2;
-	/delete-node/ lpg3;
-
-	pwm_lpg1: lpg1 {
-
-		qcom,lpg-chan-id = <1>;
-		qcom,ramp-step-ms = <100>;
-		qcom,ramp-pause-hi-count = <2>;
-		qcom,ramp-pause-lo-count = <2>;
-		qcom,ramp-low-index = <0>;
-		qcom,ramp-high-index = <20>;
-		qcom,ramp-from-low-to-high;
-		qcom,ramp-pattern-repeat;
-	};
-
-	pwm_lpg2: lpg2 {
-
-		qcom,lpg-chan-id = <2>;
-		qcom,ramp-step-ms = <100>;
-		qcom,ramp-pause-hi-count = <2>;
-		qcom,ramp-pause-lo-count = <2>;
-		qcom,ramp-low-index = <0>;
-		qcom,ramp-high-index = <20>;
-		qcom,ramp-from-low-to-high;
-		qcom,ramp-pattern-repeat;
-	};
-
-	pwm_lpg3: lpg3 {
-
-		qcom,lpg-chan-id = <3>;
-		qcom,ramp-step-ms = <100>;
-		qcom,ramp-pause-hi-count = <2>;
-		qcom,ramp-pause-lo-count = <2>;
-		qcom,ramp-low-index = <0>;
-		qcom,ramp-high-index = <20>;
-		qcom,ramp-from-low-to-high;
-		qcom,ramp-pattern-repeat;
-	};
-};
-
 &pm8150l_pwm {
 
 	status="disabled";
-};
-
-&pm8150l_rgb_led {
-
-	/delete-node/ red;
-	/delete-node/ green;
-	/delete-node/ blue;
-
-	red_led: red {
-
-		label = "red";
-		pwms = <&pm8150l_lpg 0 1000000>;
-		led-sources = <0>;
-	};
-
-	green_led: green {
-
-		label = "green";
-		pwms = <&pm8150l_lpg 1 1000000>;
-		led-sources = <1>;
-		linux,default-trigger = "timer";
-	};
-
-	blue_led: blue {
-
-		label = "blue";
-		pwms = <&pm8150l_lpg 2 1000000>;
-		led-sources = <2>;
-		linux,default-trigger = "timer";
-	};
 };
 
 /* sm8150-pmic-overlay */

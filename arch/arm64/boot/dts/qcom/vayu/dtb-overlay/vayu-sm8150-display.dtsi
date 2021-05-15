@@ -1,0 +1,112 @@
+/* Copyright (c) 2021, The Linux Foundation. All rights reserved.
+*  Copyright (c) 2021, Jebaitedneko <Jebaitedneko@gmail.com>.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License version 2 and
+* only version 2 as published by the Free Software Foundation.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*/
+
+#include "../../sm8150-sde-display.dtsi"
+#include "../../sm8150-pmic-overlay.dtsi"
+#include "../../pm8150.dtsi"
+#include "../../pm8150b.dtsi"
+
+/* sm8150-sde-display */
+
+&tlmm {
+
+	/delete-node/ display_panel_avdd_eldo_default;
+};
+
+&soc {
+
+	/delete-node/ display-gpio-regulator@0;
+
+	/delete-node/ qcom,dsi-display@19;
+	/delete-node/ qcom,dsi-display@20;
+	/delete-node/ qcom,dsi-display@21;
+	/delete-node/ qcom,dsi-display@22;
+	/delete-node/ qcom,dsi-display@23;
+
+
+	dsi_rm69299_visionox_amoled_vid_display: qcom,dsi-display@40 {
+
+		label = "dsi_rm69299_visionox_amoled_vid_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl-num = <0>;
+		qcom,dsi-phy-num = <0>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0";
+
+		qcom,dsi-panel = <&dsi_rm69299_visionox_amoled_video>;
+	};
+
+	dsi_dual_nt36850_truly_cmd_display: qcom,dsi-display@26 {
+
+		label = "dsi_dual_nt36850_truly_cmd_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl-num = <0 1>;
+		qcom,dsi-phy-num = <0 1>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0";
+
+		qcom,dsi-panel = <&dsi_dual_nt36850_truly_cmd>;
+	};
+
+	dsi_nt35695b_truly_fhd_cmd_sec_display: qcom,dsi-display@27 {
+
+		label = "dsi_nt35695b_truly_fhd_cmd_display";
+		qcom,display-type = "secondary";
+
+		qcom,dsi-ctrl-num = <1>;
+		qcom,dsi-phy-num = <1>;
+		qcom,dsi-select-clocks = "mux_byte_clk1", "mux_pixel_clk1";
+
+		qcom,dsi-panel = <&dsi_nt35695b_truly_fhd_cmd>;
+
+	};
+
+	dsi_nt35695b_truly_fhd_video_sec_display: qcom,dsi-display@28 {
+
+		label = "dsi_nt35695b_truly_fhd_video_display";
+		qcom,display-type = "secondary";
+
+		qcom,dsi-ctrl-num = <1>;
+		qcom,dsi-phy-num = <1>;
+		qcom,dsi-select-clocks = "mux_byte_clk1", "mux_pixel_clk1";
+
+		qcom,dsi-panel = <&dsi_nt35695b_truly_fhd_video>;
+	};
+
+	dsi_sim_sec_hd_cmd_display: qcom,dsi-display@29 {
+
+		label = "dsi_sim_sec_hd_cmd_display";
+		qcom,display-type = "secondary";
+
+		qcom,dsi-ctrl-num = <1>;
+		qcom,dsi-phy-num = <1>;
+		qcom,dsi-select-clocks = "mux_byte_clk1", "mux_pixel_clk1";
+
+		qcom,dsi-panel = <&dsi_sim_sec_hd_cmd>;
+	};
+};
+
+&sde_dsi {
+
+	/delete-property/ vdd-supply;
+};
+
+&sde_dsi1 {
+
+	/delete-property/ vdd-supply;
+};
+
+&sde_dp {
+
+	/delete-property/ qcom,dp-aux-switch;
+};
