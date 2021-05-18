@@ -252,7 +252,6 @@ static void dsi_bridge_pre_enable(struct drm_bridge *bridge)
 			drm_notifier_call_chain(DRM_EVENT_BLANK, &g_notify_data);
 			dev->fp_quickon = false;
 		}
-		pr_info("%s panel already on\n", __func__);
 		return;
 	}
 
