@@ -31,6 +31,9 @@ static int __init audio_q6_init(void)
 	msm_audio_ion_init();
 	audio_slimslave_init();
 	avtimer_init();
+#ifdef CONFIG_MSM_CSPL
+	crus_sp_init();
+#endif
 	msm_mdf_init();
 	voice_mhi_init();
 	return 0;
@@ -39,6 +42,9 @@ static int __init audio_q6_init(void)
 static void __exit audio_q6_exit(void)
 {
 	msm_mdf_exit();
+#ifdef CONFIG_MSM_CSPL
+	crus_sp_exit();
+#endif
 	avtimer_exit();
 	audio_slimslave_exit();
 	msm_audio_ion_exit();
