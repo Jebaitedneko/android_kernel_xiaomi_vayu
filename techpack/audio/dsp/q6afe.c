@@ -5158,7 +5158,7 @@ void (*tas256x_sw_reset)(void *data);
 dc_detection_data_t *s_dc_detect = NULL;
 void register_tas256x_reset_func(void *fptr, dc_detection_data_t* data)
 {
-	pr_err("[TI-SmartPA:%s] ", __func__);
+	pr_debug("[TI-SmartPA:%s] ", __func__);
 	tas256x_sw_reset = fptr;
 	s_dc_detect = data;
 }
@@ -5187,7 +5187,7 @@ static int32_t tas_smartamp_algo_callback(uint32_t opcode, uint32_t *payload,
 		data_start = &payload[5];
 		break;
 	default:
-		pr_err("[TI-SmartPA:%s] Unrecognized command %d\n", __func__, opcode);
+		pr_debug("[TI-SmartPA:%s] Unrecognized command %d\n", __func__, opcode);
 		return -EINVAL;
 	}
 	data_dest = (u32 *) &this_afe.tas_calib_data;
@@ -5195,7 +5195,7 @@ static int32_t tas_smartamp_algo_callback(uint32_t opcode, uint32_t *payload,
 	memcpy(&data_dest[1], &param_hdr, sizeof(struct param_hdr_v3));
 	memcpy(&data_dest[5], data_start, param_hdr.param_size);
 	if (param_hdr.param_id == CAPI_V2_TAS_SA_DC_DETECT) {
-		pr_err("[TI-SmartPA:%s] Detected DC, Calling TAS256X Software Reset \n", __func__);
+		pr_debug("[TI-SmartPA:%s] Detected DC, Calling TAS256X Software Reset \n", __func__);
 		s_dc_detect->channel = this_afe.tas_calib_data.res_cfg.payload[0];
 		tas256x_sw_reset(s_dc_detect);
 	}
@@ -5216,18 +5216,18 @@ int afe_tas_smartamp_get_calib_data(uint32_t module_id, uint32_t param_id,
 	uint32_t port = 0x0;
 
 	if (!data || length <= 0) {
-		pr_err("[TI-SmartPA:%s] Invalid params, length: %d\n",
+		pr_debug("[TI-SmartPA:%s] Invalid params, length: %d\n",
 			__func__, length);
 		goto fail_cmd;
 	}
 
-	pr_info("[TI-SmartPA:%s] module id : 0x%x ", __func__, module_id);
+	pr_debug("[TI-SmartPA:%s] module id : 0x%x ", __func__, module_id);
 	if (module_id == AFE_SMARTAMP_MODULE_RX) {
 		port = TAS_RX_PORT;
 	} else if (module_id == AFE_SMARTAMP_MODULE_TX) {
 		port = TAS_TX_PORT;
 	} else {
-		pr_err("[TI-SmartPA:%s] Invalid module id 0x%x\n", __func__, module_id);
+		pr_debug("[TI-SmartPA:%s] Invalid module id 0x%x\n", __func__, module_id);
 		goto fail_cmd;
 	}
 
@@ -5238,7 +5238,7 @@ int afe_tas_smartamp_get_calib_data(uint32_t module_id, uint32_t param_id,
 	param_hdr.param_size = sizeof(struct afe_smartamp_get_calib);
 	ret = q6afe_get_params(port, NULL, &param_hdr);
 	if (ret < 0) {
-		pr_err("[TI-SmartPA:%s] get param port 0x%x param id[0x%x]failed %d\n",
+		pr_debug("[TI-SmartPA:%s] get param port 0x%x param id[0x%x]failed %d\n",
 		       __func__, port, param_hdr.param_id, ret);
 		goto fail_cmd;
 	}
@@ -5261,19 +5261,19 @@ int afe_tas_smartamp_set_calib_data(uint32_t module_id, uint32_t param_id,
 	u8 *packed_param_data = NULL;
 	u32 packed_param_size = 0;
 	u32 single_param_size = 0;
-	pr_info("[TI-SmartPA:%s] length: %d\n", __func__, length);
+	pr_debug("[TI-SmartPA:%s] length: %d\n", __func__, length);
 	if (!data || (length < 0)) {
-		pr_err("[TI-SmartPA:%s] Invalid params\n", __func__);
+		pr_debug("[TI-SmartPA:%s] Invalid params\n", __func__);
 		return ret;
 	}
 
-	pr_info("[TI-SmartPA:%s] module id : 0x%x \n", __func__, module_id);
+	pr_debug("[TI-SmartPA:%s] module id : 0x%x \n", __func__, module_id);
 	if (module_id == AFE_SMARTAMP_MODULE_RX) {
 		port = TAS_RX_PORT;
 	} else if (module_id == AFE_SMARTAMP_MODULE_TX) {
 		port = TAS_TX_PORT;
 	} else {
-		pr_err("[TI-SmartPA:%s] Invalid module id 0x%x\n", __func__, module_id);
+		pr_debug("[TI-SmartPA:%s] Invalid module id 0x%x\n", __func__, module_id);
 		return ret;
 	}
 	packed_param_size = sizeof(param_hdr) + length;
@@ -5288,7 +5288,7 @@ int afe_tas_smartamp_set_calib_data(uint32_t module_id, uint32_t param_id,
 	ret = q6common_pack_pp_params(packed_param_data, &param_hdr,
 			(u8 *) data, &single_param_size);
 	if (ret) {
-		pr_err("[TI-SmartPA:%s] Failed to pack param data, error %d\n", __func__,
+		pr_debug("[TI-SmartPA:%s] Failed to pack param data, error %d\n", __func__,
 		       ret);
 		goto done;
 	}
@@ -5310,7 +5310,7 @@ static int32_t tas_smartamp_algo_callback(uint32_t *payload, uint32_t payload_si
     pr_debug("[TI-SmartPA:%s] callback\n", __func__);
 
 	if (!(&(resp->pdata))) {
-		pr_err("[TI-SmartPA:%s] Error: resp pdata is NULL", __func__);
+		pr_debug("[TI-SmartPA:%s] Error: resp pdata is NULL", __func__);
 		return -EINVAL;
 	}
 
@@ -5321,7 +5321,7 @@ static int32_t tas_smartamp_algo_callback(uint32_t *payload, uint32_t payload_si
 
 	if(resp->pdata.param_id == CAPI_V2_TAS_SA_DC_DETECT) {
 		s_dc_detect->channel = resp->res_cfg.payload[0];
-		pr_err("[TI-SmartPA:%s] Detected DC, Calling TAS256X Software Reset Channel-%s\n", __func__,
+		pr_debug("[TI-SmartPA:%s] Detected DC, Calling TAS256X Software Reset Channel-%s\n", __func__,
 			(s_dc_detect->channel == 0)?"Left":"Right");
 		tas256x_sw_reset(s_dc_detect);
 	}
@@ -5446,7 +5446,7 @@ int afe_tas_smartamp_set_calib_data(uint32_t module_id, uint32_t param_id,
 	config = &configV;
 	memset(config, 0 , sizeof(struct afe_smartamp_config_command));
 	if (!data) {
-		pr_err("[TI-SmartPA:%s] Invalid params\n", __func__);
+		pr_debug("[TI-SmartPA:%s] Invalid params\n", __func__);
 		goto fail_cmd;
 	}
 
