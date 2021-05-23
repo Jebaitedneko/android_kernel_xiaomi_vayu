@@ -21,7 +21,6 @@
  */
 
 #ifdef CONFIG_TAS256X_CODEC
-#define DEBUG 5
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>
