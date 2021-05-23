@@ -157,7 +157,7 @@ static int tas256x_i2c_load_data(struct tas256x_priv *p_tas256x,
 		} else {
 			if (n_register != 0xFFFFFFFF) {
 				if (n_size > 128) {
-					pr_err("%s %s, Line=%d, invalid size, maximum is 128 bytes!\n",
+					pr_debug("%s %s, Line=%d, invalid size, maximum is 128 bytes!\n",
 					 LOG_TAG, __func__, __LINE__);
 					break;
 				}
@@ -176,7 +176,7 @@ static int tas256x_i2c_load_data(struct tas256x_priv *p_tas256x,
 					if (n_result < 0)
 						break;
 				} else {
-					pr_err("%s %s, Line=%d,invalid size, minimum is 1 bytes!\n",
+					pr_debug("%s %s, Line=%d,invalid size, minimum is 1 bytes!\n",
 						LOG_TAG, __func__, __LINE__);
 				}
 			}
@@ -360,7 +360,7 @@ bool tas256x_iv_sense_enable_get(struct tas256x_priv *p_tas256x, int ch)
 	n_result = p_tas256x->read(p_tas256x, ch,
 			TAS256X_POWERCONTROL, &value);
 	if (n_result < 0)
-		pr_err("%s can't get ivsensor state %s, L=%d\n",
+		pr_debug("%s can't get ivsensor state %s, L=%d\n",
 			 LOG_TAG, __func__, __LINE__);
 	else if (((value & TAS256X_POWERCONTROL_ISNSPOWER_MASK)
 			== TAS256X_POWERCONTROL_ISNSPOWER_ACTIVE)
@@ -491,7 +491,7 @@ int tas256x_iv_slot_config(struct tas256x_priv *p_tas256x)
 					0xff, 0x43);
 		}
 	} else {
-		pr_err("%s %s, wrong params, slot %d\n",
+		pr_debug("%s %s, wrong params, slot %d\n",
 			LOG_TAG, __func__, p_tas256x->mn_slot_width);
 	}
 
@@ -590,7 +590,7 @@ int tas256x_set_samplerate(struct tas256x_priv *p_tas256x,
 			TAS256X_TDMCONFIGURATIONREG0_SAMPRATE31_176_4_192KHZ);
 		break;
 	default:
-		pr_info("%s %s, unsupported sample rate, %d\n",
+		pr_debug("%s %s, unsupported sample rate, %d\n",
 			 LOG_TAG, __func__, samplerate);
 	}
 
@@ -696,7 +696,7 @@ int tas256x_rx_set_bitwidth(struct tas256x_priv *p_tas256x,
 		break;
 
 	default:
-		pr_info("%s Not supported params format\n",  LOG_TAG);
+		pr_debug("%s Not supported params format\n",  LOG_TAG);
 		break;
 	}
 
@@ -761,13 +761,13 @@ int tas256x_icn_enable(struct tas256x_priv *p_tas256x, int enable, int ch)
 			TAS256X_ICN_SW_REG,
 			TAS256X_ICN_SW_MASK,
 			TAS256X_ICN_SW_ENABLE);
-		pr_info("%s %s: ICN Enable!\n",  LOG_TAG, __func__);
+		pr_debug("%s %s: ICN Enable!\n",  LOG_TAG, __func__);
 	} else { /*Disable*/
 		p_tas256x->update_bits(p_tas256x, ch,
 			TAS256X_ICN_SW_REG,
 			TAS256X_ICN_SW_MASK,
 			TAS256X_ICN_SW_DISABLE);
-		pr_info("%s %s: ICN Disable!\n",  LOG_TAG, __func__);
+		pr_debug("%s %s: ICN Disable!\n",  LOG_TAG, __func__);
 	}
 
 	return n_result;
@@ -778,7 +778,7 @@ int tas256x_icn_data(struct tas256x_priv *p_tas256x, int ch)
 {
 	int n_result = 0;
 
-	pr_info("%s set ICN to -80dB\n", LOG_TAG);
+	pr_debug("%s set ICN to -80dB\n", LOG_TAG);
 	n_result = p_tas256x->bulk_write(p_tas256x, ch,
 		TAS256X_ICN_THRESHOLD_REG,
 		p_icn_threshold,
@@ -963,7 +963,7 @@ int tas256x_interrupt_determine(struct tas256x_priv *p_tas256x, int ch,
 		if (int1status &
 			TAS256X_LATCHEDINTERRUPTREG0_TDMCLOCKERRORSTICKY_INTERRUPT) {
 			mn_err_code |= ERROR_CLOCK;
-			pr_err("%s TDM clock error!\n", LOG_TAG);
+			pr_debug("%s TDM clock error!\n", LOG_TAG);
 		} else {
 			mn_err_code &= ~ERROR_CLOCK;
 		}
@@ -971,7 +971,7 @@ int tas256x_interrupt_determine(struct tas256x_priv *p_tas256x, int ch,
 		if (int1status &
 			TAS256X_LATCHEDINTERRUPTREG0_OCEFLAGSTICKY_INTERRUPT) {
 			mn_err_code |= ERROR_OVER_CURRENT;
-			pr_err("%s SPK over current!\n", LOG_TAG);
+			pr_debug("%s SPK over current!\n", LOG_TAG);
 		} else {
 			mn_err_code &= ~ERROR_OVER_CURRENT;
 		}
@@ -979,7 +979,7 @@ int tas256x_interrupt_determine(struct tas256x_priv *p_tas256x, int ch,
 		if (int1status &
 			TAS256X_LATCHEDINTERRUPTREG0_OTEFLAGSTICKY_INTERRUPT) {
 			mn_err_code |= ERROR_DIE_OVERTEMP;
-			pr_err("%s die over temperature!\n", LOG_TAG);
+			pr_debug("%s die over temperature!\n", LOG_TAG);
 		} else {
 			mn_err_code &= ~ERROR_DIE_OVERTEMP;
 		}
@@ -987,7 +987,7 @@ int tas256x_interrupt_determine(struct tas256x_priv *p_tas256x, int ch,
 		if (int2status &
 			TAS256X_LATCHEDINTERRUPTREG1_VBATOVLOSTICKY_INTERRUPT) {
 			mn_err_code |= ERROR_OVER_VOLTAGE;
-			pr_err("%s SPK over voltage!\n", LOG_TAG);
+			pr_debug("%s SPK over voltage!\n", LOG_TAG);
 		} else {
 			mn_err_code &= ~ERROR_OVER_VOLTAGE;
 		}
@@ -995,7 +995,7 @@ int tas256x_interrupt_determine(struct tas256x_priv *p_tas256x, int ch,
 		if (int2status &
 			TAS256X_LATCHEDINTERRUPTREG1_VBATUVLOSTICKY_INTERRUPT) {
 			mn_err_code |= ERROR_UNDER_VOLTAGE;
-			pr_err("%s SPK under voltage!\n", LOG_TAG);
+			pr_debug("%s SPK under voltage!\n", LOG_TAG);
 		} else {
 			mn_err_code &= ~ERROR_UNDER_VOLTAGE;
 		}
@@ -1003,7 +1003,7 @@ int tas256x_interrupt_determine(struct tas256x_priv *p_tas256x, int ch,
 		if (int2status &
 			TAS256X_LATCHEDINTERRUPTREG1_BROWNOUTFLAGSTICKY_INTERRUPT) {
 			mn_err_code |= ERROR_BROWNOUT;
-			pr_err("%s brownout!\n", LOG_TAG);
+			pr_debug("%s brownout!\n", LOG_TAG);
 		} else {
 			mn_err_code &= ~ERROR_BROWNOUT;
 		}
