@@ -148,9 +148,6 @@ struct wcd_cpe_core {
 	/* work to handle CPE SSR*/
 	struct work_struct ssr_work;
 
-	/* PM handle for suspend mode during SSR */
-	struct pm_qos_request pm_qos_req;
-
 	/* completion event indicating CPE OFFLINE */
 	struct completion offline_compl;
 
