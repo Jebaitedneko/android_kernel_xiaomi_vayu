@@ -17,7 +17,6 @@
 #include <linux/platform_device.h>
 #include <linux/of_irq.h>
 #include <linux/interrupt.h>
-#include <linux/pm_qos.h>
 
 #define WCD9XXX_MAX_IRQ_REGS 4
 #define WCD9XXX_MAX_NUM_IRQS (WCD9XXX_MAX_IRQ_REGS * 8)
@@ -226,7 +225,6 @@ struct wcd9xxx_core_resource {
 	struct mutex pm_lock;
 	/* pm_wq notifies change of pm_state */
 	wait_queue_head_t pm_wq;
-	struct pm_qos_request pm_qos_req;
 	int wlock_holders;
 
 
