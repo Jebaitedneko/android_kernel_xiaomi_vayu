@@ -987,9 +987,6 @@ int wcd9xxx_core_res_init(
 	wcd9xxx_core_res->wlock_holders = 0;
 	wcd9xxx_core_res->pm_state = WCD9XXX_PM_SLEEPABLE;
 	init_waitqueue_head(&wcd9xxx_core_res->pm_wq);
-	pm_qos_add_request(&wcd9xxx_core_res->pm_qos_req,
-				PM_QOS_CPU_DMA_LATENCY,
-				PM_QOS_DEFAULT_VALUE);
 
 	wcd9xxx_core_res->num_irqs = num_irqs;
 	wcd9xxx_core_res->num_irq_regs = num_irq_regs;
@@ -1014,7 +1011,6 @@ void wcd9xxx_core_res_deinit(struct wcd9xxx_core_resource *wcd9xxx_core_res)
 	if (!wcd9xxx_core_res)
 		return;
 
-	pm_qos_remove_request(&wcd9xxx_core_res->pm_qos_req);
 	mutex_destroy(&wcd9xxx_core_res->pm_lock);
 }
 EXPORT_SYMBOL(wcd9xxx_core_res_deinit);
@@ -1066,10 +1062,6 @@ int wcd9xxx_core_res_suspend(
 	int ret = 0;
 
 	pr_debug("%s: enter\n", __func__);
-	/*
-	 * pm_qos_update_request() can be called after this suspend chain call
-	 * started. thus suspend can be called while lock is being held
-	 */
 	mutex_lock(&wcd9xxx_core_res->pm_lock);
 	if (wcd9xxx_core_res->pm_state == WCD9XXX_PM_SLEEPABLE) {
 		pr_debug("%s: suspending system, state %d, wlock %d\n",
