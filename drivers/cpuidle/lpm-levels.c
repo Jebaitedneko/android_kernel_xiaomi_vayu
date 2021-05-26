@@ -625,24 +625,6 @@ out:
 	return false;
 }
 
-static inline bool lpm_disallowed(s64 sleep_us, int cpu, struct lpm_cpu *pm_cpu)
-{
-	uint64_t bias_time = 0;
-
-	if (sleep_disabled && !cpu_isolated(cpu))
-		return true;
-
-	if (is_cpu_biased(cpu, &bias_time) && (!cpu_isolated(cpu))) {
-		pm_cpu->bias = bias_time;
-		return true;
-	}
-
-	if (sleep_us < 0)
-		return true;
-
-	return false;
-}
-
 static int cpu_power_select(struct cpuidle_device *dev,
 		struct lpm_cpu *cpu)
 {
