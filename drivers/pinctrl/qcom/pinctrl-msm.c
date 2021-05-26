@@ -300,6 +300,10 @@ static int msm_config_group_get(struct pinctrl_dev *pctldev,
 	int ret;
 	u32 val;
 
+	/* gpio 0~3 is NFC spi, gpio 126~129 is FP spi */
+	if (group < 4 || (group > 125 && group < 130))
+		return 0;
+
 	g = &pctrl->soc->groups[group];
 	base = reassign_pctrl_reg(pctrl->soc, group);
 
@@ -622,6 +626,11 @@ static void msm_gpio_dbg_show(struct seq_file *s, struct gpio_chip *chip)
 	unsigned i;
 
 	for (i = 0; i < chip->ngpio; i++, gpio++) {
+
+		/* gpio 0~3 is NFC spi, gpio 126~129 is FP spi */
+		if (i < 4 || (i > 125 && i < 130))
+			continue;
+
 		msm_gpio_dbg_show_one(s, NULL, chip, i, gpio);
 		seq_puts(s, "\n");
 	}
