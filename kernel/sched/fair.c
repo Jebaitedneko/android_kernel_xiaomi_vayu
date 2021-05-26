@@ -5411,6 +5411,26 @@ enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
 	if (!task_new &&
 		!(prefer_idle && rq->nr_running == 1))
 		update_overutilized_status(rq);
+
+enqueue_throttle:
+	if (cfs_bandwidth_used()) {
+		/*
+		 * When bandwidth control is enabled; the cfs_rq_throttled()
+		 * breaks in the above iteration can result in incomplete
+		 * leaf list maintenance, resulting in triggering the assertion
+		 * below.
+		 */
+		for_each_sched_entity(se) {
+			cfs_rq = cfs_rq_of(se);
+
+			if (list_add_leaf_cfs_rq(cfs_rq))
+				break;
+		}
+	}
+
+	assert_list_leaf_cfs_rq(rq);
+
+	hrtick_update(rq);
 }
 
 static void set_next_buddy(struct sched_entity *se);
@@ -11143,6 +11163,15 @@ static int need_active_balance(struct lb_env *env)
 		return 1;
 
 	return unlikely(sd->nr_balance_failed > sd->cache_nice_tries+2);
+}
+
+static int group_balance_cpu_not_isolated(struct sched_group *sg)
+{
+	cpumask_t cpus;
+
+	cpumask_and(&cpus, sched_group_span(sg), group_balance_mask(sg));
+	cpumask_andnot(&cpus, &cpus, cpu_isolated_mask);
+	return cpumask_first(&cpus);
 }
 
 static int active_load_balance_cpu_stop(void *data);
