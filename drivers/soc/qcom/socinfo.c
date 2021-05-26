@@ -71,6 +71,7 @@ enum {
 	HW_PLATFORM_HDK = 31,
 	HW_PLATFORM_IOT = 32,
 	HW_PLATFORM_IDP = 34,
+	HW_PLATFORM_J20S = 47,
 	HW_PLATFORM_INVALID
 };
 
@@ -95,7 +96,8 @@ const char *hw_platform[] = {
 	[HW_PLATFORM_TTP] = "TTP",
 	[HW_PLATFORM_HDK] = "HDK",
 	[HW_PLATFORM_IOT] = "IOT",
-	[HW_PLATFORM_IDP] = "IDP"
+	[HW_PLATFORM_IDP] = "IDP",
+	[HW_PLATFORM_J20S] = "VAYU"
 };
 
 enum {
