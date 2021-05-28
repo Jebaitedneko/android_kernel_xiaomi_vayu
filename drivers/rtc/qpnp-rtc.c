@@ -23,6 +23,7 @@
 #include <linux/platform_device.h>
 #include <linux/spinlock.h>
 #include <linux/alarmtimer.h>
+#include <linux/wakeup_reason.h>
 
 /* RTC/ALARM Register offsets */
 #define REG_OFFSET_ALARM_RW	0x40
@@ -731,10 +732,31 @@ static int qpnp_rtc_freeze(struct device *dev)
 	return 0;
 }
 
+extern bool alarm_fired;
+static int qpnp_rtc_resume(struct device *dev)
+{
+	struct qpnp_rtc *rtc_dd = dev_get_drvdata(dev);
+
+	if (alarm_fired == true) {
+		pr_info("Alarm event generated during suspend\n");
+		log_irq_wakeup_reason(rtc_dd->rtc_alarm_irq);
+	}
+
+	return 0;
+}
+
+static int qpnp_rtc_suspend(struct device *dev)
+{
+	alarm_fired = false;
+	return 0;
+}
+
 static const struct dev_pm_ops qpnp_rtc_pm_ops = {
 	.freeze = qpnp_rtc_freeze,
 	.restore = qpnp_rtc_restore,
 	.thaw = qpnp_rtc_restore,
+	.suspend = qpnp_rtc_suspend,
+	.resume = qpnp_rtc_resume,
 };
 
 static const struct of_device_id spmi_match_table[] = {
