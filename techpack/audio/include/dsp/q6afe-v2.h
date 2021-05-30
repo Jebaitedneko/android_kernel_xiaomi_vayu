@@ -265,6 +265,7 @@ enum {
 	/* IDX 187 -> 188 */
 	IDX_AFE_PORT_ID_SENARY_PCM_RX,
 	IDX_AFE_PORT_ID_SENARY_PCM_TX,
+    IDX_AFE_PORT_ID_PSEUDOPORT_01,
 	/* IDX 189 -> 190 */
 	IDX_RT_PROXY_PORT_002_RX,
 	IDX_RT_PROXY_PORT_002_TX,
@@ -459,6 +460,7 @@ int afe_get_sp_rx_tmax_xmax_logging_data(
 		u16 port_id);
 int afe_cal_init_hwdep(void *card);
 int afe_send_port_island_mode(u16 port_id);
+
 int afe_send_cmd_wakeup_register(void *handle, bool enable);
 void afe_register_wakeup_irq_callback(
 	void (*afe_cb_wakeup_irq)(void *handle));
