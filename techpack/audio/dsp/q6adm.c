@@ -55,6 +55,9 @@ enum adm_cal_status {
 	ADM_STATUS_MAX,
 };
 
+static bool is_usb_timeout = false;
+static bool close_usb = false;
+
 struct adm_copp {
 
 	atomic_t id[AFE_MAX_PORTS][MAX_COPPS_PER_PORT];
@@ -1763,6 +1766,20 @@ static int32_t adm_callback(struct apr_client_data *data, void *priv)
 				   open->copp_id);
 			pr_debug("%s: coppid rxed=%d\n", __func__,
 				 open->copp_id);
+
+			if(is_usb_timeout && (IDX_AFE_PORT_ID_USB_RX == port_idx))
+			{
+
+				pr_debug("%s:usb port need be closed\n", __func__);
+				close_usb = true;
+			}
+
+			if(close_usb && (IDX_AFE_PORT_ID_QUATERNARY_MI2S_RX == port_idx))
+			{
+				pr_debug("%s: enable usb port\n", __func__);
+				is_usb_timeout = false;
+			}
+
 			wake_up(&this_adm.copp.wait[port_idx][copp_idx]);
 			}
 			break;
@@ -2856,6 +2873,12 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 
 	port_id = q6audio_convert_virtual_to_portid(port_id);
 	port_idx = adm_validate_and_get_port_index(port_id);
+
+	if(is_usb_timeout && (AFE_PORT_ID_USB_RX == port_id)){
+		pr_err("%s: USB RX timeout return\n", __func__);
+		return -EINVAL;
+	}
+
 	if (port_idx < 0) {
 		pr_err("%s: Invalid port_id 0x%x\n", __func__, port_id);
 		return -EINVAL;
@@ -2923,8 +2946,15 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 				this_adm.ffecns_port_id);
 	}
 
+	#if 0
 	if (topology == VPM_TX_VOICE_SMECNS_V2_COPP_TOPOLOGY)
+	#endif
+	if (topology == VPM_TX_VOICE_SMECNS_V2_COPP_TOPOLOGY ||
+		topology == ADM_TOPOLOGY_ID_AUDIO_RX_FVSAM) {
+		pr_debug("%s: set channel_mode as 1 for topology=%d\n", __func__, topology);
 		channel_mode = 1;
+	}
+
 
 	/*
 	 * Routing driver reuses the same adm for streams with the same
@@ -3218,6 +3248,10 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 		if (!ret) {
 			pr_err("%s: ADM open timedout for port_id: 0x%x for [0x%x]\n",
 						__func__, tmp_port, port_id);
+
+			if(AFE_PORT_ID_USB_RX == port_id){
+				is_usb_timeout = true;
+			}
 			return -EINVAL;
 		} else if (atomic_read(&this_adm.copp.stat
 					[port_idx][copp_idx]) > 0) {
@@ -3577,6 +3611,10 @@ int adm_close(int port_id, int perf_mode, int copp_idx)
 	int ret = 0, port_idx;
 	int copp_id = RESET_COPP_ID;
 
+	int usb_copp_id = RESET_COPP_ID;
+	int usb_copp_idx = 0;
+	struct apr_hdr usb_close;
+
 	pr_debug("%s: port_id=0x%x perf_mode: %d copp_idx: %d\n", __func__,
 		 port_id, perf_mode, copp_idx);
 
@@ -3641,6 +3679,68 @@ int adm_close(int port_id, int perf_mode, int copp_idx)
 			this_adm.sourceTrackingData.apr_cmd_status = -1;
 			atomic_set(&this_adm.mem_map_handles[
 					ADM_MEM_MAP_INDEX_SOURCE_TRACKING], 0);
+		}
+
+		if(close_usb)
+		{
+			for(usb_copp_idx = 0; usb_copp_idx < 8; usb_copp_idx++){
+
+				usb_copp_id = adm_get_copp_id(IDX_AFE_PORT_ID_USB_RX, usb_copp_idx);
+
+				if(usb_copp_id == RESET_COPP_ID) continue;
+
+				pr_err("%s: usb_copp_id = %d\n", __func__, usb_copp_id);
+
+				usb_close.hdr_field = APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD,
+								APR_HDR_LEN(APR_HDR_SIZE),
+								APR_PKT_VER);
+				usb_close.pkt_size = sizeof(usb_close);
+				usb_close.src_svc = APR_SVC_ADM;
+				usb_close.src_domain = APR_DOMAIN_APPS;
+				usb_close.src_port = AFE_PORT_ID_USB_RX;
+				usb_close.dest_svc = APR_SVC_ADM;
+				usb_close.dest_domain = APR_DOMAIN_ADSP;
+				usb_close.dest_port = usb_copp_id;
+				usb_close.token = IDX_AFE_PORT_ID_USB_RX << 16 | usb_copp_idx;
+				usb_close.opcode = ADM_CMD_DEVICE_CLOSE_V5;
+
+				atomic_set(&this_adm.copp.id[IDX_AFE_PORT_ID_USB_RX][usb_copp_idx],
+					   RESET_COPP_ID);
+				atomic_set(&this_adm.copp.cnt[IDX_AFE_PORT_ID_USB_RX][usb_copp_idx], 0);
+				atomic_set(&this_adm.copp.topology[IDX_AFE_PORT_ID_USB_RX][usb_copp_idx], 0);
+				atomic_set(&this_adm.copp.mode[IDX_AFE_PORT_ID_USB_RX][usb_copp_idx], 0);
+				atomic_set(&this_adm.copp.stat[IDX_AFE_PORT_ID_USB_RX][usb_copp_idx], -1);
+				atomic_set(&this_adm.copp.rate[IDX_AFE_PORT_ID_USB_RX][usb_copp_idx], 0);
+				atomic_set(&this_adm.copp.channels[IDX_AFE_PORT_ID_USB_RX][usb_copp_idx], 0);
+				atomic_set(&this_adm.copp.bit_width[IDX_AFE_PORT_ID_USB_RX][usb_copp_idx], 0);
+				atomic_set(&this_adm.copp.app_type[IDX_AFE_PORT_ID_USB_RX][usb_copp_idx], 0);
+
+				clear_bit(ADM_STATUS_CALIBRATION_REQUIRED,
+				(void *)&this_adm.copp.adm_status[IDX_AFE_PORT_ID_USB_RX][usb_copp_idx]);
+
+				ret = apr_send_pkt(this_adm.apr, (uint32_t *)&usb_close);
+				if (ret < 0) {
+					pr_err("%s: ADM close failed %d\n", __func__, ret);
+				}
+				else
+					pr_err("%s: ADM close ok %d\n", __func__, ret);
+			}
+
+			close_usb = false;
+
+			pr_err("%s: close_usb done \n", __func__);
+
+			if(AFE_PORT_ID_USB_RX == port_id)
+			{
+				pr_err("%s: close_usb return \n", __func__);
+
+				if (perf_mode != ULTRA_LOW_LATENCY_PCM_MODE) {
+					pr_debug("%s: remove adm device from rtac\n", __func__);
+					rtac_remove_adm_device(port_id, copp_id);
+				}
+				return 0;
+			}
+
 		}
 
 		close.hdr_field = APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD,
