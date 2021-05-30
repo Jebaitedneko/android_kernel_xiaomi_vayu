@@ -863,6 +863,11 @@ static bool tavil_is_anc_on(struct wcd_mbhc *mbhc)
 	return anc_on;
 }
 
+static void tavil_mute_hs_tx(struct snd_soc_codec *codec)
+{
+	snd_soc_update_bits(codec, WCD934X_CDC_TX0_TX_PATH_CTL, 0x10, 0x10);
+}
+
 static const struct wcd_mbhc_cb mbhc_cb = {
 	.request_irq = tavil_mbhc_request_irq,
 	.irq_control = tavil_mbhc_irq_control,
@@ -888,6 +893,7 @@ static const struct wcd_mbhc_cb mbhc_cb = {
 	.hph_register_recovery = tavil_hph_register_recovery,
 	.update_anc_state = tavil_update_anc_state,
 	.is_anc_on = tavil_is_anc_on,
+	.mbhc_mute_hs_tx = tavil_mute_hs_tx,
 };
 
 static struct regulator *tavil_codec_find_ondemand_regulator(
@@ -986,6 +992,27 @@ int tavil_mbhc_get_impedance(struct wcd934x_mbhc *wcd934x_mbhc,
 	return wcd_mbhc_get_impedance(&wcd934x_mbhc->wcd_mbhc, zl, zr);
 }
 EXPORT_SYMBOL(tavil_mbhc_get_impedance);
+
+
+int tavil_mb_pull_down(struct snd_soc_codec *codec, bool active,
+		int value)
+{
+	int oldv = 0;
+
+	if (active) {
+		oldv = snd_soc_read(codec, WCD934X_ANA_MICB2);
+		snd_soc_update_bits(codec, WCD934X_ANA_MBHC_ELECT,
+				0x80, 0x00);
+		snd_soc_update_bits(codec, WCD934X_ANA_MICB2, 0xC0, 0xC0);
+	} else {
+		snd_soc_write(codec, WCD934X_ANA_MICB2, value);
+		snd_soc_update_bits(codec, WCD934X_ANA_MBHC_ELECT,
+				0x80, 0x80);
+	}
+
+	return oldv;
+}
+EXPORT_SYMBOL(tavil_mb_pull_down);
 
 /*
  * tavil_mbhc_hs_detect: starts mbhc insertion/removal functionality
