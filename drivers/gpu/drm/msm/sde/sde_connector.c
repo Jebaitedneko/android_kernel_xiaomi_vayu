@@ -21,10 +21,20 @@
 #include <linux/string.h>
 #include "dsi_drm.h"
 #include "dsi_display.h"
+#include "dsi_panel.h"
 #include "sde_crtc.h"
 #include "sde_rm.h"
+#include "sde_trace.h"
+#include <drm/drm_notifier.h>
 
 #define BL_NODE_NAME_SIZE 32
+
+enum bkl_dimming_state {
+	STATE_NONE,
+	STATE_DIM_BLOCK,
+	STATE_DIM_RESTORE,
+	STATE_ALL
+};
 
 /* Autorefresh will occur after FRAME_CNT frames. Large values are unlikely */
 #define AUTOREFRESH_MAX_FRAME_CNT 6
@@ -583,6 +593,68 @@ static int _sde_connector_update_dirty_properties(
 	return 0;
 }
 
+static int dsi_display_write_panel(struct dsi_display *display,
+				struct dsi_panel_cmd_set *cmd_sets)
+{
+	int rc = 0, i = 0;
+	ssize_t len;
+	u32 count;
+	struct dsi_cmd_desc *cmds;
+	enum dsi_cmd_set_state state;
+	struct dsi_display_mode *mode;
+	struct dsi_panel *panel = display->panel;
+	const struct mipi_dsi_host_ops *ops = panel->host->ops;
+
+	rc = dsi_display_clk_ctrl(display->dsi_clk_handle,
+			DSI_CORE_CLK, DSI_CLK_ON);
+	if (rc) {
+		pr_err("[%s] failed to enable DSI core clocks, rc=%d\n",
+		       display->name, rc);
+		goto error;
+	}
+
+	mode = panel->cur_mode;
+
+	cmds = cmd_sets->cmds;
+	count = cmd_sets->count;
+	state = cmd_sets->state;
+
+	if (count == 0) {
+		pr_debug("[%s] No commands to be sent for state\n",
+			 panel->name);
+		goto error;
+	}
+
+	for (i = 0; i < count; i++) {
+		if (state == DSI_CMD_SET_STATE_LP)
+			cmds->msg.flags |= MIPI_DSI_MSG_USE_LPM;
+
+		if (cmds->last_command)
+			cmds->msg.flags |= MIPI_DSI_MSG_LASTCOMMAND;
+
+		len = ops->transfer(panel->host, &cmds->msg);//dsi_host_transfer,
+		if (len < 0) {
+			rc = len;
+			pr_err("failed to set cmds, rc=%d\n", rc);
+			goto error;
+		}
+		if (cmds->post_wait_ms)
+			usleep_range(cmds->post_wait_ms*1000,
+					((cmds->post_wait_ms*1000)+10));
+		cmds++;
+	}
+
+	rc = dsi_display_clk_ctrl(display->dsi_clk_handle,
+			DSI_CORE_CLK, DSI_CLK_OFF);
+	if (rc) {
+		pr_err("[%s] failed to disable DSI core clocks, rc=%d\n",
+		       display->name, rc);
+		goto error;
+	}
+error:
+	return rc;
+}
+
 int sde_connector_pre_kickoff(struct drm_connector *connector)
 {
 	struct sde_connector *c_conn;
@@ -721,12 +793,13 @@ void sde_connector_helper_bridge_enable(struct drm_connector *connector)
 				MSM_ENC_TX_COMPLETE);
 	c_conn->allow_bl_update = true;
 
-	if (c_conn->bl_device) {
+	if (!display->is_first_boot && c_conn->bl_device) {
 		c_conn->bl_device->props.power = FB_BLANK_UNBLANK;
 		c_conn->bl_device->props.state &= ~BL_CORE_FBBLANK;
 		backlight_update_status(c_conn->bl_device);
 	}
 	c_conn->panel_dead = false;
+	display->is_first_boot = false;
 }
 
 int sde_connector_clk_ctrl(struct drm_connector *connector, bool enable)
@@ -1842,10 +1915,42 @@ static int sde_connector_atomic_check(struct drm_connector *connector,
 	return 0;
 }
 
+static irqreturn_t esd_err_irq_handle(int irq, void *data)
+{
+	struct sde_connector *c_conn = data;
+	struct drm_event event;
+	bool panel_on = false;
+
+	if (!c_conn && !c_conn->display) {
+		SDE_ERROR("not able to get connector object\n");
+		return IRQ_HANDLED;
+	}
+
+	if (c_conn->connector_type == DRM_MODE_CONNECTOR_DSI) {
+		struct dsi_display * dsi_display = (struct dsi_display *)(c_conn->display);
+		if (dsi_display && dsi_display->panel) {
+			panel_on = dsi_display->panel->panel_initialized;
+		}
+	}
+
+	if (panel_on && (c_conn->panel_dead == false)) {
+		SDE_ERROR("esd check irq report PANEL_DEAD conn_id: %d enc_id: %d, panel_status[%d]\n",
+			c_conn->base.base.id, c_conn->encoder->base.id, panel_on);
+		c_conn->panel_dead = true;
+		event.type = DRM_EVENT_PANEL_DEAD;
+		event.length = sizeof(bool);
+		msm_mode_object_event_notify(&c_conn->base.base,
+			c_conn->base.dev, &event, (u8 *)&c_conn->panel_dead);
+		sde_encoder_display_failure_notification(c_conn->encoder,false);
+	}
+	return IRQ_HANDLED;
+}
+
 static void _sde_connector_report_panel_dead(struct sde_connector *conn,
 	bool skip_pre_kickoff)
 {
 	struct drm_event event;
+	struct dsi_display *display = (struct dsi_display *)(conn->display);
 
 	if (!conn)
 		return;
@@ -1859,6 +1964,7 @@ static void _sde_connector_report_panel_dead(struct sde_connector *conn,
 		return;
 
 	conn->panel_dead = true;
+	display->panel->panel_dead_flag = true;
 	event.type = DRM_EVENT_PANEL_DEAD;
 	event.length = sizeof(bool);
 	msm_mode_object_event_notify(&conn->base.base,
@@ -2277,6 +2383,21 @@ struct drm_connector *sde_connector_init(struct drm_device *dev,
 				&dsi_display->panel->hdr_props,
 				sizeof(dsi_display->panel->hdr_props),
 				CONNECTOR_PROP_HDR_INFO);
+		}
+
+		/* register esd irq and enable it after panel enabled */
+		if (dsi_display && dsi_display->panel &&
+			dsi_display->panel->esd_config.esd_err_irq_gpio > 0) {
+			rc = request_threaded_irq(dsi_display->panel->esd_config.esd_err_irq,
+							NULL, esd_err_irq_handle,
+							dsi_display->panel->esd_config.esd_err_irq_flags,
+							"esd_err_irq", c_conn);
+			if (rc < 0) {
+				pr_err("%s: request irq %d failed\n", __func__, dsi_display->panel->esd_config.esd_err_irq);
+					dsi_display->panel->esd_config.esd_err_irq = 0;
+			} else {
+				pr_info("%s: Request esd irq succeed!\n", __func__);
+			}
 		}
 	}
 
