@@ -4195,7 +4195,7 @@
 		console-size = <0x00200000>;
 		ftrace-size = <0x00200000>;
 		pmsg-size = <0x00200000>;
-		ecc-size = <16>;
+		ecc-size = <0>;
 		status = "ok";
 	};
 };
