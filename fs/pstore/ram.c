@@ -35,7 +35,6 @@
 #include <linux/pstore_ram.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
-#include <linux/memblock.h>
 
 #define RAMOOPS_KERNMSG_HDR "===="
 #define MIN_MEM_SIZE 4096UL
@@ -953,57 +952,6 @@ static void ramoops_register_dummy(void)
 			PTR_ERR(dummy));
 	}
 }
-
-static struct ramoops_platform_data ramoops_data;
-
-static struct platform_device ramoops_dev  = {
-	.name = "ramoops",
-	.dev = {
-		.platform_data = &ramoops_data,
-	},
-};
-
-static int __init ramoops_memreserve(char *p)
-{
-	unsigned long size;
-
-	if (!p)
-		return 1;
-
-	size = memparse(p, &p) & PAGE_MASK;
-	ramoops_data.mem_size = size;
-	ramoops_data.mem_address = 0xB0000000;
-	ramoops_data.console_size = size / 4;
-	ramoops_data.pmsg_size = size / 4;
-	ramoops_data.record_size = size / 4;
-	ramoops_data.ftrace_size = size / 4;
-	ramoops_data.dump_oops = 1;
-	ramoops_data.ecc_info.ecc_size = 16;
-
-	pr_info("ramoops_memreserve: addr=%llx, size=%lx\n",
-		ramoops_data.mem_address, ramoops_data.mem_size);
-	pr_info("ramoops_memreserve: record_size=%lx, ftrace_size=%lx\n",
-		ramoops_data.record_size, ramoops_data.ftrace_size);
-	pr_info("ramoops_memreserve: console_size=%lx, pmsg_size=%lx\n",
-		ramoops_data.console_size, ramoops_data.pmsg_size);
-	pr_info("ramoops_memreserve: dump_oops: 1\n");
-	pr_info("ramoops_memreserve: ecc_size: 16\n");
-
-
-	memblock_reserve(ramoops_data.mem_address, ramoops_data.mem_size);
-
-	return 0;
-}
-early_param("ramoops_memreserve", ramoops_memreserve);
-
-static int __init msm_register_ramoops_device(void)
-{
-	pr_info("msm_register_ramoops_device\n");
-	if (platform_device_register(&ramoops_dev))
-		pr_info("Unable to register ramoops platform device\n");
-	return 0;
-}
-core_initcall(msm_register_ramoops_device);
 
 static int __init ramoops_init(void)
 {
