@@ -37,7 +37,7 @@
 #include <linux/of_address.h>
 
 #define RAMOOPS_KERNMSG_HDR "===="
-#define MIN_MEM_SIZE 4096UL
+#define MIN_MEM_SIZE 64*4096UL
 
 static ulong record_size = MIN_MEM_SIZE;
 module_param(record_size, ulong, 0400);
@@ -56,12 +56,12 @@ static ulong ramoops_pmsg_size = MIN_MEM_SIZE;
 module_param_named(pmsg_size, ramoops_pmsg_size, ulong, 0400);
 MODULE_PARM_DESC(pmsg_size, "size of user space message log");
 
-static unsigned long long mem_address;
+static unsigned long long mem_address = 0xb0000000;
 module_param_hw(mem_address, ullong, other, 0400);
 MODULE_PARM_DESC(mem_address,
 		"start of reserved RAM used to store oops/panic logs");
 
-static ulong mem_size;
+static ulong mem_size = 0x00800000;
 module_param(mem_size, ulong, 0400);
 MODULE_PARM_DESC(mem_size,
 		"size of reserved RAM used to store oops/panic logs");
