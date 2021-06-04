@@ -19,6 +19,8 @@
 #include "vayu-oem-audio-overlay.dtsi"
 #include "vayu-oem-thermal-overlay.dtsi"
 #include "vayu-oem-touchscreen-overlay.dtsi"
+#include "vayu-oem-sde-overlay.dtsi"
+#include "vayu-oem-leds.dtsi"
 
 #include "vayu-oem-pinctrl.dtsi"
 #include "vayu-oem-sm8150-camera-sensor-mtp.dtsi"
@@ -95,12 +97,6 @@
 	mi,non-qcom-pps-ctrl;
 };
 
-&pm8150l_wled {
-	qcom,string-cfg= <7>;
-	qcom,leds-per-string = <6>;
-	status = "ok";
-};
-
 &vendor {
 
 	bluetooth: bt_wcn3990 {
@@ -165,32 +161,6 @@
 		qcom,bark-time = <20000>;
 		qcom,pet-time = <15000>;
 	};
-};
-
-&dsi_j20s_36_02_0a_video {
-	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
-	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_wled";
-	qcom,mdss-dsi-bl-min-level = <1>;
-	qcom,mdss-dsi-bl-max-level = <4095>;
-	qcom,mdss-brightness-max-level = <4095>;
-	qcom,mdss-dsi-mode-sel-gpio-state = "single_port";
-	qcom,platform-te-gpio = <&tlmm 8 0>;
-	qcom,platform-reset-gpio = <&tlmm 6 0>;
-};
-
-&dsi_j20s_42_02_0b_video {
-	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
-	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_wled";
-	qcom,mdss-dsi-bl-min-level = <1>;
-	qcom,mdss-dsi-bl-max-level = <4095>;
-	qcom,mdss-brightness-max-level = <4095>;
-	qcom,mdss-dsi-mode-sel-gpio-state = "single_port";
-	qcom,platform-te-gpio = <&tlmm 8 0>;
-	qcom,platform-reset-gpio = <&tlmm 6 0>;
-};
-
-&dsi_sim_vid_display {
-	qcom,dsi-display-active;
 };
 
 &ufsphy_mem {
@@ -510,35 +480,6 @@
 	};
 };
 
-&qupv3_se4_i2c {
-	status = "ok";
-	fsa4480@42 {
-		status = "disabled";
-	};
-};
-
-&qupv3_se7_i2c {
-	status = "ok";
-	tas256x:tas256x@4c {
-		#sound-dai-cells = <0>;
-		compatible = "ti,tas256x";/*or "ti,tas2564" or "ti,tas256x" */
-		reg = <0x4c>;//register tas256x_i2c_driver
-		ti,left-channel = <0x4d>;  //receiver address
-		ti,right-channel = <0x4c>; //speaker address
-		ti,channels = <2>; /* channel number */
-		ti,reset-gpio = <&tlmm 89 0>;  //SPKR_RST1
-		ti,reset-gpio2 = <&tlmm 92 0>;  //SPKR_RST2
-		pinctrl-names = "default";
-		//pinctrl-0 = <&reset_stat_default>;
-		//ti,reset-gpio = <&pm6150l_gpios 8 GPIO_ACTIVE_LOW>;
-		ti,irq-gpio = <&tlmm 90 0>;//spkr_int1 left
-		ti,irq-gpio2 = <&tlmm 91 0>;//spkr_int2 right
-		status = "ok";
-		ti,iv-width = <16>;
-		ti,vbat-mon = <0>;
-	};
-};
-
 &usb0 {
 	dwc3@a600000 {
 		usb-phy = <&usb2_phy0>, <&usb_nop_phy>;
@@ -562,15 +503,6 @@
 		regulator-always-on;
 		gpio = <&pm8150b_gpios 5 0>;
 	 };
-
-	disp_vci_vreg: disp_vci_vreg {
-		compatible = "regulator-fixed";
-		regulator-name = "disp_vci_vreg";
-		start-delay-us = <4000>;
-		enable-active-high;
-		regulator-boot-on;
-		gpio = <&tlmm 21 0>;
-	};
 
 	fingerprint_goodix {
 		compatible = "goodix,fingerprint";
@@ -624,62 +556,6 @@
 		pinctrl-1 = <&nfc_int_suspend &nfc_enable_suspend
 					&nfc_clk_req_suspend>;
 	};
-};
-
-&qupv3_se1_spi {
-	status = "ok";
-	irled@0 {
-		compatible = "ir-spi";
-		reg = <0x0>;
-		status = "ok";
-		spi-max-frequency = <19200000>;
-	};
-};
-
-&pm8150l_lpg {
-	qcom,lut-patterns = <0 1 2 3 4 5 7 9 11 13 15
-				13 11 9 7 5 4 3 2 1 0>;
-};
-
-&pm8150l_rgb_led {
-
-	red {
-		label = "white";
-	};
-
-	green {
-		status = "disabled";
-	};
-
-	blue {
-		status = "disabled";
-	};
-
-};
-
-&mdss_mdp {
-       clock-rate = <0 0 0 0 345000000 19200000 300000000 19200000>;
-};
-
-
-&sde_dsi {
-	vcie-supply = <&disp_vci_vreg>;
-};
-
-&dsi_j20s_36_02_0a_video {
-	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
-};
-
-&dsi_j20s_42_02_0b_video {
-	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
-};
-
-&pm8150l_wled {
-	status = "okay";
-	qcom,string-cfg = <7>;
-	qcom,ovp = <28000>;
-	qcom,fs-current-limit = <22500>;
-	qcom,cabc-sel = <1>;
 };
 
 &pm8150b_haptics {

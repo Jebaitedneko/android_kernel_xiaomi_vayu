@@ -1,0 +1,57 @@
+/* Copyright (c) 2021, The Linux Foundation. All rights reserved.
+*  Copyright (c) 2021, Jebaitedneko <Jebaitedneko@gmail.com>.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License version 2 and
+* only version 2 as published by the Free Software Foundation.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*/
+
+&pm8150l_wled {
+	qcom,string-cfg= <7>;
+	qcom,leds-per-string = <6>;
+	status = "ok";
+};
+
+&qupv3_se1_spi {
+	status = "ok";
+	irled@0 {
+		compatible = "ir-spi";
+		reg = <0x0>;
+		status = "ok";
+		spi-max-frequency = <19200000>;
+	};
+};
+
+&pm8150l_lpg {
+	qcom,lut-patterns = <0 1 2 3 4 5 7 9 11 13 15
+				13 11 9 7 5 4 3 2 1 0>;
+};
+
+&pm8150l_rgb_led {
+
+	red {
+		label = "white";
+	};
+
+	green {
+		status = "disabled";
+	};
+
+	blue {
+		status = "disabled";
+	};
+
+};
+
+&pm8150l_wled {
+	status = "okay";
+	qcom,string-cfg = <7>;
+	qcom,ovp = <28000>;
+	qcom,fs-current-limit = <22500>;
+	qcom,cabc-sel = <1>;
+};
