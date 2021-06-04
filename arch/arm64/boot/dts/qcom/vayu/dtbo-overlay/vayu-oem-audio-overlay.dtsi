@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 
-#include "../../../../sm8150-audio-overlay.dtsi"
+#include "../../sm8150-audio-overlay.dtsi"
 
 &snd_934x {
 	qcom,audio-routing =
