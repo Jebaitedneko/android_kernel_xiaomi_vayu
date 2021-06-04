@@ -20,6 +20,7 @@
 #include "vayu-oem-thermal-overlay.dtsi"
 #include "vayu-oem-touchscreen-overlay.dtsi"
 #include "vayu-oem-sde-overlay.dtsi"
+#include "vayu-oem-charger.dtsi"
 #include "vayu-oem-leds.dtsi"
 
 #include "vayu-oem-pinctrl.dtsi"
@@ -129,6 +130,58 @@
 
 &soc {
 
+	vdd_boost_vreg: vdd_boost_vreg {
+		compatible = "regulator-fixed";
+		regulator-name = "vdd_boost_vreg";
+		startup-delay-us = <4000>;
+		enable-active-high;
+		regulator-always-on;
+		gpio = <&pm8150b_gpios 5 0>;
+	 };
+
+	fingerprint_goodix {
+		compatible = "goodix,fingerprint";
+		goodix,gpio-reset = <&tlmm 37 0x0>;
+		goodix,gpio-irq = <&tlmm 120 0x0>;
+		//goodix.gpio_pwr = <&tlmm 125 0x0>;
+		//fp_vdd_vreg = <&pm8150l_l7>;
+		status = "ok";
+	};
+
+	fingerprint_fpc {
+			compatible = "fpc,fpc1020";
+			fpc,gpio_rst    = <&tlmm 37 0x0>;
+			fpc,gpio_irq    = <&tlmm 120 0x0>;
+			pinctrl-names = "fpc1020_reset_reset",
+					"fpc1020_reset_active",
+					"fpc1020_irq_active";
+
+			pinctrl-0 = <&msm_gpio_37>;
+			pinctrl-1 = <&msm_gpio_37_output_high>;
+			pinctrl-2 = <&msm_gpio_120>;
+			status = "ok";
+	};
+
+	testing_mode {
+		compatible = "modem,testing-mode";
+		status-gpio = <&tlmm 81 0x00>,
+                      <&tlmm 133 0x00>;
+		debounce-time = <30>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&ant_sub_ctrl_irq &ant_top_ctrl_irq>;
+	};
+
+	simtray {
+		compatible = "xiaomi,simtray-status";
+		status-gpio = <&tlmm 112 0x00>;
+	};
+
+	ssc_sensors: qcom,msm-ssc-sensors {
+		compatible = "qcom,msm-ssc-sensors";
+		status = "ok";
+		qcom,firmware-name = "slpi_vy";
+	};
+
 	gpio_keys {
 		compatible = "gpio-keys";
 		label = "gpio-keys";
@@ -214,269 +267,11 @@
 	status = "ok";
 };
 
-&pm8150b_charger {
-	io-channels = <&pm8150b_vadc ADC_USB_IN_V_16>,
-		      <&pm8150b_vadc ADC_USB_IN_I>,
-		      <&pm8150b_vadc ADC_CHG_TEMP>;
-	io-channel-names = "usb_in_voltage",
-			   "usb_in_current",
-			   "chg_temp";
-};
-
 &reserved_memory {
 	ramdump_fb_mem: ramdump_fb_region@af000000 {
 		compatible = "removed-dma-pool";
 		no-map;
 		reg = <0 0xaf000000 0 0x1000000>;
-	};
-};
-
-&pm8150b_fg {
-	qcom,battery-data = <&vayu_batterydata>;
-	qcom,rapid-soc-dec-en;
-	qcom,soc-scale-mode-en;
-	qcom,five-pin-battery;
-	qcom,soc-hi-res;
-	qcom,soc_decimal_rate = <
-		0  38
-		10 35
-		20 33
-		30 33
-		40 33
-		50 33
-		60 33
-		70 30
-		80 25
-		90 20
-		95 10 >;
-	qcom,ki-coeff-low-chg = <315>;
-	qcom,ki-coeff-med-chg = <183>;
-	qcom,fg-sys-term-current = <(-300)>;
-	qcom,fg-ffc-sys-term-current = <(-1160)>;
-	qcom,fg-cutoff-voltage = <3400>;
-	qcom,fg-cutoff-current = <200>;
-	qcom,fg-empty-voltage = <3100>;
-	qcom,soc-scale-vbatt-mv = <3600>;
-	qcom,fg-batt-temp-delta = <6>;
-	qcom,fg-force-load-profile;
-	qcom,shutdown-delay-enable;
-	/* ESR fast calibration */
-	qcom,fg-esr-timer-chg-fast = <0 7>;
-	qcom,fg-esr-timer-dischg-fast = <0 7>;
-	qcom,fg-esr-timer-chg-slow = <0 96>;
-	qcom,fg-esr-timer-dischg-slow = <0 96>;
-	qcom,fg-esr-cal-soc-thresh = <26 230>;
-	qcom,fg-esr-cal-temp-thresh = <10 40>;
-	qcom,ki-coeff-chg-med-hi-thresh-ma = <1000>;
-	qcom,ki-coeff-chg-low-med-thresh-ma = <500>;
-	qcom,ffc-ki-coeff-chg-med-hi-thresh-ma = <3900>;
-	qcom,ffc-ki-coeff-chg-low-med-thresh-ma = <3500>;
-};
-
-&pm8150b_charger {
-	qcom,sec-charger-config = <0>;
-	qcom,usb-icl-ua = <3000000>;
-	qcom,fcc-max-ua = <5900000>;
-	qcom,fv-max-uv = <4475000>;
-	qcom,non-fcc-fv-max-uv = <4450000>;
-	//qcom,chg-warm-th= <450>;
-	//qcom,chg-cool-th= <150>;
-	qcom,auto-recharge-soc = <99>;
-	qcom,chg-term-src = <1>;
-	qcom,chg-term-current-ma = <(-200)>;
-	mi,use-bq-pump;
-	qcom,usbpd-phandle = <&pm8150b_pdphy>;
-	qcom,battery-data = <&vayu_batterydata>;
-	//mi,six-pin-step-chg-params = <4250000  6000000
-	//			4450000  5400000
-	//			4480000  4000000>;
-	//mi,six-pin-step-chg;
-	//mi,six-pin-soc-th = <45>;
-	mi,fcc-batt-unverify-ua = <2000000>;
-	mi,support-ffc;
-	qcom,disable-suspend-on-collapse;
-	qcom,thermal-mitigation = <3000000 2800000 2600000 2400000 2200000 2100000 2000000
-				   1800000 1600000 1500000 1400000 1200000 1000000 900000
-				   800000 500000>;
-	qcom,thermal-mitigation-icl
-				= <2800000 2700000 2600000 2400000 2200000 2100000 2000000
-				   2000000 2000000 2000000 2000000 2000000 2000000 2000000
-				   2000000 2000000>;
-	qcom,thermal-mitigation-dcp
-				= <1800000 1800000 1800000 1800000 1800000 1800000 1800000
-				   1800000 1800000 1700000 1600000 1400000 1200000 1100000
-				   1100000 1000000>;
-	qcom,thermal-mitigation-qc2
-				= <1500000 1500000 1500000 1500000 1450000 1400000 1350000
-				   1300000 1150000 1100000 1000000 900000 850000 750000
-				   650000 500000>;
-	qcom,thermal-fcc-qc3-normal
-				= <3200000 3000000 2800000 2600000 2500000 2400000 2300000
-				   2200000 2100000 1800000 1600000 1400000 1200000 1000000
-				   750000 750000>;
-	qcom,thermal-fcc-qc3-cp
-				= <3600000 3600000 3600000 3600000 3200000 3200000 3200000
-				   3200000 3100000 2800000 2400000 2200000 2000000 1300000
-				   750000 300000>;
-	qcom,thermal-fcc-qc3-classb-cp
-				= <4800000 4700000 4600000 4500000 4400000 4200000 4200000
-				   4200000 4000000 3600000 3400000 3200000 3000000 2200000
-				   1000000 300000>;
-	qcom,thermal-mitigation-pd-base
-				= <3000000 2800000 2600000 2500000 2500000 2500000 2500000
-				   2500000 2500000 2400000 2200000 2000000 1600000 1300000
-				   1000000 500000>;
-	qcom,thermal-fcc-pps-cp
-				= <4800000 4700000 4600000 4500000 4400000 4200000 4200000
-				   4200000 4000000 3600000 3400000 3200000 3000000 2200000
-				   1000000 300000>;
-	qcom,thermal-fcc-pps-bq
-				= <6000000 5700000 5475000 5250000 5025000 4800000 4575000
-				   4350000 4100000 3500000 3000000 2400000 2000000 1500000
-				   1000000 500000>;
-	qcom,thermal-fcc-qc3-cp
-				= <4800000 4600000 4400000 4200000 4000000 3800000 3600000
-				   3400000 3000000 2600000 2400000 2200000 2000000 1300000
-				   1000000 300000>;
-	qcom,thermal-fcc-qc3-classb-cp
-				= <5100000 4700000 4300000 4000000 3600000 3500000 3400000
-				   3400000 3400000 3200000 2500000 2200000 2000000 1300000
-				   1000000 300000>;
-	qcom,thermal-mitigation-pd-base
-				= <3000000 2800000 2600000 2400000 2200000 2000000 1800000
-				   1600000 1600000 1400000 1200000 1100000 1050000 1000000
-				   950000 500000>;
-	qcom,thermal-mitigation-voice
-				= <6000000 2200000 2200000 1000000 1000000 800000  800000
-				   800000  800000  700000  700000  600000  600000  600000
-				   500000  400000>;
-
-
-	io-channels = <&pm8150b_vadc ADC_MID_CHG_DIV6>,
-		      <&pm8150b_vadc ADC_USB_IN_V_16>,
-		      <&pm8150b_vadc ADC_USB_IN_I>,
-		      <&pm8150b_vadc ADC_SBUx>,
-		      <&pm8150b_vadc ADC_VPH_PWR>,
-		      <&pm8150b_vadc ADC_CHG_TEMP>;
-	io-channel-names = "mid_voltage",
-			   "usb_in_voltage",
-			   "usb_in_current",
-			   "sbux_res",
-			   "vph_voltage",
-			   "chg_temp";
-//	qcom,battery-data = <&mtp_batterydata>;
-	dpdm-supply = <&usb2_phy0>;
-	qcom,distinguish-qc-class-ab;
-	qcom,lpd-disable;
-	qcom,sw-jeita-enable;
-	qcom,step-charging-enable;
-	qcom,wd-bark-time-secs = <16>;
-};
-
-&qupv3_se4_i2c {
-	#address-cells = <1>;
-	#size-cells = <0>;
-	status = "ok";
-	bq25970-standalone@66 {
-		compatible = "ti,bq2597x-standalone";
-		reg = <0x66>;
-		interrupt-parent = <&tlmm>;
-		interrupts = <10 0x2002>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&bq2597x_master_int_default &bq2597x_master_int_suspend>;
-
-		/*ti,bq2597x,bat-ovp-disable;*/
-		ti,bq2597x,bat-ovp-alarm-disable;
-		ti,bq2597x,bat-ocp-disable;
-		ti,bq2597x,bat-ocp-alarm-disable;
-		ti,bq2597x,bat-ucp-alarm-disable;
-		ti,bq2597x,bat-ucp-disable;
-
-		/*ti,bq2597x,bus-ovp-alarm-disable;
-		ti,bq2597x,bus-ocp-disable;
-		ti,bq2597x,bus-ocp-alarm-disable;*/
-		ti,bq2597x,bat-therm-disable;
-		ti,bq2597x,bus-therm-disable;
-		ti,bq2597x,die-therm-disable;
-
-		ti,bq2597x,bat-ovp-threshold = <4550>;
-		ti,bq2597x,bat-ovp-alarm-threshold = <4525>;
-		//ti,bq2597x,bat-ocp-threshold = <8000>;
-		//ti,bq2597x,bat-ocp-alarm-threshold = <7500>;
-
-		ti,bq2597x,bus-ovp-threshold = <12000>;
-		ti,bq2597x,bus-ovp-alarm-threshold = <11000>;
-		ti,bq2597x,bus-ocp-threshold = <3750>;
-		ti,bq2597x,bus-ocp-alarm-threshold = <3500>;
-
-		//ti,bq2597x,bat-ucp-alarm-threshold = <2000>;
-
-		ti,bq2597x,bat-therm-threshold = <0x15>;/*4.1%*/
-		ti,bq2597x,bus-therm-threshold = <0x15>;/*4.1%*/
-		ti,bq2597x,die-therm-threshold = <145>;
-
-		ti,bq2597x,ac-ovp-threshold = <14>;
-		//ti,bq2597x,sense-resistor-mohm = <2>;
-
-	};
-};
-
-&soc {
-	cp_qc30 {
-		compatible = "xiaomi,cp-qc30";
-		status = "ok";
-		mi,qc3-bat-volt-max = <4420>;
-		mi,qc3-bat-curr-max = <3600>;
-		mi,qc3-bus-volt-max = <12000>;
-		mi,qc3-bus-curr-max = <2100>;
-		mi,qc3-battery-warm-th = <450>;
-		mi,use-qcom-gauge;
-		//mi,cp-sec-enable;
-	};
-
-	usbpd_pm {
-		compatible = "xiaomi,usbpd-pm";
-		status = "ok";
-		mi,pd-bat-volt-max = <4500>;
-		mi,pd-ffc-bat-volt-max = <4480>;
-		mi,pd-bat-curr-max = <6000>;
-		mi,pd-bus-volt-max = <12000>;
-		mi,pd-bus-curr-max = <3000>;
-		mi,pd-non-ffc-bat-volt-max = <4450>;
-		mi,pd-bus-curr-compensate  = <0>;
-		mi,pd-battery-warm-th = <450>;
-		mi,use-qcom-gauge;
-		//mi,cp-sec-enable;
-	};
-
-	onewire_gpio: onewire_gpio {
-		compatible = "xiaomi,onewire_gpio";
-		label = "xm_onewire";
-		xiaomi,version = <1>;
-		xiaomi,ow_gpio = <&tlmm 21 0x00>;
-		mi,onewire-gpio-cfg-addr = <0x03515000 0x4>;
-		xiaomi,gpio_number = <21>;
-		pinctrl-names = "onewire_active", "onewire_sleep";
-		pinctrl-0 = <&onewire_gpio_active>;
-		pinctrl-1 = <&onewire_gpio_sleep>;
-		status = "ok";
-	};
-	vayu_batterydata: qcom,battery-data {
-		qcom,batt-id-range-pct = <15>;
-		#include "include/batteries/fg-gen4-batterydata-vayu-NVT-5160mah.dtsi"
-		#include "include/batteries/fg-gen4-batterydata-vayu-sunwoda-5160mah.dtsi"
-	};
-
-	maxim_ds28e16: maxim_ds28e16 {
-		compatible = "maxim,ds28e16";
-		label = "max_ds28e16";
-		maxim,version = <1>;
-		status = "ok";
-	};
-
-	simtray {
-		compatible = "xiaomi,simtray-status";
-		status-gpio = <&tlmm 112 0x00>;
 	};
 };
 
@@ -491,50 +286,6 @@
 	qcom,param-override-seq =
 		<0x84 0x70
 		 0x2c 0x74>;
-};
-
-&soc {
-
-	vdd_boost_vreg: vdd_boost_vreg {
-		compatible = "regulator-fixed";
-		regulator-name = "vdd_boost_vreg";
-		startup-delay-us = <4000>;
-		enable-active-high;
-		regulator-always-on;
-		gpio = <&pm8150b_gpios 5 0>;
-	 };
-
-	fingerprint_goodix {
-		compatible = "goodix,fingerprint";
-		goodix,gpio-reset = <&tlmm 37 0x0>;
-		goodix,gpio-irq = <&tlmm 120 0x0>;
-		//goodix.gpio_pwr = <&tlmm 125 0x0>;
-		//fp_vdd_vreg = <&pm8150l_l7>;
-		status = "ok";
-	};
-
-	fingerprint_fpc {
-			compatible = "fpc,fpc1020";
-			fpc,gpio_rst    = <&tlmm 37 0x0>;
-			fpc,gpio_irq    = <&tlmm 120 0x0>;
-			pinctrl-names = "fpc1020_reset_reset",
-					"fpc1020_reset_active",
-					"fpc1020_irq_active";
-
-			pinctrl-0 = <&msm_gpio_37>;
-			pinctrl-1 = <&msm_gpio_37_output_high>;
-			pinctrl-2 = <&msm_gpio_120>;
-			status = "ok";
-	};
-
-	testing_mode {
-		compatible = "modem,testing-mode";
-		status-gpio = <&tlmm 81 0x00>,
-                      <&tlmm 133 0x00>;
-		debounce-time = <30>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&ant_sub_ctrl_irq &ant_top_ctrl_irq>;
-	};
 };
 
 &qupv3_se9_i2c {
@@ -603,13 +354,5 @@
 		qcom,wf-pattern = [7e 7e 7e];
 		qcom,wf-brake-pattern = [03 03 01 00];
 		qcom,wf-play-rate-us = <5102>;
-	};
-};
-
-&soc {
-	ssc_sensors: qcom,msm-ssc-sensors {
-		compatible = "qcom,msm-ssc-sensors";
-		status = "ok";
-		qcom,firmware-name = "slpi_vy";
 	};
 };
