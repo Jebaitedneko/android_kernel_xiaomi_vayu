@@ -1,19 +1,267 @@
-/*
-this file is for attribution only of vayu
-And public attribution of xiaomi platforms(like J20S and so and)
-*/
-#include "vayu-pinctrl.dtsi"
-#include "xiaomi-sm8150-common.dtsi"
-#include "vayu-sm8150-camera-sensor-mtp.dtsi"
+/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+
+#include "../../../../sm8150-pmic-overlay.dtsi"
+#include "../../../../sm8150-sde-display.dtsi"
+#include "../../../../sm8150-thermal-overlay.dtsi"
+
+&qupv3_se12_2uart {
+	status = "ok";
+};
+
+&qupv3_se13_4uart {
+	status = "ok";
+};
+
+&qupv3_se3_spi {
+	status = "ok";
+};
+
+&qupv3_se4_i2c {
+	status = "ok";
+};
+
+&spmi_debug_bus {
+	status = "ok";
+};
+
+&pm8150l_lcdb {
+	status = "ok";
+};
+
+&wil6210 {
+	status = "ok";
+};
+
+&usb2_phy1 {
+	status = "ok";
+};
+
+&usb_qmp_phy {
+	status = "ok";
+};
+
+&smb1390 {
+	status = "disabled";
+};
+
+&smb1390_charger {
+	status = "disabled";
+};
+
+&usb_qmp_dp_phy {
+	status = "disabled";
+};
+
+&usb1 {
+	status = "disabled";
+};
+
+&usb2_phy1 {
+	status = "disabled";
+};
+
+&usb_qmp_phy {
+	status = "disabled";
+};
+
+&mhi_0 {
+	mhi,fw-name = "debug.mbn";
+};
+
+&pcie0 {
+	qcom,no-l1-supported;
+};
+
+&pm8150b_pdphy {
+	mi,non-qcom-pps-ctrl;
+};
+
+&pm8150l_wled {
+	qcom,string-cfg= <7>;
+	qcom,leds-per-string = <6>;
+	status = "ok";
+};
+
+&vendor {
+
+	bluetooth: bt_wcn3990 {
+		compatible = "qca,wcn3990";
+		qca,bt-vdd-core-supply = <&pm8150_l7>;
+		qca,bt-vdd-pa-supply = <&pm8150l_l2>;
+		qca,bt-vdd-ldo-supply = <&pm8150l_l11>;
+
+		qca,bt-vdd-core-voltage-level = <1800000 1800000>;
+		qca,bt-vdd-pa-voltage-level = <1304000 1304000>;
+		qca,bt-vdd-ldo-voltage-level = <3312000 3312000>;
+
+		qca,bt-vdd-core-current-level = <0>; /* LPM/PFM */
+		qca,bt-vdd-pa-current-level = <0>; /* LPM/PFM */
+		qca,bt-vdd-ldo-current-level = <0>; /* LPM/PFM */
+	};
+
+	extcon_usb1: extcon_usb1 {
+		compatible = "linux,extcon-usb-gpio";
+		vbus-gpio = <&pm8150_gpios 10 GPIO_ACTIVE_HIGH>;
+		id-gpio = <&tlmm 101 GPIO_ACTIVE_HIGH>;
+		vbus-out-gpio = <&pm8150_gpios 9 GPIO_ACTIVE_HIGH>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&usb2_vbus_det_default
+			     &usb2_id_det_default
+			     &usb2_vbus_boost_default>;
+	};
+};
+
+&soc {
+
+	gpio_keys {
+		compatible = "gpio-keys";
+		label = "gpio-keys";
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&key_vol_up_default>;
+
+		vol_up {
+			label = "volume_up";
+			gpios = <&pm8150_gpios 6 GPIO_ACTIVE_LOW>;
+			linux,input-type = <1>;
+			linux,code = <KEY_VOLUMEUP>;
+			gpio-key,wakeup;
+			debounce-interval = <15>;
+			linux,can-disable;
+		};
+
+	};
+
+	qcom,qbt1000 {
+		compatible = "qcom,qbt1000";
+		clock-names = "core", "iface";
+		clock-frequency = <25000000>;
+/*		qcom,ipc-gpio = <&tlmm 118 0>; */
+		qcom,finger-detect-gpio = <&pm8150_gpios 1 0>;
+		status = "disabled";
+	};
+
+	wdog: qcom,wdt@17c10000 {
+		qcom,bark-time = <20000>;
+		qcom,pet-time = <15000>;
+	};
+};
+
+&dsi_j20s_36_02_0a_video {
+	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
+	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_wled";
+	qcom,mdss-dsi-bl-min-level = <1>;
+	qcom,mdss-dsi-bl-max-level = <4095>;
+	qcom,mdss-brightness-max-level = <4095>;
+	qcom,mdss-dsi-mode-sel-gpio-state = "single_port";
+	qcom,platform-te-gpio = <&tlmm 8 0>;
+	qcom,platform-reset-gpio = <&tlmm 6 0>;
+};
+
+&dsi_j20s_42_02_0b_video {
+	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
+	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_wled";
+	qcom,mdss-dsi-bl-min-level = <1>;
+	qcom,mdss-dsi-bl-max-level = <4095>;
+	qcom,mdss-brightness-max-level = <4095>;
+	qcom,mdss-dsi-mode-sel-gpio-state = "single_port";
+	qcom,platform-te-gpio = <&tlmm 8 0>;
+	qcom,platform-reset-gpio = <&tlmm 6 0>;
+};
+
+&dsi_sim_vid_display {
+	qcom,dsi-display-active;
+};
+
+&ufsphy_mem {
+	compatible = "qcom,ufs-phy-qmp-v4";
+
+	vdda-phy-supply = <&pm8150_l5>;
+	vdda-phy-always-on;
+	vdda-pll-supply = <&pm8150l_l3>;
+	vdda-phy-max-microamp = <90200>;
+	vdda-pll-max-microamp = <19000>;
+
+	status = "ok";
+};
 
 &ufshc_mem {
+	vdd-hba-supply = <&ufs_phy_gdsc>;
+	vdd-hba-fixed-regulator;
+	vcc-supply = <&pm8150_l10>;
+	vcc-voltage-level = <2950000 2960000>;
+	vccq2-supply = <&pm8150_s4>;
+	vcc-max-microamp = <750000>;
+	vccq2-max-microamp = <750000>;
+
+	qcom,vddp-ref-clk-supply = <&pm8150_l9>;
+	qcom,vddp-ref-clk-max-microamp = <100>;
+
 	vcc-voltage-level = <2504000 2950000>;
 	vcc-low-voltage-sup;
 	qcom,vccq-parent-supply = <&pm8150l_s8>;
 	qcom,vccq-parent-max-microamp = <210000>;
 	vccq-supply = <&pm8150_l9>;
 	vccq-max-microamp = <700000>;
+
+	status = "ok";
 };
+
+&sdhc_2 {
+	vdd-supply = <&pm8150l_l9>;
+	qcom,vdd-voltage-level = <2950000 2960000>;
+	qcom,vdd-current-level = <200 800000>;
+
+	vdd-io-supply = <&pm8150l_l6>;
+	qcom,vdd-io-voltage-level = <1808000 2960000>;
+	qcom,vdd-io-current-level = <200 22000>;
+
+	pinctrl-names = "active", "sleep";
+	pinctrl-0 = <&sdc2_clk_on  &sdc2_cmd_on &sdc2_data_on &storage_cd>;
+	pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off &storage_cd>;
+
+	cd-gpios = <&tlmm 96 GPIO_ACTIVE_HIGH>;
+
+	status = "ok";
+};
+
+&pm8150b_charger {
+	io-channels = <&pm8150b_vadc ADC_USB_IN_V_16>,
+		      <&pm8150b_vadc ADC_USB_IN_I>,
+		      <&pm8150b_vadc ADC_CHG_TEMP>;
+	io-channel-names = "usb_in_voltage",
+			   "usb_in_current",
+			   "chg_temp";
+};
+
+&reserved_memory {
+	ramdump_fb_mem: ramdump_fb_region@af000000 {
+		compatible = "removed-dma-pool";
+		no-map;
+		reg = <0 0xaf000000 0 0x1000000>;
+	};
+};
+
+/*
+this file is for attribution only of vayu
+And public attribution of xiaomi platforms(like J20S and so and)
+*/
+#include "vayu-pinctrl.dtsi"
+#include "vayu-sm8150-camera-sensor-mtp.dtsi"
 
 &pm8150b_fg {
 	qcom,battery-data = <&vayu_batterydata>;
@@ -157,14 +405,6 @@ And public attribution of xiaomi platforms(like J20S and so and)
 	qcom,wd-bark-time-secs = <16>;
 };
 
-&ext_5v_boost {
-	status = "disable";
-};
-
-&pm8150b_pdphy {
-	mi,non-qcom-pps-ctrl;
-};
-
 &qupv3_se4_i2c {
 	#address-cells = <1>;
 	#size-cells = <0>;
@@ -301,14 +541,6 @@ And public attribution of xiaomi platforms(like J20S and so and)
 	};
 };
 
-&smb1390 {
-	status = "disabled";
-};
-
-&smb1390_charger {
-	status = "disabled";
-};
-
 &usb0 {
 	dwc3@a600000 {
 		usb-phy = <&usb2_phy0>, <&usb_nop_phy>;
@@ -320,22 +552,6 @@ And public attribution of xiaomi platforms(like J20S and so and)
 	qcom,param-override-seq =
 		<0x84 0x70
 		 0x2c 0x74>;
-};
-
-&usb_qmp_dp_phy {
-	status = "disabled";
-};
-
-&usb1 {
-	status = "disabled";
-};
-
-&usb2_phy1 {
-        status = "disabled";
-};
-
-&usb_qmp_phy {
-        status = "disabled";
 };
 
 &soc {
@@ -405,125 +621,9 @@ And public attribution of xiaomi platforms(like J20S and so and)
 	};
 };
 
-/*Touch SPI state init*/
-&qupv3_se17_spi_active {
-		mux {
-				pins = "gpio55", "gpio56", "gpio57";
-				function = "qup17";
-		};
-
-		config {
-				pins = "gpio55", "gpio56", "gpio57";
-				drive-strength = <6>;
-				// bias-disable;
-				bias-pull-down;
-		};
-};
-
-&qupv3_se17_spi_sleep {
-		mux {
-				pins = "gpio55", "gpio56", "gpio57";
-				function = "gpio";
-		};
-
-		config {
-				pins = "gpio55", "gpio56", "gpio57";
-				drive-strength = <6>;
-				bias-pull-down;
-		};
-};
-
 &qupv3_se17_spi {
 		pinctrl-0 = <&qupv3_se17_spi_active>;
 		pinctrl-1 = <&qupv3_se17_spi_sleep>;
-};
-
-/*IC int pin, rst pin init*/
-&tlmm {
-	ts_mux {
-		ts_int_active: ts_int_active {
-			mux {
-				pins = "gpio122";
-				function = "gpio";
-			};
-
-			config {
-				pins = "gpio122";
-				drive-strength = <16>;
-				bias-pull-down;
-			};
-		};
-
-		ts_reset_active: ts_reset_active {
-			mux {
-				pins = "gpio12";
-				function = "gpio";
-			};
-
-			config {
-				pins = "gpio12";
-				drive-strength = <16>;
-				bias-pull-up;
-			};
-		};
-
-		ts_cs_active: ts_cs_active {
-			mux {
-				pins = "gpio58";
-				function = "qup17";
-			};
-
-			config {
-				pins = "gpio58";
-				drive-strength = <6>;
-				bias-disable;
-			};
-		};
-
-		ts_cs_suspend: ts_cs_suspend {
-			mux {
-				pins = "gpio58";
-				function = "gpio";
-			};
-
-			config {
-				pins = "gpio58";
-				drive-strength = <6>;
-				bias-pull-down;
-				output-low;
-			};
-		};
-	};
-};
-
-&ts_int_suspend {
-		mux {
-				pins = "gpio122";
-				function = "gpio";
-		};
-
-		config {
-				pins = "gpio122";
-				drive-strength = <16>;
-			bias-disable;
-			input-enable;
-		};
-};
-
-&ts_reset_suspend {
-	mux {
-		pins = "gpio12";
-		function = "gpio";
-	};
-
-	config {
-		pins = "gpio12";
-		drive-strength = <16>;
-		bias-disable;
-	};
-};
-
-&qupv3_se17_spi {
 		status = "ok";
 		touch_spi@0 {
 				compatible = "xiaomi,spi-for-tp";
@@ -1796,50 +1896,3 @@ And public attribution of xiaomi platforms(like J20S and so and)
 		board-sensor = "quiet_therm";
 	};
 };
-
-&tlmm {
-	/* GPIO_37 : FP_RESET_N */
-	msm_gpio_37: msm_gpio_37 {
-			mux {
-						pins = "gpio37";
-						function = "gpio";
-			};
-
-			config {
-					pins = "gpio37";
-					drive-strength = <2>;
-					bias-disable;
-					output-low;
-			};
-	};
-
-	/* GPIO_37 : FP_RESET_N, state device active*/
-	msm_gpio_37_output_high: msm_gpio_37_output_high {
-			mux {
-					pins = "gpio37";
-					function = "gpio";
-			};
-
-			config {
-					pins = "gpio37";
-					drive-strength = <2>;
-					bias-disable;
-					output-high;
-			};
-	};
-
-	/* GPIO_120 : FP_INT_N */
-	msm_gpio_120: msm_gpio_120 {
-			mux {
-					pins = "gpio120";
-					function = "gpio";
-			};
-
-			config {
-					pins = "gpio120";
-					drive-strength = <2>;
-					bias-pull-down;
-			};
-	};
-};
-

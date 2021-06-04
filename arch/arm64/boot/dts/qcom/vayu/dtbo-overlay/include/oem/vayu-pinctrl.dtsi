@@ -615,3 +615,162 @@
 };
 
 //camera voltage end
+
+/*Touch SPI state init*/
+&qupv3_se17_spi_active {
+		mux {
+				pins = "gpio55", "gpio56", "gpio57";
+				function = "qup17";
+		};
+
+		config {
+				pins = "gpio55", "gpio56", "gpio57";
+				drive-strength = <6>;
+				// bias-disable;
+				bias-pull-down;
+		};
+};
+
+&qupv3_se17_spi_sleep {
+		mux {
+				pins = "gpio55", "gpio56", "gpio57";
+				function = "gpio";
+		};
+
+		config {
+				pins = "gpio55", "gpio56", "gpio57";
+				drive-strength = <6>;
+				bias-pull-down;
+		};
+};
+
+/*IC int pin, rst pin init*/
+&tlmm {
+	ts_mux {
+		ts_int_active: ts_int_active {
+			mux {
+				pins = "gpio122";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio122";
+				drive-strength = <16>;
+				bias-pull-down;
+			};
+		};
+
+		ts_reset_active: ts_reset_active {
+			mux {
+				pins = "gpio12";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio12";
+				drive-strength = <16>;
+				bias-pull-up;
+			};
+		};
+
+		ts_cs_active: ts_cs_active {
+			mux {
+				pins = "gpio58";
+				function = "qup17";
+			};
+
+			config {
+				pins = "gpio58";
+				drive-strength = <6>;
+				bias-disable;
+			};
+		};
+
+		ts_cs_suspend: ts_cs_suspend {
+			mux {
+				pins = "gpio58";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio58";
+				drive-strength = <6>;
+				bias-pull-down;
+				output-low;
+			};
+		};
+	};
+};
+
+&ts_int_suspend {
+		mux {
+				pins = "gpio122";
+				function = "gpio";
+		};
+
+		config {
+				pins = "gpio122";
+				drive-strength = <16>;
+			bias-disable;
+			input-enable;
+		};
+};
+
+&ts_reset_suspend {
+	mux {
+		pins = "gpio12";
+		function = "gpio";
+	};
+
+	config {
+		pins = "gpio12";
+		drive-strength = <16>;
+		bias-disable;
+	};
+};
+
+&tlmm {
+	/* GPIO_37 : FP_RESET_N */
+	msm_gpio_37: msm_gpio_37 {
+			mux {
+						pins = "gpio37";
+						function = "gpio";
+			};
+
+			config {
+					pins = "gpio37";
+					drive-strength = <2>;
+					bias-disable;
+					output-low;
+			};
+	};
+
+	/* GPIO_37 : FP_RESET_N, state device active*/
+	msm_gpio_37_output_high: msm_gpio_37_output_high {
+			mux {
+					pins = "gpio37";
+					function = "gpio";
+			};
+
+			config {
+					pins = "gpio37";
+					drive-strength = <2>;
+					bias-disable;
+					output-high;
+			};
+	};
+
+	/* GPIO_120 : FP_INT_N */
+	msm_gpio_120: msm_gpio_120 {
+			mux {
+					pins = "gpio120";
+					function = "gpio";
+			};
+
+			config {
+					pins = "gpio120";
+					drive-strength = <2>;
+					bias-pull-down;
+			};
+	};
+};
