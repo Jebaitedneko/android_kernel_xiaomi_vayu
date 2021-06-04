@@ -15,12 +15,6 @@ And public attribution of xiaomi platforms(like J20S and so and)
 	vccq-max-microamp = <700000>;
 };
 
-&qupv3_se4_i2c {
-#include "../../../../smb1390.dtsi"
-};
-
-
-
 &pm8150b_fg {
 	qcom,battery-data = <&vayu_batterydata>;
 	qcom,rapid-soc-dec-en;
@@ -272,63 +266,16 @@ And public attribution of xiaomi platforms(like J20S and so and)
 		status = "ok";
 	};
 
-        simtray {
-                compatible = "xiaomi,simtray-status";
-                status-gpio = <&tlmm 112 0x00>;
-        };
+	simtray {
+		compatible = "xiaomi,simtray-status";
+		status-gpio = <&tlmm 112 0x00>;
+	};
 };
 
 &qupv3_se4_i2c {
 	status = "ok";
-	tas2557@4c {
-		status = "disabled";
-		compatible = "ti,tas2557";
-		reg = <0x4c>;
-		//ti,cdc-reset-gpio = <&tlmm 59 0>;
-		ti,irq-gpio = <&tlmm 60 0>;
-		ti,i2s-bits = <16>;
-		ti,bypass-tmax = <0>;
-	};
-
 	fsa4480@42 {
 		status = "disabled";
-	};
-
-	cs35l41@40 {
-		status = "disabled";
-		#sound-dai-cells = <1>;
-		compatible = "cirrus,cs35l41";
-		cs,cdc-reset-gpio = <&tlmm 89 0x01>;
-		reg = <0x40>;
-		pinctrl-names = "cs35l41_irq_default";
-		pinctrl-0 = <&cs35l41_int_default>;
-		interrupt-parent = <&tlmm>;
-		interrupts = <10 8>;
-
-		cirrus,temp-warn_threshold = <3>;
-		cirrus,boost-peak-milliamp = <4000>;
-		cirrus,boost-ind-nanohenry = <1000>;
-		cirrus,boost-cap-microfarad = <15>;
-		cirrus,gpio-config2 {
-			cirrus,gpio-src-select = <0x4>;
-			cirrus,gpio-output-enable;
-		};
-/*
-		VA-supply = <&dummy_vreg>;
-		VP-supply = <&dummy_vreg>;
-		interrupt-parent = <&tlmm>;
-		interrupts = <11 8>;
-		reset-gpios = <&tlmm 7 0x01>;
-		VA-supply = <&pm8998_s4>;
-		VP-supply = <&audio_vsys>;
-		cirrus,boost-peak-milliamp = <4500>;
-		cirrus,boost-ind-nanohenry = <1000>;
-		cirrus,boost-cap-microfarad = <15>;
-		cirrus,gpio-config2 {
-			cirrus,gpio-src-select = <0x4>;
-			cirrus,gpio-output-enable;
-		};
-*/
 	};
 };
 
@@ -380,8 +327,7 @@ And public attribution of xiaomi platforms(like J20S and so and)
 };
 
 &usb1 {
-	extcon = <&extcon_usb1>;
-        status = "disabled";
+	status = "disabled";
 };
 
 &usb2_phy1 {
@@ -420,32 +366,6 @@ And public attribution of xiaomi platforms(like J20S and so and)
 		gpio = <&tlmm 21 0>;
 	};
 
-	dsi_amoled_panel_pwr_external_supply: dsi_amoled_panel_pwr_external_supply {
-		#address-cells = <1>;
-		#size-cells = <0>;
-
-		qcom,panel-supply-entry@0 {
-			reg = <0>;
-			qcom,supply-name = "vddio";
-			qcom,supply-min-voltage = <1800000>;
-			qcom,supply-max-voltage = <1800000>;
-			qcom,supply-enable-load = <62000>;
-			qcom,supply-disable-load = <80>;
-			//qcom,supply-post-on-sleep = <20>;
-		};
-
-		qcom,panel-supply-entry@1 {
-			reg = <1>;
-			qcom,supply-name = "vcie";
-			qcom,supply-min-voltage = <3000000>;
-			qcom,supply-max-voltage = <3000000>;
-			qcom,supply-enable-load = <62000>;
-			qcom,supply-disable-load = <80>;
-			qcom,supply-post-on-sleep = <10>;
-			qcom,supply-pre-off-sleep = <10>;
-		};
-	};
-
 	fingerprint_goodix {
 		compatible = "goodix,fingerprint";
 		goodix,gpio-reset = <&tlmm 37 0x0>;
@@ -455,21 +375,19 @@ And public attribution of xiaomi platforms(like J20S and so and)
 		status = "ok";
 	};
 
+	fingerprint_fpc {
+			compatible = "fpc,fpc1020";
+			fpc,gpio_rst    = <&tlmm 37 0x0>;
+			fpc,gpio_irq    = <&tlmm 120 0x0>;
+			pinctrl-names = "fpc1020_reset_reset",
+					"fpc1020_reset_active",
+					"fpc1020_irq_active";
 
-        fingerprint_fpc {
-               compatible = "fpc,fpc1020";
-               fpc,gpio_rst    = <&tlmm 37 0x0>;
-               fpc,gpio_irq    = <&tlmm 120 0x0>;
-               pinctrl-names = "fpc1020_reset_reset",
-                       "fpc1020_reset_active",
-                       "fpc1020_irq_active";
-
-               pinctrl-0 = <&msm_gpio_37>;
-               pinctrl-1 = <&msm_gpio_37_output_high>;
-               pinctrl-2 = <&msm_gpio_120>;
-               status = "ok";
-       };
-
+			pinctrl-0 = <&msm_gpio_37>;
+			pinctrl-1 = <&msm_gpio_37_output_high>;
+			pinctrl-2 = <&msm_gpio_120>;
+			status = "ok";
+	};
 
 	xiaomi_touch {
 		compatible = "xiaomi-touch";
@@ -1879,54 +1797,49 @@ And public attribution of xiaomi platforms(like J20S and so and)
 	};
 };
 
-&sdhc_2 {
-	cd-gpios = <&tlmm 96 GPIO_ACTIVE_HIGH>;
-	status = "ok";
- };
-
 &tlmm {
-        /* GPIO_37 : FP_RESET_N */
-        msm_gpio_37: msm_gpio_37 {
-                mux {
-                         pins = "gpio37";
-                         function = "gpio";
-                };
+	/* GPIO_37 : FP_RESET_N */
+	msm_gpio_37: msm_gpio_37 {
+			mux {
+						pins = "gpio37";
+						function = "gpio";
+			};
 
-                config {
-                        pins = "gpio37";
-                        drive-strength = <2>;
-                        bias-disable;
-                        output-low;
-                };
-        };
+			config {
+					pins = "gpio37";
+					drive-strength = <2>;
+					bias-disable;
+					output-low;
+			};
+	};
 
-        /* GPIO_37 : FP_RESET_N, state device active*/
-        msm_gpio_37_output_high: msm_gpio_37_output_high {
-                mux {
-                        pins = "gpio37";
-                        function = "gpio";
-                };
+	/* GPIO_37 : FP_RESET_N, state device active*/
+	msm_gpio_37_output_high: msm_gpio_37_output_high {
+			mux {
+					pins = "gpio37";
+					function = "gpio";
+			};
 
-                config {
-                        pins = "gpio37";
-                        drive-strength = <2>;
-                        bias-disable;
-                        output-high;
-                };
-        };
+			config {
+					pins = "gpio37";
+					drive-strength = <2>;
+					bias-disable;
+					output-high;
+			};
+	};
 
-        /* GPIO_120 : FP_INT_N */
-        msm_gpio_120: msm_gpio_120 {
-                mux {
-                        pins = "gpio120";
-                        function = "gpio";
-                };
+	/* GPIO_120 : FP_INT_N */
+	msm_gpio_120: msm_gpio_120 {
+			mux {
+					pins = "gpio120";
+					function = "gpio";
+			};
 
-                config {
-                        pins = "gpio120";
-                        drive-strength = <2>;
-                        bias-pull-down;
-                };
-        };
+			config {
+					pins = "gpio120";
+					drive-strength = <2>;
+					bias-pull-down;
+			};
+	};
 };
 

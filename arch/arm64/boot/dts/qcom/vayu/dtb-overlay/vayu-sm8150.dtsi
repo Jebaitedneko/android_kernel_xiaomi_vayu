@@ -194,8 +194,6 @@
 	};
 };
 
-#include "include/trusty.dtsi"
-
 &qcom_seecom {
 
 	reg = <0x87900000 0x3E00000>;
