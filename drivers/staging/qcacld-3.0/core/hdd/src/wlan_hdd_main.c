@@ -15516,9 +15516,18 @@ static int wlan_hdd_state_ctrl_param_release(struct inode *inode,
 	return 0;
 }
 
+static ssize_t wlan_hdd_state_ctrl_param_read(struct file *filp,
+						char __user *user_buf,
+						size_t count,
+						loff_t *f_pos)
+{
+	return 0;
+}
+
 const struct file_operations wlan_hdd_state_fops = {
 	.owner = THIS_MODULE,
 	.open = wlan_hdd_state_ctrl_param_open,
+	.read = wlan_hdd_state_ctrl_param_read,
 	.write = wlan_hdd_state_ctrl_param_write,
 	.release = wlan_hdd_state_ctrl_param_release,
 };
