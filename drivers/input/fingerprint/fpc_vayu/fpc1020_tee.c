@@ -41,7 +41,6 @@
 
 #define FPC_SCREEN_HOLD_TIME 2000
 #define FPC_TTW_HOLD_TIME 2000
-#define FP_UNLOCK_REJECTION_TIMEOUT (FPC_TTW_HOLD_TIME - 500)
 
 #define RESET_LOW_SLEEP_MIN_US 5000
 #define RESET_LOW_SLEEP_MAX_US (RESET_LOW_SLEEP_MIN_US + 100)
@@ -594,12 +593,6 @@ static const struct attribute_group attribute_group = {
 	.attrs = attributes,
 };
 
-static void notification_work(struct work_struct *work)
-{
-	pr_debug("%s: unblank\n", __func__);
-	dsi_bridge_interface_enable(FP_UNLOCK_REJECTION_TIMEOUT);
-}
-
 static irqreturn_t fpc1020_irq_handler(int irq, void *handle)
 {
 	struct fpc1020_data *fpc1020 = handle;
@@ -768,7 +761,6 @@ static int fpc1020_probe(struct platform_device *pdev)
 
 	fpc1020->fb_black = false;
 	fpc1020->wait_finger_down = false;
-	INIT_WORK(&fpc1020->work, notification_work);
 	fpc1020->fb_notifier = fpc_notif_block;
 	msm_drm_register_client(&fpc1020->fb_notifier);
 
