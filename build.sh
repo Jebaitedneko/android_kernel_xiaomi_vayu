@@ -19,7 +19,7 @@ export KBUILD_BUILD_HOST="mochi"
 if [[ $USER == "mochi" ]]; then
 	ENABLE_CCACHE="1"
 fi
-TOOLCHAIN="2" # 1) gcc-4.9 2) eva-gcc-12 3) proton-clang-13 4) sdclang-12.1 5) aosp-clang-r383902
+TOOLCHAIN="5" # 1) gcc-4.9 2) eva-gcc-12 3) proton-clang-13 4) sdclang-12.1 5) aosp-clang-r383902
 USE_UNCOMPRESSED_KERNEL="1"
 DISABLE_LLD="0"
 DISABLE_IAS="0"
