@@ -12,7 +12,10 @@
 
 #include "cam_csiphy_soc.h"
 #include "cam_csiphy_core.h"
+#if 0
 #include "include/cam_csiphy_1_1_hwreg.h"
+#endif
+#include "include/cam_csiphy_1_1_hwreg_vayu.h"
 #include "include/cam_csiphy_1_0_hwreg.h"
 #include "include/cam_csiphy_1_2_hwreg.h"
 #include "include/cam_csiphy_1_2_2_hwreg.h"
