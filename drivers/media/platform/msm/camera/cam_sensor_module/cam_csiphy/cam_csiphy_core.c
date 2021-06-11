@@ -1,4 +1,4 @@
-/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -50,6 +50,12 @@ static int cam_csiphy_notify_secure_mode(struct csiphy_device *csiphy_dev,
 		CAM_ERR(CAM_CSIPHY, "scm call to hypervisor failed");
 		return -EINVAL;
 	}
+
+	CAM_INFO(CAM_CSIPHY, "PHY : %d offset: %d SEC: %d Mask: %d",
+			csiphy_dev->soc_info.index,
+			offset,
+			protect,
+			csiphy_dev->csiphy_cpas_cp_reg_mask[offset]);
 
 	return 0;
 }
@@ -551,7 +557,7 @@ int32_t cam_csiphy_config_dev(struct csiphy_device *csiphy_dev)
 void cam_csiphy_shutdown(struct csiphy_device *csiphy_dev)
 {
 	struct cam_hw_soc_info *soc_info;
-	int32_t i = 0;
+	int32_t i = 0, rc = 0;
 
 	if (csiphy_dev->csiphy_state == CAM_CSIPHY_INIT)
 		return;
@@ -574,7 +580,10 @@ void cam_csiphy_shutdown(struct csiphy_device *csiphy_dev)
 		cam_csiphy_reset(csiphy_dev);
 		cam_soc_util_disable_platform_resource(soc_info, true, true);
 
-		cam_cpas_stop(csiphy_dev->cpas_handle);
+		rc = cam_cpas_stop(csiphy_dev->cpas_handle);
+		if (rc)
+			CAM_ERR(CAM_CSIPHY, "cpas stop failed %d", rc);
+
 		csiphy_dev->csiphy_state = CAM_CSIPHY_ACQUIRE;
 	}
 
@@ -598,6 +607,11 @@ void cam_csiphy_shutdown(struct csiphy_device *csiphy_dev)
 	csiphy_dev->acquire_count = 0;
 	csiphy_dev->start_dev_count = 0;
 	csiphy_dev->csiphy_state = CAM_CSIPHY_INIT;
+
+	/* reset csiphy info */
+	csiphy_dev->csiphy_info.lane_mask = 0;
+	csiphy_dev->csiphy_info.lane_cnt = 0;
+	csiphy_dev->csiphy_info.combo_mode = 0;
 }
 
 static int32_t cam_csiphy_external_cmd(struct csiphy_device *csiphy_dev,
@@ -829,6 +843,7 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 	}
 		break;
 	case CAM_RELEASE_DEV: {
+		int32_t offset;
 		struct cam_release_dev_cmd release;
 
 		if (!csiphy_dev->acquire_count) {
@@ -843,6 +858,23 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 			rc = -EFAULT;
 			goto release_mutex;
 		}
+
+		offset = cam_csiphy_get_instance_offset(csiphy_dev,
+			release.dev_handle);
+		if (offset < 0 || offset >= CSIPHY_MAX_INSTANCES) {
+			CAM_ERR(CAM_CSIPHY, "Invalid offset");
+			goto release_mutex;
+		}
+
+		if (csiphy_dev->csiphy_info.secure_mode[offset])
+			cam_csiphy_notify_secure_mode(
+				csiphy_dev,
+				CAM_SECURE_MODE_NON_SECURE, offset);
+
+		csiphy_dev->csiphy_info.secure_mode[offset] =
+			CAM_SECURE_MODE_NON_SECURE;
+
+		csiphy_dev->csiphy_cpas_cp_reg_mask[offset] = 0x0;
 
 		rc = cam_destroy_device_hdl(release.dev_handle);
 		if (rc < 0)
@@ -862,8 +894,11 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 		csiphy_dev->config_count--;
 		csiphy_dev->acquire_count--;
 
-		if (csiphy_dev->acquire_count == 0)
+		if (csiphy_dev->acquire_count == 0) {
 			csiphy_dev->csiphy_state = CAM_CSIPHY_INIT;
+			/* reset config count */
+			csiphy_dev->config_count = 0;
+		}
 
 		if (csiphy_dev->config_count == 0) {
 			CAM_DBG(CAM_CSIPHY, "reset csiphy_info");
@@ -917,6 +952,7 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 		ahb_vote.type = CAM_VOTE_ABSOLUTE;
 		ahb_vote.vote.level = CAM_SVS_VOTE;
 		axi_vote.compressed_bw = CAM_CPAS_DEFAULT_AXI_BW;
+		axi_vote.compressed_bw_ab = CAM_CPAS_DEFAULT_AXI_BW;
 		axi_vote.uncompressed_bw = CAM_CPAS_DEFAULT_AXI_BW;
 
 		rc = cam_cpas_start(csiphy_dev->cpas_handle,
@@ -933,7 +969,10 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 			if (rc < 0) {
 				csiphy_dev->csiphy_info.secure_mode[offset] =
 					CAM_SECURE_MODE_NON_SECURE;
-				cam_cpas_stop(csiphy_dev->cpas_handle);
+				rc = cam_cpas_stop(csiphy_dev->cpas_handle);
+				if (rc < 0)
+					CAM_ERR(CAM_CSIPHY,
+						"de-voting CPAS: %d", rc);
 				goto release_mutex;
 			}
 		}
@@ -941,7 +980,9 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 		rc = cam_csiphy_enable_hw(csiphy_dev);
 		if (rc != 0) {
 			CAM_ERR(CAM_CSIPHY, "cam_csiphy_enable_hw failed");
-			cam_cpas_stop(csiphy_dev->cpas_handle);
+			rc = cam_cpas_stop(csiphy_dev->cpas_handle);
+			if (rc < 0)
+				CAM_ERR(CAM_CSIPHY, "de-voting CPAS: %d", rc);
 			goto release_mutex;
 		}
 		rc = cam_csiphy_config_dev(csiphy_dev);
@@ -951,7 +992,9 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 		if (rc < 0) {
 			CAM_ERR(CAM_CSIPHY, "cam_csiphy_config_dev failed");
 			cam_csiphy_disable_hw(csiphy_dev);
-			cam_cpas_stop(csiphy_dev->cpas_handle);
+			rc = cam_cpas_stop(csiphy_dev->cpas_handle);
+			if (rc < 0)
+				CAM_ERR(CAM_CSIPHY, "de-voting CPAS: %d", rc);
 			goto release_mutex;
 		}
 		csiphy_dev->start_dev_count++;
