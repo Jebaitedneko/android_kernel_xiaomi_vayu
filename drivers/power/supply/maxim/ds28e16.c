@@ -31,10 +31,10 @@
 #include <linux/regmap.h>
 #include <linux/random.h>
 
-#define ds_info	pr_err
-#define ds_dbg	pr_err
-#define ds_err	pr_err
-#define ds_log	pr_err
+#define ds_info(x, ...)
+#define ds_dbg(x, ...)
+#define ds_err(x, ...)
+#define ds_log(x, ...)
 
 struct ds28e16_data {
 	struct platform_device *pdev;
