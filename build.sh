@@ -16,7 +16,8 @@ ZIP_DEVICE_NAME="vayu"
 ZIP_PREFIX_STR="mochi-vayu"
 export KBUILD_BUILD_USER="mochi"
 export KBUILD_BUILD_HOST="mochi"
-if [[ $USER == "mochi" ]]; then
+USER_OVERRIDE="mochi"
+if [[ $USER == $USER_OVERRIDE ]]; then
 	ENABLE_CCACHE="1"
 fi
 TOOLCHAIN="2" # 1) gcc-4.9 2) eva-gcc-12 3) proton-clang-13 4) sdclang-12.1 5) aosp-clang-r383902
@@ -73,26 +74,31 @@ git_clone() {
 
 check_updates_from_github() {
 
-	if [[ $(echo ${1} | grep github | wc -c) -gt 0 ]]; then
+	if [[ $USER == $USER_OVERRIDE ]]; then
+		if [[ $(echo ${1} | grep github | wc -c) -gt 0 ]]; then
 
-		REMOTE_SHA=$(curl -s "${1}/commits/${2}" | grep "Copy the full SHA" | grep -oE "[0-9a-f]{40}" | head -n1)
-		LOCAL_SHA=$( ( cd "${3}"; [ -d ".git" ] && git log | grep -oE "[0-9a-f]{40}" | head -n1 ) )
-
-		if [[ ! $(echo "${REMOTE_SHA}" | wc -c) -eq 41 ]]; then
 			REMOTE_SHA=$(curl -s "${1}/commits/${2}" | grep "Copy the full SHA" | grep -oE "[0-9a-f]{40}" | head -n1)
-		fi
+			LOCAL_SHA=$( ( cd "${3}"; [ -d ".git" ] && git log | grep -oE "[0-9a-f]{40}" | head -n1 ) )
 
-		if [[ "${REMOTE_SHA}" != "" ]]; then
-			echo -e "\nREMOTE: ${REMOTE_SHA}"
-			echo -e "\nLOCAL:  ${LOCAL_SHA}"
-			if [[ "${REMOTE_SHA}" != "${LOCAL_SHA}" ]]; then
-				echo -e "\nSHA Mismatch. Fetching Upstream...\n"
-				( rm -rf "${3}"; git clone --depth=1 "${1}" --single-branch -b "${2}" "${3}" )
-			else
-				echo -e "\nSHA Matched.\n"
+			if [[ ! $(echo "${REMOTE_SHA}" | wc -c) -eq 41 ]]; then
+				REMOTE_SHA=$(curl -s "${1}/commits/${2}" | grep "Copy the full SHA" | grep -oE "[0-9a-f]{40}" | head -n1)
 			fi
-		fi
 
+			if [[ "${REMOTE_SHA}" != "" ]]; then
+				echo -e "\nREMOTE: ${REMOTE_SHA}"
+				echo -e "\nLOCAL:  ${LOCAL_SHA}"
+				if [[ "${REMOTE_SHA}" != "${LOCAL_SHA}" ]]; then
+					echo -e "\nSHA Mismatch. Fetching Upstream...\n"
+					( rm -rf "${3}"; git clone --depth=1 "${1}" --single-branch -b "${2}" "${3}" )
+				else
+					echo -e "\nSHA Matched.\n"
+				fi
+			fi
+
+		fi
+	else
+		echo -e "\nFetching ${1}/archive/refs/heads/${2}.zip...\n"
+		( wget -q "${1}/archive/refs/heads/${2}.zip" -O "${3}/../${2}.zip" && unzip "${3}/../${2}.zip" -d "${3}" &> /dev/null )
 	fi
 
 }
@@ -190,7 +196,7 @@ get_proton_clang-13.0() {
 
 get_eva_gcc-12.0() {
 
-	if [[ $USER == "mochi" ]]; then
+	if [[ $USER == $USER_OVERRIDE ]]; then
 		get_proton_clang-13.0
 	fi
 
@@ -215,7 +221,7 @@ get_eva_gcc-12.0() {
 	CROSS_ARM32="$TC_32/bin/arm-eabi-"
 	PFX_OVERRIDE=$TOOLCHAIN_DIR/proton-clang-13.0/bin/
 
-	if [[ $USER != "mochi" ]]; then
+	if [[ $USER != $USER_OVERRIDE ]]; then
 		echo -e "\nBuilding from CI. Fetching LLVM Tools...\n"
 		SRC="https://github.com/kdrag0n/proton-clang/raw/master/bin"
 		wget -q ${SRC}/lld -O /tmp/ld.lld && chmod +x /tmp/ld.lld
