@@ -190,7 +190,9 @@ get_proton_clang-13.0() {
 
 get_eva_gcc-12.0() {
 
-	get_proton_clang-13.0
+	if [[ $USER == "mochi" ]]; then
+		get_proton_clang-13.0
+	fi
 
 	CC_IS_CLANG=0
 	CC_IS_GCC=1
@@ -212,6 +214,20 @@ get_eva_gcc-12.0() {
 	CROSS="$TC_64/bin/aarch64-elf-"
 	CROSS_ARM32="$TC_32/bin/arm-eabi-"
 	PFX_OVERRIDE=$TOOLCHAIN_DIR/proton-clang-13.0/bin/
+
+	if [[ $USER != "mochi" ]]; then
+		echo -e "\nBuilding from CI. Fetching LLVM Tools...\n"
+		SRC="https://github.com/kdrag0n/proton-clang/raw/master/bin"
+		wget -q ${SRC}/lld -O /tmp/ld.lld && chmod +x /tmp/ld.lld
+		wget -q ${SRC}/llvm-ar -O /tmp/llvm-ar && chmod +x /tmp/llvm-ar
+		wget -q ${SRC}/llvm-as -O /tmp/llvm-as && chmod +x /tmp/llvm-as
+		wget -q ${SRC}/llvm-nm -O /tmp/llvm-nm && chmod +x /tmp/llvm-nm
+		wget -q ${SRC}/llvm-objcopy -O /tmp/llvm-strip && chmod +x /tmp/llvm-strip
+		wget -q ${SRC}/llvm-objdump -O /tmp/llvm-objdump && chmod +x /tmp/llvm-objdump
+		cp /tmp/llvm-strip /tmp/llvm-objcopy && chmod +x /tmp/llvm-objcopy # strip is objcopy as well
+		PFX_OVERRIDE=/tmp/
+		echo -e "\nDone.\n"
+	fi
 
 	MAKEOPTS="LD=${PFX_OVERRIDE}ld.lld AR=${PFX_OVERRIDE}llvm-ar AS=${PFX_OVERRIDE}llvm-as NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
 				OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
