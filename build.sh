@@ -20,7 +20,7 @@ USER_OVERRIDE="mochi"
 if [[ $USER == $USER_OVERRIDE ]]; then
 	ENABLE_CCACHE="1"
 fi
-TOOLCHAIN="2" # 1) gcc-4.9 2) eva-gcc-12 3) proton-clang-13 4) sdclang-12.1 5) aosp-clang-r383902
+TOOLCHAIN="6" # 1) gcc-4.9 2) eva-gcc-12 3) proton-clang-13 4) sdclang-12.1 5) aosp-clang-r383902 6) aospa-gcc-10.2
 USE_UNCOMPRESSED_KERNEL="1"
 DISABLE_LLD="0"
 DISABLE_IAS="0"
@@ -94,11 +94,7 @@ check_updates_from_github() {
 					echo -e "\nSHA Matched.\n"
 				fi
 			fi
-
 		fi
-	else
-		echo -e "\nFetching ${1}/archive/refs/heads/${2}.zip...\n"
-		( wget -q "${1}/archive/refs/heads/${2}.zip" -O "${3}/../${2}.zip" && unzip "${3}/../${2}.zip" -d "${3}" &> /dev/null )
 	fi
 
 }
@@ -168,6 +164,7 @@ get_proton_clang-13.0() {
 
 	CROSS="$TC/bin/aarch64-linux-gnu-"
 	CROSS_ARM32="$TC/bin/arm-linux-gnueabi-"
+
 	PFX_OVERRIDE=""
 
 	MAKEOPTS="CC=clang LD=${PFX_OVERRIDE}ld.lld AR=${PFX_OVERRIDE}llvm-ar AS=${PFX_OVERRIDE}llvm-as NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
@@ -191,6 +188,32 @@ get_proton_clang-13.0() {
 			fi
 		fi
 	fi
+
+}
+
+get_aospa_gcc-10.2() {
+
+	CC_IS_CLANG=0
+	CC_IS_GCC=1
+
+	TC_64="$TOOLCHAIN_DIR/aospa-gcc-10.2-64"
+	REPO_64="https://github.com/AOSPA/android_prebuilts_gcc_linux-x86_aarch64_aarch64-elf"
+	BRANCH_64="master"
+
+	TC_32="$TOOLCHAIN_DIR/aospa-gcc-10.2-32"
+	REPO_32="https://github.com/AOSPA/android_prebuilts_gcc_linux-x86_arm_arm-eabi"
+	BRANCH_32="master"
+
+	git_clone "${REPO_64}" "${BRANCH_64}" "${TC_64}"
+	check_updates_from_github "${REPO_64}" "${BRANCH_64}" "${TC_64}"
+
+	git_clone "${REPO_32}" "${BRANCH_32}" "${TC_32}"
+	check_updates_from_github "${REPO_32}" "${BRANCH_32}" "${TC_32}"
+
+	CROSS="$TC_64/bin/aarch64-elf-"
+	CROSS_ARM32="$TC_32/bin/arm-eabi-"
+
+	MAKEOPTS="CONFIG_TOOLS_SUPPORT_RELR=n CONFIG_RELR=n"
 
 }
 
@@ -219,6 +242,7 @@ get_eva_gcc-12.0() {
 
 	CROSS="$TC_64/bin/aarch64-elf-"
 	CROSS_ARM32="$TC_32/bin/arm-eabi-"
+
 	PFX_OVERRIDE=$TOOLCHAIN_DIR/proton-clang-13.0/bin/
 
 	if [[ $USER != $USER_OVERRIDE ]]; then
@@ -274,6 +298,7 @@ get_sdclang-12.1() {
 	check_updates_from_github "${REPO}" "${BRANCH}" "${TC}"
 
 	TRIPLE="$TC/bin/aarch64-linux-gnu-"
+
 	PFX_OVERRIDE=$TOOLCHAIN_DIR/proton-clang-13.0/bin/
 
 	MAKEOPTS="CC=clang CLANG_TRIPLE=$TRIPLE LD=${PFX_OVERRIDE}ld.lld AR=${PFX_OVERRIDE}llvm-ar AS=${PFX_OVERRIDE}llvm-as NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
@@ -321,6 +346,7 @@ get_aosp_clang-r383902() {
 	fi
 
 	TRIPLE="$TC/bin/aarch64-linux-gnu-"
+
 	PFX_OVERRIDE="${TRIPLE%/*}/"
 
 	MAKEOPTS="CONFIG_TOOLS_SUPPORT_RELR=n CONFIG_RELR=n CLANG_TRIPLE=$TRIPLE CC=clang LD=${PFX_OVERRIDE}ld.lld"
@@ -375,6 +401,7 @@ build() {
 		3) echo -e "\nSelecting PROTON-CLANG-13.0...\n" && get_proton_clang-13.0 ;;
 		4) echo -e "\nSelecting SDCLANG-12.1...\n" && get_sdclang-12.1 ;;
 		5) echo -e "\nSelecting AOSP-CLANG-R383902...\n" && get_aosp_clang-r383902 ;;
+		6) echo -e "\nSelecting AOSPA-GCC-10.2...\n" && get_aospa_gcc-10.2 ;;
 	esac
 
 	if [[ $TARGET_ARCH = "arm" ]]; then
