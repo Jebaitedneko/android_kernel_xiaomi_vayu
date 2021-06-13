@@ -796,6 +796,10 @@ config PERCPU_STATS
 	  information includes global and per chunk statistics, which can
 	  be used to help understand percpu memory usage.
 
+config DISABLE_OOM_KILLER
+	bool "Disable OOM Killer"
+	default n
+
 config PRLMK
 	bool "Enable PRLMK"
 	depends on TASK_XACCT && ZRAM
