@@ -20,11 +20,12 @@ USER_OVERRIDE="mochi"
 if [[ $USER == $USER_OVERRIDE ]]; then
 	ENABLE_CCACHE="1"
 fi
-TOOLCHAIN="6" # 1) gcc-4.9 2) eva-gcc-12 3) proton-clang-13 4) sdclang-12.1 5) aosp-clang-r383902 6) aospa-gcc-10.2
+TOOLCHAIN="2" # 1) gcc-4.9 2) eva-gcc-12 3) proton-clang-13 4) sdclang-12.1 5) aosp-clang-r383902 6) aospa-gcc-10.2
 USE_UNCOMPRESSED_KERNEL="1"
 DISABLE_LLD="0"
 DISABLE_IAS="0"
 DISABLE_LLD_IAS="0"
+USE_LLVM_FOR_GCC="0"
 BUILD_MODULES="0"
 DO_SYSTEMLESS="1"
 BUILD_DTBO_IMG="0"
@@ -219,8 +220,10 @@ get_aospa_gcc-10.2() {
 
 get_eva_gcc-12.0() {
 
-	if [[ $USER == $USER_OVERRIDE ]]; then
-		get_proton_clang-13.0
+	if [[ $USE_LLVM_FOR_GCC == "1" ]]; then
+		if [[ $USER == $USER_OVERRIDE ]]; then
+			get_proton_clang-13.0
+		fi
 	fi
 
 	CC_IS_CLANG=0
@@ -243,40 +246,45 @@ get_eva_gcc-12.0() {
 	CROSS="$TC_64/bin/aarch64-elf-"
 	CROSS_ARM32="$TC_32/bin/arm-eabi-"
 
-	PFX_OVERRIDE=$TOOLCHAIN_DIR/proton-clang-13.0/bin/
+	MAKEOPTS="CONFIG_TOOLS_SUPPORT_RELR=n CONFIG_RELR=n"
 
-	if [[ $USER != $USER_OVERRIDE ]]; then
-		echo -e "\nBuilding from CI. Fetching LLVM Tools...\n"
-		SRC="https://github.com/kdrag0n/proton-clang/raw/master/bin"
-		wget -q ${SRC}/lld -O /tmp/ld.lld && chmod +x /tmp/ld.lld
-		wget -q ${SRC}/llvm-ar -O /tmp/llvm-ar && chmod +x /tmp/llvm-ar
-		wget -q ${SRC}/llvm-as -O /tmp/llvm-as && chmod +x /tmp/llvm-as
-		wget -q ${SRC}/llvm-nm -O /tmp/llvm-nm && chmod +x /tmp/llvm-nm
-		wget -q ${SRC}/llvm-objcopy -O /tmp/llvm-strip && chmod +x /tmp/llvm-strip
-		wget -q ${SRC}/llvm-objdump -O /tmp/llvm-objdump && chmod +x /tmp/llvm-objdump
-		cp /tmp/llvm-strip /tmp/llvm-objcopy && chmod +x /tmp/llvm-objcopy # strip is objcopy as well
-		PFX_OVERRIDE=/tmp/
-		echo -e "\nDone.\n"
-	fi
+	if [[ $USE_LLVM_FOR_GCC == "1" ]]; then
 
-	MAKEOPTS="LD=${PFX_OVERRIDE}ld.lld AR=${PFX_OVERRIDE}llvm-ar AS=${PFX_OVERRIDE}llvm-as NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
-				OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
-				HOSTAR=${PFX_OVERRIDE}llvm-ar HOSTAS=${PFX_OVERRIDE}llvm-as HOSTLD=${PFX_OVERRIDE}ld.lld"
+		PFX_OVERRIDE=$TOOLCHAIN_DIR/proton-clang-13.0/bin/
 
-	if [[ $DISABLE_LLD == "1" ]]; then
-		MAKEOPTS="AR=${PFX_OVERRIDE}llvm-ar AS=${PFX_OVERRIDE}llvm-as NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
+		if [[ $USER != $USER_OVERRIDE ]]; then
+			echo -e "\nBuilding from CI. Fetching LLVM Tools...\n"
+			SRC="https://github.com/kdrag0n/proton-clang/raw/master/bin"
+			wget -q ${SRC}/lld -O /tmp/ld.lld && chmod +x /tmp/ld.lld
+			wget -q ${SRC}/llvm-ar -O /tmp/llvm-ar && chmod +x /tmp/llvm-ar
+			wget -q ${SRC}/llvm-as -O /tmp/llvm-as && chmod +x /tmp/llvm-as
+			wget -q ${SRC}/llvm-nm -O /tmp/llvm-nm && chmod +x /tmp/llvm-nm
+			wget -q ${SRC}/llvm-objcopy -O /tmp/llvm-strip && chmod +x /tmp/llvm-strip
+			wget -q ${SRC}/llvm-objdump -O /tmp/llvm-objdump && chmod +x /tmp/llvm-objdump
+			cp /tmp/llvm-strip /tmp/llvm-objcopy && chmod +x /tmp/llvm-objcopy # strip is objcopy as well
+			PFX_OVERRIDE=/tmp/
+			echo -e "\nDone.\n"
+		fi
+
+		MAKEOPTS="LD=${PFX_OVERRIDE}ld.lld AR=${PFX_OVERRIDE}llvm-ar AS=${PFX_OVERRIDE}llvm-as NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
 					OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
-					HOSTAR=${PFX_OVERRIDE}llvm-ar HOSTAS=${PFX_OVERRIDE}llvm-as"
-	else
-		if [[ $DISABLE_IAS == "1" ]]; then
-			MAKEOPTS="LD=${PFX_OVERRIDE}ld.lld AR=${PFX_OVERRIDE}llvm-ar NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
+					HOSTAR=${PFX_OVERRIDE}llvm-ar HOSTAS=${PFX_OVERRIDE}llvm-as HOSTLD=${PFX_OVERRIDE}ld.lld"
+
+		if [[ $DISABLE_LLD == "1" ]]; then
+			MAKEOPTS="AR=${PFX_OVERRIDE}llvm-ar AS=${PFX_OVERRIDE}llvm-as NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
 						OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
-						HOSTAR=${PFX_OVERRIDE}llvm-ar HOSTLD=${PFX_OVERRIDE}ld.lld"
+						HOSTAR=${PFX_OVERRIDE}llvm-ar HOSTAS=${PFX_OVERRIDE}llvm-as"
 		else
-			if [[ $DISABLE_LLD_IAS == "1" ]]; then
-				MAKEOPTS="AR=${PFX_OVERRIDE}llvm-ar NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
+			if [[ $DISABLE_IAS == "1" ]]; then
+				MAKEOPTS="LD=${PFX_OVERRIDE}ld.lld AR=${PFX_OVERRIDE}llvm-ar NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
 							OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
-							HOSTAR=${PFX_OVERRIDE}llvm-ar"
+							HOSTAR=${PFX_OVERRIDE}llvm-ar HOSTLD=${PFX_OVERRIDE}ld.lld"
+			else
+				if [[ $DISABLE_LLD_IAS == "1" ]]; then
+					MAKEOPTS="AR=${PFX_OVERRIDE}llvm-ar NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
+								OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
+								HOSTAR=${PFX_OVERRIDE}llvm-ar"
+				fi
 			fi
 		fi
 	fi
