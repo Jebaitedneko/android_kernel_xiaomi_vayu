@@ -43,5 +43,10 @@
 			opp-hz = /bits/ 64 <257000000>;
 			opp-microvolt = <RPMH_REGULATOR_LEVEL_MIN_SVS>;
 		};
+
+		opp-195000000 {
+			opp-hz = /bits/ 64 <195000000>;
+			opp-microvolt = <RPMH_REGULATOR_LEVEL_MIN_SVS>;
+		};
 	};
 };
