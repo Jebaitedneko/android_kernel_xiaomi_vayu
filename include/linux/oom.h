@@ -46,8 +46,8 @@ struct oom_control {
 
 #if !defined(CONFIG_DISABLE_OOM_KILLER)
 extern struct mutex oom_lock;
-#endif
 extern struct mutex oom_adj_mutex;
+#endif
 
 static inline void set_current_oom_origin(void)
 {
@@ -135,6 +135,7 @@ extern void add_to_oom_reaper(struct task_struct *p);
 #else /* defined(CONFIG_DISABLE_OOM_KILLER) */
 
 static struct mutex oom_lock;
+static struct mutex oom_adj_mutex;
 
 static inline void __oom_reap_task_mm(struct mm_struct *mm)
 {
