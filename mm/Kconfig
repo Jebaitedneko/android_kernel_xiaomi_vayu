@@ -815,7 +815,7 @@ config DISABLE_OOM_KILLER
 
 config PRLMK
 	bool "Enable PRLMK"
-	depends on TASK_XACCT && ZRAM
+	depends on TASK_XACCT
 	depends on !PSI && !MEMCG
 	depends on !PROCESS_RECLAIM && !ANDROID_LOW_MEMORY_KILLER && !ANDROID_SIMPLE_LMK
 	default n

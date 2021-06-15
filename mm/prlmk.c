@@ -74,7 +74,7 @@ static const short adj_ignore[] = {
  * LOWMEM_NONE: No low-memory scenario detected.
  *
  * LOWMEM_NORMAL: A scenario in which the swap
- * memory levels are below free_swap_limit.
+ * memory levels are below free_limit.
  *
  * LOWMEM_CRITICAL: A scenario in which the LOWMEM_NORMAL
  * condition is satisfied, as well as when the reclaimable
@@ -112,11 +112,11 @@ static int free_file_limit = 20000;
 module_param_named(free_file_limit, free_file_limit, int, 0644);
 
 /*
- * Number of SWAP pages in MiB below which tasks with
+ * Number of RAM/SWAP pages in MiB below which tasks with
  * adjs greater than min_adj should be killed.
  */
-static int free_swap_limit = 20;
-module_param_named(free_swap_limit, free_swap_limit, int, 0644);
+static int free_limit = 20;
+module_param_named(free_limit, free_limit, int, 0644);
 
 /*
  * This enables arranging tasks based on their unique
@@ -223,19 +223,23 @@ static inline int is_low_mem(void)
 	const int lru_base = NR_LRU_BASE - LRU_BASE;
 	int ret;
 
+	unsigned long cur_fpgs =
+			global_node_page_state(NR_FILE_PAGES);
+
 	unsigned long cur_file_mem =
 			global_zone_page_state(lru_base + LRU_ACTIVE_FILE);
 
-	unsigned long cur_swap_mem = (get_nr_swap_pages() << (PAGE_SHIFT - 10));
-	unsigned long swap_mem = free_swap_limit * 1024;
+	int mem = (total_swap_pages ?
+			(get_nr_swap_pages() << (PAGE_SHIFT - 10)) >> 10 :
+			(si_mem_available() + cur_fpgs) * 100 / totalram_pages);
 
-	bool swap_limit = cur_swap_mem < swap_mem;
+	bool mem_limit = mem < free_limit;
 	bool file_limit = cur_file_mem < free_file_limit;
 
-	bool lowmem_normal = (swap_mem ? swap_limit : file_limit);
-	bool lowmem_critical = (swap_mem ? file_limit : true) &&
-				lowmem_normal && !cur_swap_mem;
-
+	bool lowmem_normal = (free_limit ? mem_limit : file_limit);
+	bool lowmem_critical = lowmem_normal &&
+				(free_limit ? file_limit : true) &&
+				(total_swap_pages ? !mem : true);
 	if (lowmem_critical)
 		ret = LOWMEM_CRITICAL;
 	else if (lowmem_normal)
@@ -243,7 +247,7 @@ static inline int is_low_mem(void)
 	else
 		ret = LOWMEM_NONE;
 
-	lowmem_dbg(cur_file_mem, cur_swap_mem, ret);
+	lowmem_dbg(cur_file_mem, mem, ret);
 
 	return ret;
 }
