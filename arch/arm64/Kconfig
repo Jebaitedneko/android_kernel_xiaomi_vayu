@@ -772,6 +772,12 @@ config NR_CPUS
 	# These have to remain sorted largest to smallest
 	default "64"
 
+config DISABLE_IRQ_BOOSTS
+	bool "Disable cluster-affined IRQ boosting"
+	help
+	  Say Y if you want to disable cluster-affined IRQ boosting.
+	default n
+
 config LITTLE_CPU_MASK
 	int "Bitmask of available LITTLE CPUs"
 	help
