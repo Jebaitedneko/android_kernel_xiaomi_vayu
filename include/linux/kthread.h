@@ -54,6 +54,10 @@ struct task_struct *kthread_create_on_cpu(int (*threadfn)(void *data),
  *
  * Same as kthread_create(), but takes a perf cpumask to affine to.
  */
+
+#if defined(CONFIG_DISABLE_IRQ_BOOSTS)
+#define kthread_run_perf_critical(perfmask, threadfn, data, namefmt, ...) kthread_run(threadfn, data, namefmt)
+#else
 #define kthread_run_perf_critical(perfmask, threadfn, data, namefmt, ...)  \
 ({									   \
 	struct task_struct *__k						   \
@@ -68,6 +72,7 @@ struct task_struct *kthread_create_on_cpu(int (*threadfn)(void *data),
 	}								   \
 	__k;								   \
 })
+#endif
 
 void free_kthread_struct(struct task_struct *k);
 void kthread_bind(struct task_struct *k, unsigned int cpu);
