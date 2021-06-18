@@ -3085,13 +3085,13 @@ static int nvt_drm_notifier_callback(struct notifier_block *self, unsigned long 
 		blank = evdata->data;
 		NVT_LOG("%s: event:%lu,blank:%u\n", event, blank);
 
-		if (event == MSM_DRM_EARLY_EVENT_BLANK) {
+		if (event == MSM_DRM_EVENT_BLANK) {
 			if (*blank == MSM_DRM_BLANK_POWERDOWN) {
 				NVT_LOG("event=%lu, *blank=%d\n", event, *blank);
 				flush_workqueue(ts_data->event_wq);
 				nvt_ts_suspend(&ts_data->client->dev);
 			}
-		} else if (event == MSM_DRM_EVENT_BLANK) {
+		} else if (event == MSM_DRM_EARLY_EVENT_BLANK) {
 			if (*blank == MSM_DRM_BLANK_UNBLANK) {
 				NVT_LOG("event=%lu, *blank=%d\n", event, *blank);
 				flush_workqueue(ts_data->event_wq);
