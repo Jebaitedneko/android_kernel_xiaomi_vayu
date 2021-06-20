@@ -1854,7 +1854,7 @@ static int screen_state_for_thermal_callback(struct notifier_block *nb, unsigned
 	struct msm_drm_notifier *evdata = data;
 	unsigned int blank;
 
-	if (val != MSM_DRM_EARLY_EVENT_BLANK || !evdata || !evdata->data)
+	if (val != MSM_DRM_EVENT_BLANK || !evdata || !evdata->data)
 		return 0;
 
 	blank = *(int *)(evdata->data);
