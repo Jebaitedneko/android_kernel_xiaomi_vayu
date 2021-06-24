@@ -1,8 +1,8 @@
+#!/bin/bash
+
 #
 # Copyright (c) 2020, Jebaitedneko.
 #
-
-#!/bin/bash
 
 KERNEL_ROOT_DIR=$(pwd)
 
@@ -17,10 +17,22 @@ ZIP_PREFIX_STR="mochi-vayu"
 export KBUILD_BUILD_USER="mochi"
 export KBUILD_BUILD_HOST="mochi"
 USER_OVERRIDE="mochi"
-if [[ $USER == $USER_OVERRIDE ]]; then
+IS_WSL_USER="0"
+if [[ $USER == "$USER_OVERRIDE" ]]; then
 	ENABLE_CCACHE="1"
 fi
-TOOLCHAIN="2" # 1) gcc-4.9 2) eva-gcc-12 3) proton-clang-13 4) sdclang-12.1 5) aosp-clang-r383902 6) aospa-gcc-10.2
+
+#############################
+TOOLCHAIN="7"               #
+# 1) gcc-4.9                #
+# 2) eva-gcc-12             #
+# 3) proton-clang-13        #
+# 4) sdclang-12.1           #
+# 5) aosp-clang-r383902     #
+# 6) aospa-gcc-10.2         #
+# 7) arter-gcc [9.3 & 11.1] #
+#############################
+
 USE_UNCOMPRESSED_KERNEL="1"
 DISABLE_LLD="0"
 DISABLE_IAS="0"
@@ -61,27 +73,40 @@ run() {
 
 git_clone() {
 
-	if [ ! -d "${3}" ]; then
-		mkdir -p "${3}"
-		run "git clone \
-			--depth=1 \
-			--single-branch \
-			\"${1}\" \
-			-b \"${2}\" \
-			\"${3}\" &> /dev/null"
+	if [[ $USER == "$USER_OVERRIDE" ]]; then
+		if [ ! -d "${3}" ]; then
+			mkdir -p "${3}"
+			run "git clone \
+				--depth=1 \
+				--single-branch \
+				\"${1}\" \
+				-b \"${2}\" \
+				\"${3}\" &> /dev/null"
+		fi
+	else
+		folder_fmt="$(echo "${1}" | cut -f5 -d/)-${2}"
+		if [ ! -d "${3}/$folder_fmt" ]; then
+			(
+				mkdir -p "${3}" && cd "${3}/.."
+				run "wget \"${1}/archive/${2}.zip\" &> /dev/null"
+				run "unzip \"${2}.zip\" -d $(pwd) &> /dev/null"
+				run "rm \"${2}.zip\""
+				run "mv \"$folder_fmt\" \"${3}\" &> /dev/null"
+			)
+		fi
 	fi
 
 }
 
 check_updates_from_github() {
 
-	if [[ $USER == $USER_OVERRIDE ]]; then
-		if [[ $(echo ${1} | grep github | wc -c) -gt 0 ]]; then
+	if [[ $USER == "$USER_OVERRIDE" ]]; then
+		if [[ $(echo "${1}" | grep github | wc -c) -gt 0 ]]; then
 
 			REMOTE_SHA=$(curl -s "${1}/commits/${2}" | grep "Copy the full SHA" | grep -oE "[0-9a-f]{40}" | head -n1)
 			LOCAL_SHA=$( ( cd "${3}"; [ -d ".git" ] && git log | grep -oE "[0-9a-f]{40}" | head -n1 ) )
 
-			if [[ ! $(echo "${REMOTE_SHA}" | wc -c) -eq 41 ]]; then
+			if [[ ! ${#REMOTE_SHA} -eq 41 ]]; then
 				REMOTE_SHA=$(curl -s "${1}/commits/${2}" | grep "Copy the full SHA" | grep -oE "[0-9a-f]{40}" | head -n1)
 			fi
 
@@ -93,6 +118,51 @@ check_updates_from_github() {
 					( rm -rf "${3}"; git clone --depth=1 "${1}" --single-branch -b "${2}" "${3}" )
 				else
 					echo -e "\nSHA Matched.\n"
+				fi
+			fi
+		fi
+	fi
+
+}
+
+use_llvm_for_gcc() {
+
+	if [[ $USE_LLVM_FOR_GCC == "1" ]]; then
+
+		PFX_OVERRIDE=$TOOLCHAIN_DIR/proton-clang-13.0/bin/
+
+		if [[ $USER != "$USER_OVERRIDE" ]]; then
+			echo -e "\nBuilding from CI. Fetching LLVM Tools...\n"
+			SRC="https://github.com/kdrag0n/proton-clang/raw/master/bin"
+			wget -q ${SRC}/lld -O /tmp/ld.lld && chmod +x /tmp/ld.lld
+			wget -q ${SRC}/llvm-ar -O /tmp/llvm-ar && chmod +x /tmp/llvm-ar
+			wget -q ${SRC}/llvm-as -O /tmp/llvm-as && chmod +x /tmp/llvm-as
+			wget -q ${SRC}/llvm-nm -O /tmp/llvm-nm && chmod +x /tmp/llvm-nm
+			wget -q ${SRC}/llvm-objcopy -O /tmp/llvm-strip && chmod +x /tmp/llvm-strip
+			wget -q ${SRC}/llvm-objdump -O /tmp/llvm-objdump && chmod +x /tmp/llvm-objdump
+			cp /tmp/llvm-strip /tmp/llvm-objcopy && chmod +x /tmp/llvm-objcopy # strip is objcopy as well
+			PFX_OVERRIDE=/tmp/
+			echo -e "\nDone.\n"
+		fi
+
+		MAKEOPTS="LD=${PFX_OVERRIDE}ld.lld AR=${PFX_OVERRIDE}llvm-ar AS=${PFX_OVERRIDE}llvm-as NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
+					OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
+					HOSTAR=${PFX_OVERRIDE}llvm-ar HOSTAS=${PFX_OVERRIDE}llvm-as HOSTLD=${PFX_OVERRIDE}ld.lld"
+
+		if [[ $DISABLE_LLD == "1" ]]; then
+			MAKEOPTS="AR=${PFX_OVERRIDE}llvm-ar AS=${PFX_OVERRIDE}llvm-as NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
+						OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
+						HOSTAR=${PFX_OVERRIDE}llvm-ar HOSTAS=${PFX_OVERRIDE}llvm-as"
+		else
+			if [[ $DISABLE_IAS == "1" ]]; then
+				MAKEOPTS="LD=${PFX_OVERRIDE}ld.lld AR=${PFX_OVERRIDE}llvm-ar NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
+							OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
+							HOSTAR=${PFX_OVERRIDE}llvm-ar HOSTLD=${PFX_OVERRIDE}ld.lld"
+			else
+				if [[ $DISABLE_LLD_IAS == "1" ]]; then
+					MAKEOPTS="AR=${PFX_OVERRIDE}llvm-ar NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
+								OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
+								HOSTAR=${PFX_OVERRIDE}llvm-ar"
 				fi
 			fi
 		fi
@@ -113,16 +183,32 @@ get_gcc-4.9() {
 	REPO_32="https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9"
 	BRANCH_32="lineage-18.1"
 
-	git_clone "${REPO_64}" "${BRANCH_64}" "${TC_64}"
-	check_updates_from_github "${REPO_64}" "${BRANCH_64}" "${TC_64}"
+	if [[ $USER != "$USER_OVERRIDE" ]]; then
 
-	git_clone "${REPO_32}" "${BRANCH_32}" "${TC_32}"
-	check_updates_from_github "${REPO_32}" "${BRANCH_32}" "${TC_32}"
+		git_clone "${REPO_64}" "${BRANCH_64}" "${TC_64}" &
+		check_updates_from_github "${REPO_64}" "${BRANCH_64}" "${TC_64}" &
+
+		git_clone "${REPO_32}" "${BRANCH_32}" "${TC_32}" &
+		check_updates_from_github "${REPO_32}" "${BRANCH_32}" "${TC_32}" &
+
+		wait
+
+		TC_64="$TC_64/$(echo ${REPO_64} | cut -f5 -d/)-${BRANCH_64}"
+		TC_32="$TC_32/$(echo ${REPO_32} | cut -f5 -d/)-${BRANCH_32}"
+	else
+		git_clone "${REPO_64}" "${BRANCH_64}" "${TC_64}"
+		check_updates_from_github "${REPO_64}" "${BRANCH_64}" "${TC_64}"
+
+		git_clone "${REPO_32}" "${BRANCH_32}" "${TC_32}"
+		check_updates_from_github "${REPO_32}" "${BRANCH_32}" "${TC_32}"
+	fi
 
 	CROSS="$TC_64/bin/aarch64-linux-android-"
 	CROSS_ARM32="$TC_32/bin/arm-linux-androideabi-"
 
 	MAKEOPTS=""
+
+	use_llvm_for_gcc
 
 }
 
@@ -139,11 +225,25 @@ get_gcc-4.9-aosp() {
 	REPO_32="https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9"
 	BRANCH_32="master"
 
-	git_clone "${REPO_64}" "${BRANCH_64}" "${TC_64}"
-	check_updates_from_github "${REPO_64}" "${BRANCH_64}" "${TC_64}"
+	if [[ $USER != "$USER_OVERRIDE" ]]; then
 
-	git_clone "${REPO_32}" "${BRANCH_32}" "${TC_32}"
-	check_updates_from_github "${REPO_32}" "${BRANCH_32}" "${TC_32}"
+		git_clone "${REPO_64}" "${BRANCH_64}" "${TC_64}" &
+		check_updates_from_github "${REPO_64}" "${BRANCH_64}" "${TC_64}" &
+
+		git_clone "${REPO_32}" "${BRANCH_32}" "${TC_32}" &
+		check_updates_from_github "${REPO_32}" "${BRANCH_32}" "${TC_32}" &
+
+		wait
+
+		TC_64="$TC_64/$(echo ${REPO_64} | cut -f5 -d/)-${BRANCH_64}"
+		TC_32="$TC_32/$(echo ${REPO_32} | cut -f5 -d/)-${BRANCH_32}"
+	else
+		git_clone "${REPO_64}" "${BRANCH_64}" "${TC_64}"
+		check_updates_from_github "${REPO_64}" "${BRANCH_64}" "${TC_64}"
+
+		git_clone "${REPO_32}" "${BRANCH_32}" "${TC_32}"
+		check_updates_from_github "${REPO_32}" "${BRANCH_32}" "${TC_32}"
+	fi
 
 	CROSS="$TC_64/bin/aarch64-linux-android-"
 	CROSS_ARM32="$TC_32/bin/arm-linux-androideabi-"
@@ -160,8 +260,18 @@ get_proton_clang-13.0() {
 	REPO="https://github.com/kdrag0n/proton-clang"
 	BRANCH="master"
 
-	git_clone "${REPO}" "${BRANCH}" "${TC}"
-	check_updates_from_github "${REPO}" "${BRANCH}" "${TC}"
+	if [[ $USER != "$USER_OVERRIDE" ]]; then
+
+		git_clone "${REPO}" "${BRANCH}" "${TC}" &
+		check_updates_from_github "${REPO}" "${BRANCH}" "${TC}" &
+
+		wait
+
+		TC="$TC/$(echo ${REPO} | cut -f5 -d/)-${BRANCH}"
+	else
+		git_clone "${REPO}" "${BRANCH}" "${TC}"
+		check_updates_from_github "${REPO}" "${BRANCH}" "${TC}"
+	fi
 
 	CROSS="$TC/bin/aarch64-linux-gnu-"
 	CROSS_ARM32="$TC/bin/arm-linux-gnueabi-"
@@ -205,11 +315,80 @@ get_aospa_gcc-10.2() {
 	REPO_32="https://github.com/AOSPA/android_prebuilts_gcc_linux-x86_arm_arm-eabi"
 	BRANCH_32="master"
 
-	git_clone "${REPO_64}" "${BRANCH_64}" "${TC_64}"
-	check_updates_from_github "${REPO_64}" "${BRANCH_64}" "${TC_64}"
+	if [[ $USER != "$USER_OVERRIDE" ]]; then
 
-	git_clone "${REPO_32}" "${BRANCH_32}" "${TC_32}"
-	check_updates_from_github "${REPO_32}" "${BRANCH_32}" "${TC_32}"
+		git_clone "${REPO_64}" "${BRANCH_64}" "${TC_64}" &
+		check_updates_from_github "${REPO_64}" "${BRANCH_64}" "${TC_64}" &
+
+		git_clone "${REPO_32}" "${BRANCH_32}" "${TC_32}" &
+		check_updates_from_github "${REPO_32}" "${BRANCH_32}" "${TC_32}" &
+
+		wait
+
+		TC_64="$TC_64/$(echo ${REPO_64} | cut -f5 -d/)-${BRANCH_64}"
+		TC_32="$TC_32/$(echo ${REPO_32} | cut -f5 -d/)-${BRANCH_32}"
+	else
+		git_clone "${REPO_64}" "${BRANCH_64}" "${TC_64}"
+		check_updates_from_github "${REPO_64}" "${BRANCH_64}" "${TC_64}"
+
+		git_clone "${REPO_32}" "${BRANCH_32}" "${TC_32}"
+		check_updates_from_github "${REPO_32}" "${BRANCH_32}" "${TC_32}"
+	fi
+
+	CROSS="$TC_64/bin/aarch64-elf-"
+	CROSS_ARM32="$TC_32/bin/arm-eabi-"
+
+	MAKEOPTS="CONFIG_TOOLS_SUPPORT_RELR=n CONFIG_RELR=n"
+
+}
+
+get_arter-gcc() {
+
+	if [[ $USE_LLVM_FOR_GCC == "1" ]]; then
+		if [[ $USER == "$USER_OVERRIDE" ]]; then
+			get_proton_clang-13.0
+		fi
+	fi
+
+	CC_IS_CLANG=0
+	CC_IS_GCC=1
+
+	TC_64="$TOOLCHAIN_DIR/arter-gcc-64"
+	REPO_64="https://github.com/arter97/arm64-gcc"
+	BRANCH_64="master"
+
+	TC_32="$TOOLCHAIN_DIR/arter-gcc-32"
+	REPO_32="https://github.com/arter97/arm32-gcc"
+	BRANCH_32="master"
+
+	if [[ $USER != "$USER_OVERRIDE" ]]; then
+		# 9.3.0
+		# BRANCH_64="811a3bc6b40ad924cd1a24a481b6ac5d9227ff7e"
+		# BRANCH_32="566df579fa8123a5357c4bdcbbe62a192c5b37b4"
+		# 11.1
+		BRANCH_64="ec728817533e01cc90e0b51f100b24d943dc900b"
+		BRANCH_32="909f80b4a17f86b1e600451d232bbb8153213c8e"
+	fi
+
+	if [[ $USER != "$USER_OVERRIDE" ]]; then
+
+		git_clone "${REPO_64}" "${BRANCH_64}" "${TC_64}" &
+		check_updates_from_github "${REPO_64}" "${BRANCH_64}" "${TC_64}" &
+
+		git_clone "${REPO_32}" "${BRANCH_32}" "${TC_32}" &
+		check_updates_from_github "${REPO_32}" "${BRANCH_32}" "${TC_32}" &
+
+		wait
+
+		TC_64="$TC_64/$(echo ${REPO_64} | cut -f5 -d/)-${BRANCH_64}"
+		TC_32="$TC_32/$(echo ${REPO_32} | cut -f5 -d/)-${BRANCH_32}"
+	else
+		git_clone "${REPO_64}" "${BRANCH_64}" "${TC_64}"
+		check_updates_from_github "${REPO_64}" "${BRANCH_64}" "${TC_64}"
+
+		git_clone "${REPO_32}" "${BRANCH_32}" "${TC_32}"
+		check_updates_from_github "${REPO_32}" "${BRANCH_32}" "${TC_32}"
+	fi
 
 	CROSS="$TC_64/bin/aarch64-elf-"
 	CROSS_ARM32="$TC_32/bin/arm-eabi-"
@@ -221,7 +400,7 @@ get_aospa_gcc-10.2() {
 get_eva_gcc-12.0() {
 
 	if [[ $USE_LLVM_FOR_GCC == "1" ]]; then
-		if [[ $USER == $USER_OVERRIDE ]]; then
+		if [[ $USER == "$USER_OVERRIDE" ]]; then
 			get_proton_clang-13.0
 		fi
 	fi
@@ -237,57 +416,37 @@ get_eva_gcc-12.0() {
 	REPO_32="https://github.com/mvaisakh/gcc-arm"
 	BRANCH_32="gcc-master"
 
-	git_clone "${REPO_64}" "${BRANCH_64}" "${TC_64}"
-	check_updates_from_github "${REPO_64}" "${BRANCH_64}" "${TC_64}"
+	if [[ $USER != "$USER_OVERRIDE" ]]; then
+		BRANCH_64="fdc38625ac88fba470e0c97e894319437ef1fcf5"
+		BRANCH_32="b0446a5480a79b80cd0d58bdab75f9219035add6"
+	fi
 
-	git_clone "${REPO_32}" "${BRANCH_32}" "${TC_32}"
-	check_updates_from_github "${REPO_32}" "${BRANCH_32}" "${TC_32}"
+	if [[ $USER != "$USER_OVERRIDE" ]]; then
+
+		git_clone "${REPO_64}" "${BRANCH_64}" "${TC_64}" &
+		check_updates_from_github "${REPO_64}" "${BRANCH_64}" "${TC_64}" &
+
+		git_clone "${REPO_32}" "${BRANCH_32}" "${TC_32}" &
+		check_updates_from_github "${REPO_32}" "${BRANCH_32}" "${TC_32}" &
+
+		wait
+
+		TC_64="$TC_64/$(echo ${REPO_64} | cut -f5 -d/)-${BRANCH_64}"
+		TC_32="$TC_32/$(echo ${REPO_32} | cut -f5 -d/)-${BRANCH_32}"
+	else
+		git_clone "${REPO_64}" "${BRANCH_64}" "${TC_64}"
+		check_updates_from_github "${REPO_64}" "${BRANCH_64}" "${TC_64}"
+
+		git_clone "${REPO_32}" "${BRANCH_32}" "${TC_32}"
+		check_updates_from_github "${REPO_32}" "${BRANCH_32}" "${TC_32}"
+	fi
 
 	CROSS="$TC_64/bin/aarch64-elf-"
 	CROSS_ARM32="$TC_32/bin/arm-eabi-"
 
 	MAKEOPTS="CONFIG_TOOLS_SUPPORT_RELR=n CONFIG_RELR=n"
 
-	if [[ $USE_LLVM_FOR_GCC == "1" ]]; then
-
-		PFX_OVERRIDE=$TOOLCHAIN_DIR/proton-clang-13.0/bin/
-
-		if [[ $USER != $USER_OVERRIDE ]]; then
-			echo -e "\nBuilding from CI. Fetching LLVM Tools...\n"
-			SRC="https://github.com/kdrag0n/proton-clang/raw/master/bin"
-			wget -q ${SRC}/lld -O /tmp/ld.lld && chmod +x /tmp/ld.lld
-			wget -q ${SRC}/llvm-ar -O /tmp/llvm-ar && chmod +x /tmp/llvm-ar
-			wget -q ${SRC}/llvm-as -O /tmp/llvm-as && chmod +x /tmp/llvm-as
-			wget -q ${SRC}/llvm-nm -O /tmp/llvm-nm && chmod +x /tmp/llvm-nm
-			wget -q ${SRC}/llvm-objcopy -O /tmp/llvm-strip && chmod +x /tmp/llvm-strip
-			wget -q ${SRC}/llvm-objdump -O /tmp/llvm-objdump && chmod +x /tmp/llvm-objdump
-			cp /tmp/llvm-strip /tmp/llvm-objcopy && chmod +x /tmp/llvm-objcopy # strip is objcopy as well
-			PFX_OVERRIDE=/tmp/
-			echo -e "\nDone.\n"
-		fi
-
-		MAKEOPTS="LD=${PFX_OVERRIDE}ld.lld AR=${PFX_OVERRIDE}llvm-ar AS=${PFX_OVERRIDE}llvm-as NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
-					OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
-					HOSTAR=${PFX_OVERRIDE}llvm-ar HOSTAS=${PFX_OVERRIDE}llvm-as HOSTLD=${PFX_OVERRIDE}ld.lld"
-
-		if [[ $DISABLE_LLD == "1" ]]; then
-			MAKEOPTS="AR=${PFX_OVERRIDE}llvm-ar AS=${PFX_OVERRIDE}llvm-as NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
-						OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
-						HOSTAR=${PFX_OVERRIDE}llvm-ar HOSTAS=${PFX_OVERRIDE}llvm-as"
-		else
-			if [[ $DISABLE_IAS == "1" ]]; then
-				MAKEOPTS="LD=${PFX_OVERRIDE}ld.lld AR=${PFX_OVERRIDE}llvm-ar NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
-							OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
-							HOSTAR=${PFX_OVERRIDE}llvm-ar HOSTLD=${PFX_OVERRIDE}ld.lld"
-			else
-				if [[ $DISABLE_LLD_IAS == "1" ]]; then
-					MAKEOPTS="AR=${PFX_OVERRIDE}llvm-ar NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
-								OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
-								HOSTAR=${PFX_OVERRIDE}llvm-ar"
-				fi
-			fi
-		fi
-	fi
+	use_llvm_for_gcc
 
 }
 
@@ -302,8 +461,18 @@ get_sdclang-12.1() {
 	REPO="https://github.com/ThankYouMario/proprietary_vendor_qcom_sdclang"
 	BRANCH="ruby-12"
 
-	git_clone "${REPO}" "${BRANCH}" "${TC}"
-	check_updates_from_github "${REPO}" "${BRANCH}" "${TC}"
+	if [[ $USER != "$USER_OVERRIDE" ]]; then
+
+		git_clone "${REPO}" "${BRANCH}" "${TC}" &
+		check_updates_from_github "${REPO}" "${BRANCH}" "${TC}" &
+
+		wait
+
+		TC="$TC/$(echo ${REPO} | cut -f5 -d/)-${BRANCH}"
+	else
+		git_clone "${REPO}" "${BRANCH}" "${TC}"
+		check_updates_from_github "${REPO}" "${BRANCH}" "${TC}"
+	fi
 
 	TRIPLE="$TC/bin/aarch64-linux-gnu-"
 
@@ -410,6 +579,7 @@ build() {
 		4) echo -e "\nSelecting SDCLANG-12.1...\n" && get_sdclang-12.1 ;;
 		5) echo -e "\nSelecting AOSP-CLANG-R383902...\n" && get_aosp_clang-r383902 ;;
 		6) echo -e "\nSelecting AOSPA-GCC-10.2...\n" && get_aospa_gcc-10.2 ;;
+		7) echo -e "\nSelecting ARTER-GCC...\n" && get_arter-gcc ;;
 	esac
 
 	if [[ $TARGET_ARCH = "arm" ]]; then
@@ -420,9 +590,17 @@ build() {
 
 	CROSS_COMPILE_ARM32=$CROSS_ARM32
 
-	PATH="${CROSS_COMPILE%/*}:${CROSS_COMPILE_ARM32%/*}:${PATH}"
-	if [[ $PFX_OVERRIDE != "" ]]; then
-		PATH="${CROSS_COMPILE%/*}:${CROSS_COMPILE_ARM32%/*}:${PFX_OVERRIDE%/*}:${PATH}"
+	if [[ $IS_WSL_USER == "1" ]]; then
+		WIN_PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin"
+		PATH="${CROSS_COMPILE%/*}:${CROSS_COMPILE_ARM32%/*}:${WIN_PATH}"
+		if [[ $PFX_OVERRIDE != "" ]]; then
+			PATH="${CROSS_COMPILE%/*}:${CROSS_COMPILE_ARM32%/*}:${PFX_OVERRIDE%/*}:${WIN_PATH}"
+		fi
+	else
+		PATH="${CROSS_COMPILE%/*}:${CROSS_COMPILE_ARM32%/*}:${PATH}"
+		if [[ $PFX_OVERRIDE != "" ]]; then
+			PATH="${CROSS_COMPILE%/*}:${CROSS_COMPILE_ARM32%/*}:${PFX_OVERRIDE%/*}:${PATH}"
+		fi
 	fi
 
 	if [[ ! -f ${TRIPLE%/*}/clang ]]; then
@@ -648,9 +826,11 @@ build_zip() {
 				cp "$OUT_BOOT_DIR"/Image.gz "$ANYKERNEL_DIR" && make_dtimg
 			fi
 		else
-			[[ "$USE_UNCOMPRESSED_KERNEL" != "1" ]] && \
-				cp "$OUT_BOOT_DIR"/Image.gz-dtb "$ANYKERNEL_DIR" || \
-				cp "$OUT_BOOT_DIR"/Image "$ANYKERNEL_DIR"
+			if [[ "$USE_UNCOMPRESSED_KERNEL" != "1" ]]; then
+					cp "$OUT_BOOT_DIR"/Image.gz-dtb "$ANYKERNEL_DIR"
+			else
+					cp "$OUT_BOOT_DIR"/Image "$ANYKERNEL_DIR"
+			fi
 		fi
 
 		if [[ ! -f $OUT_BOOT_DIR/dtbo.img ]]; then
@@ -696,13 +876,13 @@ build_zip() {
 }
 
 upload_zip() {
-	curl bashupload.com -T $(ls -1 "$KERNEL_ROOT_DIR"/out/*.zip)
+	curl bashupload.com -T "$(ls -1 "$KERNEL_ROOT_DIR"/out/*.zip)"
 	str=$(
 		for f in $(ls -1 "$KERNEL_ROOT_DIR"/out/*.zip); do
 			echo "-F f[]=@${f}"
 		done
 	)
-	curl -i $str https://oshi.at
+	curl -i "$str" https://oshi.at
 }
 
 case "${1}" in
