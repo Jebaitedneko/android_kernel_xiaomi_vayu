@@ -87,11 +87,9 @@ git_clone() {
 		folder_fmt="$(echo "${1}" | cut -f5 -d/)-${2}"
 		if [ ! -d "${3}/$folder_fmt" ]; then
 			(
-				mkdir -p "${3}" && cd "${3}/.."
-				run "wget \"${1}/archive/${2}.zip\" &> /dev/null"
-				run "unzip \"${2}.zip\" -d $(pwd) &> /dev/null"
-				run "rm \"${2}.zip\""
-				run "mv \"$folder_fmt\" \"${3}\" &> /dev/null"
+				mkdir -p "${3}"
+				( cd "${3}"/.. && run "wget \"${1}/archive/${2}.zip\" &> /dev/null" )
+				run "unzip \"${3}/../${2}.zip*\" -d \"${3}\" &> /dev/null"
 			)
 		fi
 	fi
