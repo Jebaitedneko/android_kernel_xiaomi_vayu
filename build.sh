@@ -23,7 +23,7 @@ if [[ $USER == "$USER_OVERRIDE" ]]; then
 fi
 
 #############################
-TOOLCHAIN="7"               #
+TOOLCHAIN="2"               #
 # 1) gcc-4.9                #
 # 2) eva-gcc-12             #
 # 3) proton-clang-13        #
@@ -416,10 +416,10 @@ get_eva_gcc-12.0() {
 	REPO_32="https://github.com/mvaisakh/gcc-arm"
 	BRANCH_32="gcc-master"
 
-	if [[ $USER != "$USER_OVERRIDE" ]]; then
-		BRANCH_64="fdc38625ac88fba470e0c97e894319437ef1fcf5"
-		BRANCH_32="b0446a5480a79b80cd0d58bdab75f9219035add6"
-	fi
+#	if [[ $USER != "$USER_OVERRIDE" ]]; then
+# 		BRANCH_64="fdc38625ac88fba470e0c97e894319437ef1fcf5"
+# 		BRANCH_32="b0446a5480a79b80cd0d58bdab75f9219035add6"
+#	fi
 
 	if [[ $USER != "$USER_OVERRIDE" ]]; then
 
