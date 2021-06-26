@@ -231,7 +231,7 @@ static inline int is_low_mem(void)
 
 	int mem = (total_swap_pages ?
 			(get_nr_swap_pages() << (PAGE_SHIFT - 10)) >> 10 :
-			(si_mem_available() + cur_fpgs) * 100 / totalram_pages);
+			(si_mem_available() + cur_fpgs) * 100 / totalram_pages());
 
 	bool mem_limit = mem < free_limit;
 	bool file_limit = cur_file_mem < free_file_limit;
