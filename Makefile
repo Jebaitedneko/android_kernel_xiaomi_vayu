@@ -685,7 +685,6 @@ LLVM_NM		:= llvm-nm
 export LLVM_AR LLVM_NM
 endif
 
-ifeq ($(cc-name),gcc)
 ifdef CONFIG_LTO_GCC
 LTO_CFLAGS	:= -flto -flto=jobserver -fipa-pta -fno-fat-lto-objects \
 		   -fuse-linker-plugin -fwhole-program
@@ -704,7 +703,6 @@ endif
 
 ifdef CONFIG_GCC_GRAPHITE
 KBUILD_CFLAGS	+= -fgraphite-identity -floop-nest-optimize
-endif
 endif
 
 # The arch Makefile can set ARCH_{CPP,A,C}FLAGS to override the default
@@ -1056,10 +1054,8 @@ ifeq ($(CONFIG_STRIP_ASM_SYMS),y)
 LDFLAGS_vmlinux	+= $(call ld-option, -X,)
 endif
 
-ifeq ($(ld-name),lld)
 ifeq ($(CONFIG_RELR),y)
 LDFLAGS_vmlinux	+= --pack-dyn-relocs=relr
-endif
 endif
 
 # Default kernel image to build when no specific target is given.
