@@ -90,7 +90,6 @@ static void nvt_ts_late_resume(struct early_suspend *h);
 #endif
 static int32_t nvt_ts_suspend(struct device *dev);
 static int32_t nvt_ts_resume(struct device *dev);
-extern int dsi_panel_lockdown_info_read(unsigned char *plockdowninfo);
 extern void dsi_panel_doubleclick_enable(bool on);
 #ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
 static int32_t nvt_check_palm(uint8_t input_id, uint8_t *data);
@@ -1108,6 +1107,32 @@ static bool nvt_cmds_panel_info(void)
 		}
 	}
 	return panel_id;
+}
+
+static inline int dsi_panel_lockdown_info_read(unsigned char *plockdowninfo)
+{
+	if (nvt_cmds_panel_info()) {
+		NVT_LOG("%s: lockdown panel is tianma\n", __func__);
+		plockdowninfo[0] = 0x46;
+		plockdowninfo[1] = 0x36;
+		plockdowninfo[2] = 0x32;
+		plockdowninfo[3] = 0x01;
+		plockdowninfo[4] = 0x4a;
+		plockdowninfo[5] = 0x14;
+		plockdowninfo[6] = 0x31;
+		plockdowninfo[7] = 0x00;
+	} else {
+		NVT_LOG("%s: lockdown panel is huaxing\n", __func__);
+		plockdowninfo[0] = 0x00;
+		plockdowninfo[1] = 0x00;
+		plockdowninfo[2] = 0x00;
+		plockdowninfo[3] = 0x00;
+		plockdowninfo[4] = 0x00;
+		plockdowninfo[5] = 0x00;
+		plockdowninfo[6] = 0x00;
+		plockdowninfo[7] = 0x00;
+	}
+	return 1;
 }
 
 static int nvt_get_panel_type(struct nvt_ts_data *ts_data)
