@@ -633,8 +633,13 @@ int cam_sensor_match_id(struct cam_sensor_ctrl_t *s_ctrl)
 	rc = camera_io_dev_read(
 		&(s_ctrl->io_master_info),
 		slave_info->sensor_id_reg_addr,
+#if 1
+		&chipid, s_ctrl->sensor_probe_addr_type,
+		s_ctrl->sensor_probe_data_type);
+#else
 		&chipid, CAMERA_SENSOR_I2C_TYPE_WORD,
 		CAMERA_SENSOR_I2C_TYPE_WORD);
+#endif
 
 	CAM_DBG(CAM_SENSOR, "read id: 0x%x expected id 0x%x:",
 			 chipid, slave_info->sensor_id);
@@ -988,6 +993,68 @@ int32_t cam_sensor_driver_cmd(struct cam_sensor_ctrl_t *s_ctrl,
 			}
 			s_ctrl->sensor_state = CAM_SENSOR_CONFIG;
 		}
+	}
+		break;
+	case CAM_UPDATE_REG: {
+		struct cam_sensor_i2c_reg_setting user_reg_setting;
+		struct cam_sensor_i2c_reg_array *i2c_reg_setting = NULL;
+		int i;
+
+		rc = copy_from_user(&user_reg_setting, (void __user *)cmd->handle, sizeof(user_reg_setting));
+		if (rc < 0)
+			goto release_mutex;
+
+		i2c_reg_setting = kzalloc(sizeof(struct cam_sensor_i2c_reg_array) *
+			user_reg_setting.size, GFP_KERNEL);
+		if (!i2c_reg_setting) {
+			rc = -ENOMEM;
+			goto release_mutex;
+		}
+
+		rc = copy_from_user(i2c_reg_setting, (void __user *)user_reg_setting.reg_setting,
+			sizeof(struct cam_sensor_i2c_reg_array) * user_reg_setting.size);
+		if (rc < 0) {
+			kfree(i2c_reg_setting);
+			goto release_mutex;
+		}
+		user_reg_setting.reg_setting = i2c_reg_setting;
+		rc = camera_io_dev_write(&s_ctrl->io_master_info, &user_reg_setting);
+		kfree(i2c_reg_setting);
+	}
+		break;
+	case CAM_READ_REG: {
+		struct cam_sensor_i2c_reg_setting user_reg_setting;
+		struct cam_sensor_i2c_reg_array *i2c_reg_setting;
+		int ret = 0;
+		int i;
+
+		rc = copy_from_user(&user_reg_setting, (void __user *)cmd->handle, sizeof(user_reg_setting));
+		if (rc < 0)
+			goto release_mutex;
+
+		i2c_reg_setting = kzalloc(sizeof(struct cam_sensor_i2c_reg_array) *
+			user_reg_setting.size, GFP_KERNEL);
+		if (!i2c_reg_setting) {
+			rc = -ENOMEM;
+			goto release_mutex;
+		}
+
+		rc = copy_from_user(i2c_reg_setting, (void __user *)user_reg_setting.reg_setting,
+			sizeof(struct cam_sensor_i2c_reg_array) * user_reg_setting.size);
+		if (rc < 0) {
+			kfree(i2c_reg_setting);
+			goto release_mutex;
+		}
+
+		for (i = 0; i < user_reg_setting.size; i++) {
+			ret += camera_io_dev_read(
+				&(s_ctrl->io_master_info),
+				i2c_reg_setting[i].reg_addr,
+				&i2c_reg_setting[i].reg_data,
+				CAMERA_SENSOR_I2C_TYPE_WORD,
+				CAMERA_SENSOR_I2C_TYPE_BYTE);
+		}
+		kfree(i2c_reg_setting);
 	}
 		break;
 	default:
