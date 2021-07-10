@@ -41,7 +41,7 @@
 #define NVT_DUMP_PARTITION_LEN		(1024)
 #define NVT_DUMP_PARTITION_PATH		"/data/local/tmp"
 
-struct timeval start, end;
+static struct timeval start, end;
 const struct firmware *fw_entry = NULL;
 static size_t fw_need_write_size = 0;
 static uint8_t *fwbuf = NULL;
@@ -99,7 +99,7 @@ static int32_t nvt_download_init(void)
 	/* NVT_LOG("NVT_TRANSFER_LEN = 0x%06X\n", NVT_TRANSFER_LEN); */
 
 	if (fwbuf == NULL) {
-		fwbuf = (uint8_t *)kzalloc((NVT_TRANSFER_LEN+1), GFP_KERNEL);
+		fwbuf = (uint8_t *)kzalloc((NVT_TRANSFER_LEN + 1 + DUMMY_BYTES), GFP_KERNEL);
 		if(fwbuf == NULL) {
 			NVT_ERR("kzalloc for fwbuf failed!\n");
 			return -ENOMEM;
@@ -298,6 +298,35 @@ static void update_firmware_release(void)
 	fw_entry = NULL;
 }
 
+int touch_fw_override = 0;
+char *touch_fw_name = "j20s_novatek_ts_fw01.bin";
+int panel_is_tianma = 0;
+
+static void update_firmware_override(int choice) {
+	if (panel_is_tianma) {
+		switch (choice) {
+			case 1:  touch_fw_name = "j20s_novatek_ts_fw01.2f0c.bin"; break;
+			case 2:  touch_fw_name = "j20s_novatek_ts_fw01.2fa7.bin"; break;
+			case 3:  touch_fw_name = "j20s_novatek_ts_fw01.3a42.bin"; break;
+			case 4:  touch_fw_name = "j20s_novatek_ts_fw01.8ac8.bin"; break;
+			case 8:  touch_fw_name = "j20s_novatek_ts_mp01.1b3b.bin"; break;
+			case 9:  touch_fw_name = "j20s_novatek_ts_mp01.8cb5.bin"; break;
+			default: touch_fw_name = "j20s_novatek_ts_fw01.bin"; break;
+		}
+		NVT_LOG("tianma: override");
+	} else {
+		switch (choice) {
+			case 5:  touch_fw_name = "j20s_novatek_ts_fw02.71e7.bin"; break;
+			case 6:  touch_fw_name = "j20s_novatek_ts_fw02.9874.bin"; break;
+			case 7:  touch_fw_name = "j20s_novatek_ts_fw02.fd13.bin"; break;
+			case 10: touch_fw_name = "j20s_novatek_ts_mp02.2c1f.bin"; break;
+			case 11: touch_fw_name = "j20s_novatek_ts_mp02.9fb2.bin"; break;
+			default: touch_fw_name = "j20s_novatek_ts_fw02.bin"; break;
+		}
+		NVT_LOG("huaxing: override");
+	}
+}
+
 /*******************************************************
 Description:
 	Novatek touchscreen request update firmware function.
@@ -310,12 +339,17 @@ static int32_t update_firmware_request(const char *filename)
 	uint8_t retry = 0;
 	int32_t ret = 0;
 
+	if (touch_fw_override) {
+		update_firmware_override(touch_fw_override);
+		filename = touch_fw_name;
+	}
+
 	if (NULL == filename) {
 		return -ENOENT;
 	}
 
 	while (1) {
-		NVT_LOG("filename is %s\n", filename);
+		pr_info("[NVT-ts-spi] %s: filename is %s\n", __func__, filename);
 
 		ret = request_firmware(&fw_entry, filename, &ts->client->dev);
 		if (ret) {
@@ -960,7 +994,7 @@ fail:
 			NVT_ERR("error, retry=%d\n", retry);
 			nvt_read_bld_hw_crc();
 #if NVT_TOUCH_ESD_DISP_RECOVERY
-			if (nvt_check_crc_done_ilm_err()) {
+			if (nvt_check_crc_done_ilm_err() || nvt_check_crc_done_ilm_err() || nvt_check_crc_done_ilm_err()) {
 				NVT_ERR("set display off to trigger display esd recovery.\n");
 				nvt_f2c_disp_off();
 			}
