@@ -35,7 +35,11 @@
  * Max handles supported by cam_req_mgr
  * It includes both session and device handles
  */
+#if 1
+#define CAM_REQ_MGR_MAX_HANDLES           128
+#else
 #define CAM_REQ_MGR_MAX_HANDLES           64
+#endif
 #define CAM_REQ_MGR_MAX_HANDLES_V2        128
 #define MAX_LINKS_PER_SESSION             2
 
