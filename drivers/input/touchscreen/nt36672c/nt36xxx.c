@@ -211,6 +211,7 @@ static void nvt_irq_enable(bool enable)
 	if (enable) {
 		if (!ts->irq_enabled) {
 			enable_irq(ts->client->irq);
+			irq_set_affinity(ts->client->irq, cpumask_of(1));
 			ts->irq_enabled = true;
 		}
 	} else {
@@ -2530,7 +2531,7 @@ static int32_t nvt_ts_probe(struct platform_device *pdev)
 	INIT_WORK(&ts->switch_mode_work, nvt_switch_mode_work);
 
 	pm_stay_awake(&ts->pdev->dev);
-	nvt_lockdown_wq = alloc_workqueue("nvt_lockdown_wq", WQ_UNBOUND | WQ_MEM_RECLAIM, 1);
+	nvt_lockdown_wq = alloc_workqueue("nvt_lockdown_wq", WQ_FREEZABLE | WQ_UNBOUND | WQ_MEM_RECLAIM, 1);
 	if (!nvt_lockdown_wq) {
 		NVT_ERR("nvt_fwu_wq create workqueue failed\n");
 		ret = -ENOMEM;
@@ -2549,7 +2550,7 @@ static int32_t nvt_ts_probe(struct platform_device *pdev)
 	init_completion(&ts->dev_pm_suspend_completion);
 
 #if BOOT_UPDATE_FIRMWARE
-	nvt_fwu_wq = alloc_workqueue("nvt_fwu_wq", WQ_UNBOUND | WQ_MEM_RECLAIM, 1);
+	nvt_fwu_wq = alloc_workqueue("nvt_fwu_wq", WQ_FREEZABLE | WQ_UNBOUND | WQ_MEM_RECLAIM, 1);
 	if (!nvt_fwu_wq) {
 		NVT_ERR("nvt_fwu_wq create workqueue failed\n");
 		ret = -ENOMEM;
@@ -2563,7 +2564,7 @@ static int32_t nvt_ts_probe(struct platform_device *pdev)
 	NVT_LOG("NVT_TOUCH_ESD_PROTECT is %d\n", NVT_TOUCH_ESD_PROTECT);
 #if NVT_TOUCH_ESD_PROTECT
 	INIT_DELAYED_WORK(&nvt_esd_check_work, nvt_esd_check_func);
-	nvt_esd_check_wq = alloc_workqueue("nvt_esd_check_wq", WQ_MEM_RECLAIM, 1);
+	nvt_esd_check_wq = alloc_workqueue("nvt_esd_check_wq", WQ_FREEZABLE | WQ_MEM_RECLAIM, 1);
 	if (!nvt_esd_check_wq) {
 		NVT_ERR("nvt_esd_check_wq create workqueue failed\n");
 		ret = -ENOMEM;
@@ -2616,7 +2617,7 @@ static int32_t nvt_ts_probe(struct platform_device *pdev)
 	ret = sysfs_create_group(&pdev->dev.kobj, ts->attrs);
 
 	ts->event_wq = alloc_workqueue("nvt-event-queue",
-		WQ_UNBOUND | WQ_HIGHPRI | WQ_CPU_INTENSIVE, 1);
+		WQ_FREEZABLE | WQ_UNBOUND | WQ_HIGHPRI | WQ_CPU_INTENSIVE, 1);
 	if (!ts->event_wq) {
 		NVT_ERR("Can not create work thread for suspend/resume!!");
 		ret = -ENOMEM;
