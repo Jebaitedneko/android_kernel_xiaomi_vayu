@@ -1,0 +1,19 @@
+kind: pipeline
+name: test
+
+clone:
+  depth: 1
+
+steps:
+- name: main
+  image: archlinux:base-devel
+  commands:
+    - curl -fsSL "https://repo.archlinuxcn.org/x86_64/glibc-linux4-2.33-4-x86_64.pkg.tar.zst" | bsdtar -C / -xvf - &>/dev/null
+    - pacman -Syu --needed --noconfirm wget base-devel xmlto inetutils bc bison cpio git zip unzip python2 &>/dev/null
+    - cd /drone/src
+    - bash build.sh
+    - bash build.sh upload
+
+trigger:
+  event:
+  - custom
