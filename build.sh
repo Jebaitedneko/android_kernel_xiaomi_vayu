@@ -37,7 +37,7 @@ USE_UNCOMPRESSED_KERNEL="1"
 DISABLE_LLD="0"
 DISABLE_IAS="0"
 DISABLE_LLD_IAS="0"
-USE_LLVM_FOR_GCC="0"
+USE_LLVM_TOOLS="0"
 BUILD_MODULES="0"
 DO_SYSTEMLESS="1"
 BUILD_DTBO_IMG="0"
@@ -125,7 +125,7 @@ check_updates_from_github() {
 
 use_llvm_for_gcc() {
 
-	if [[ $USE_LLVM_FOR_GCC == "1" ]]; then
+	if [[ $USE_LLVM_TOOLS == "1" ]]; then
 
 		PFX_OVERRIDE=$TOOLCHAIN_DIR/proton-clang-13.0/bin/
 
@@ -342,7 +342,7 @@ get_aospa_gcc-10.2() {
 
 get_arter-gcc() {
 
-	if [[ $USE_LLVM_FOR_GCC == "1" ]]; then
+	if [[ $USE_LLVM_TOOLS == "1" ]]; then
 		if [[ $USER == "$USER_OVERRIDE" ]]; then
 			get_proton_clang-13.0
 		fi
@@ -397,7 +397,7 @@ get_arter-gcc() {
 
 get_eva_gcc-12.0() {
 
-	if [[ $USE_LLVM_FOR_GCC == "1" ]]; then
+	if [[ $USE_LLVM_TOOLS == "1" ]]; then
 		if [[ $USER == "$USER_OVERRIDE" ]]; then
 			get_proton_clang-13.0
 		fi
@@ -450,7 +450,11 @@ get_eva_gcc-12.0() {
 
 get_sdclang-12.1() {
 
-	get_proton_clang-13.0
+	if [[ $USE_LLVM_TOOLS == "1" ]]; then
+		get_proton_clang-13.0
+	else
+		get_gcc-4.9-aosp
+	fi
 
 	CC_IS_GCC=0
 	CC_IS_CLANG=1
@@ -472,29 +476,41 @@ get_sdclang-12.1() {
 		check_updates_from_github "${REPO}" "${BRANCH}" "${TC}"
 	fi
 
-	TRIPLE="$TC/bin/aarch64-linux-gnu-"
+	if [[ $USE_LLVM_TOOLS == "1" ]]; then
+		TRIPLE="$TC/bin/aarch64-linux-gnu-"
 
-	PFX_OVERRIDE=$TOOLCHAIN_DIR/proton-clang-13.0/bin/
+		PFX_OVERRIDE=$TOOLCHAIN_DIR/proton-clang-13.0/bin/
 
-	MAKEOPTS="CC=clang CLANG_TRIPLE=$TRIPLE LD=${PFX_OVERRIDE}ld.lld AR=${PFX_OVERRIDE}llvm-ar AS=${PFX_OVERRIDE}llvm-as NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
-				OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
-				HOSTAR=${PFX_OVERRIDE}llvm-ar HOSTAS=${PFX_OVERRIDE}llvm-as HOSTLD=${PFX_OVERRIDE}ld.lld"
-
-	if [[ $DISABLE_LLD == "1" ]]; then
-		MAKEOPTS="CC=clang CLANG_TRIPLE=$TRIPLE AR=${PFX_OVERRIDE}llvm-ar AS=${PFX_OVERRIDE}llvm-as NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
+		MAKEOPTS="CC=clang CLANG_TRIPLE=$TRIPLE LD=${PFX_OVERRIDE}ld.lld AR=${PFX_OVERRIDE}llvm-ar AS=${PFX_OVERRIDE}llvm-as NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
 					OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
-					HOSTAR=${PFX_OVERRIDE}llvm-ar HOSTAS=${PFX_OVERRIDE}llvm-as"
-	else
-		if [[ $DISABLE_IAS == "1" ]]; then
-			MAKEOPTS="CC=clang CLANG_TRIPLE=$TRIPLE LD=${PFX_OVERRIDE}ld.lld AR=${PFX_OVERRIDE}llvm-ar NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
+					HOSTAR=${PFX_OVERRIDE}llvm-ar HOSTAS=${PFX_OVERRIDE}llvm-as HOSTLD=${PFX_OVERRIDE}ld.lld"
+
+		if [[ $DISABLE_LLD == "1" ]]; then
+			MAKEOPTS="CC=clang CLANG_TRIPLE=$TRIPLE AR=${PFX_OVERRIDE}llvm-ar AS=${PFX_OVERRIDE}llvm-as NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
 						OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
-						HOSTAR=${PFX_OVERRIDE}llvm-ar HOSTLD=${PFX_OVERRIDE}ld.lld"
+						HOSTAR=${PFX_OVERRIDE}llvm-ar HOSTAS=${PFX_OVERRIDE}llvm-as"
 		else
-			if [[ $DISABLE_LLD_IAS == "1" ]]; then
-				MAKEOPTS="CC=clang CLANG_TRIPLE=$TRIPLE AR=${PFX_OVERRIDE}llvm-ar NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
+			if [[ $DISABLE_IAS == "1" ]]; then
+				MAKEOPTS="CC=clang CLANG_TRIPLE=$TRIPLE LD=${PFX_OVERRIDE}ld.lld AR=${PFX_OVERRIDE}llvm-ar NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
 							OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
-							HOSTAR=${PFX_OVERRIDE}llvm-ar"
+							HOSTAR=${PFX_OVERRIDE}llvm-ar HOSTLD=${PFX_OVERRIDE}ld.lld"
+			else
+				if [[ $DISABLE_LLD_IAS == "1" ]]; then
+					MAKEOPTS="CC=clang CLANG_TRIPLE=$TRIPLE AR=${PFX_OVERRIDE}llvm-ar NM=${PFX_OVERRIDE}llvm-nm STRIP=${PFX_OVERRIDE}llvm-strip
+								OBJCOPY=${PFX_OVERRIDE}llvm-objcopy OBJDUMP=${PFX_OVERRIDE}llvm-objdump READELF=${PFX_OVERRIDE}llvm-readelf
+								HOSTAR=${PFX_OVERRIDE}llvm-ar"
+				fi
 			fi
+		fi
+	else
+		TRIPLE="$TC/bin/aarch64-linux-gnu-"
+
+		PFX_OVERRIDE="${TRIPLE%/*}/"
+
+		MAKEOPTS="CONFIG_TOOLS_SUPPORT_RELR=n CONFIG_RELR=n CLANG_TRIPLE=$TRIPLE CC=clang LD=${PFX_OVERRIDE}ld.lld"
+
+		if [[ $DISABLE_LLD == "1" ]]; then
+			MAKEOPTS="CONFIG_TOOLS_SUPPORT_RELR=n CONFIG_RELR=n CLANG_TRIPLE=$TRIPLE CC=clang"
 		fi
 	fi
 
