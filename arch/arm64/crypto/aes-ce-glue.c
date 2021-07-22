@@ -50,7 +50,7 @@ static void aes_cipher_encrypt(struct crypto_tfm *tfm, u8 dst[], u8 const src[])
 {
 	struct crypto_aes_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	if (!crypto_simd_usable()) {
+	if (!may_use_simd()) {
 		aes_encrypt(ctx, dst, src);
 		return;
 	}
@@ -64,7 +64,7 @@ static void aes_cipher_decrypt(struct crypto_tfm *tfm, u8 dst[], u8 const src[])
 {
 	struct crypto_aes_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	if (!crypto_simd_usable()) {
+	if (!may_use_simd()) {
 		aes_decrypt(ctx, dst, src);
 		return;
 	}

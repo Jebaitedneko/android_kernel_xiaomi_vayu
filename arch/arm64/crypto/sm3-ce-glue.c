@@ -29,7 +29,7 @@ asmlinkage void sm3_ce_transform(struct sm3_state *sst, u8 const *src,
 static int sm3_ce_update(struct shash_desc *desc, const u8 *data,
 			 unsigned int len)
 {
-	if (!crypto_simd_usable())
+	if (!may_use_simd())
 		return crypto_sm3_update(desc, data, len);
 
 	kernel_neon_begin();
@@ -41,7 +41,7 @@ static int sm3_ce_update(struct shash_desc *desc, const u8 *data,
 
 static int sm3_ce_final(struct shash_desc *desc, u8 *out)
 {
-	if (!crypto_simd_usable())
+	if (!may_use_simd())
 		return crypto_sm3_finup(desc, NULL, 0, out);
 
 	kernel_neon_begin();
@@ -54,7 +54,7 @@ static int sm3_ce_final(struct shash_desc *desc, u8 *out)
 static int sm3_ce_finup(struct shash_desc *desc, const u8 *data,
 			unsigned int len, u8 *out)
 {
-	if (!crypto_simd_usable())
+	if (!may_use_simd())
 		return crypto_sm3_finup(desc, data, len, out);
 
 	kernel_neon_begin();

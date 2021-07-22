@@ -521,7 +521,7 @@ static void ctr_encrypt_one(struct crypto_skcipher *tfm, const u8 *src, u8 *dst)
 
 static int __maybe_unused ctr_encrypt_sync(struct skcipher_request *req)
 {
-	if (!crypto_simd_usable())
+	if (!may_use_simd())
 		return crypto_ctr_encrypt_walk(req, ctr_encrypt_one);
 
 	return ctr_encrypt(req);
@@ -879,7 +879,7 @@ static void mac_do_update(struct crypto_aes_ctx *ctx, u8 const in[], int blocks,
 {
 	int rounds = 6 + ctx->key_length / 4;
 
-	if (crypto_simd_usable()) {
+	if (may_use_simd()) {
 		int rem;
 
 		do {

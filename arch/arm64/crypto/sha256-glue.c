@@ -101,7 +101,7 @@ static int sha256_update_neon(struct shash_desc *desc, const u8 *data,
 {
 	struct sha256_state *sctx = shash_desc_ctx(desc);
 
-	if (!crypto_simd_usable())
+	if (!may_use_simd())
 		return sha256_base_do_update(desc, data, len,
 				__sha256_block_data_order);
 
@@ -130,7 +130,7 @@ static int sha256_update_neon(struct shash_desc *desc, const u8 *data,
 static int sha256_finup_neon(struct shash_desc *desc, const u8 *data,
 			     unsigned int len, u8 *out)
 {
-	if (!crypto_simd_usable()) {
+	if (!may_use_simd()) {
 		if (len)
 			sha256_base_do_update(desc, data, len,
 				__sha256_block_data_order);
