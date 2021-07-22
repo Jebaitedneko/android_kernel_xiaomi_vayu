@@ -197,7 +197,6 @@ static struct shash_alg sha3_224 = {
 	.base		=	{
 		.cra_name	=	"sha3-224",
 		.cra_driver_name =	"sha3-224-generic",
-		.cra_flags	=	CRYPTO_ALG_TYPE_SHASH,
 		.cra_blocksize	=	SHA3_224_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
 	}
@@ -212,7 +211,6 @@ static struct shash_alg sha3_256 = {
 	.base		=	{
 		.cra_name	=	"sha3-256",
 		.cra_driver_name =	"sha3-256-generic",
-		.cra_flags	=	CRYPTO_ALG_TYPE_SHASH,
 		.cra_blocksize	=	SHA3_256_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
 	}
@@ -227,7 +225,6 @@ static struct shash_alg sha3_384 = {
 	.base		=	{
 		.cra_name	=	"sha3-384",
 		.cra_driver_name =	"sha3-384-generic",
-		.cra_flags	=	CRYPTO_ALG_TYPE_SHASH,
 		.cra_blocksize	=	SHA3_384_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
 	}
@@ -242,7 +239,6 @@ static struct shash_alg sha3_512 = {
 	.base		=	{
 		.cra_name	=	"sha3-512",
 		.cra_driver_name =	"sha3-512-generic",
-		.cra_flags	=	CRYPTO_ALG_TYPE_SHASH,
 		.cra_blocksize	=	SHA3_512_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
 	}
