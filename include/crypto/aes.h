@@ -90,4 +90,7 @@ void aes_decrypt(const struct crypto_aes_ctx *ctx, u8 *out, const u8 *in);
 #undef aes_mac_update
 #define aes_mac_update         neon_aes_mac_update
 
+extern const u8 crypto_aes_sbox[];
+extern const u8 crypto_aes_inv_sbox[];
+
 #endif
