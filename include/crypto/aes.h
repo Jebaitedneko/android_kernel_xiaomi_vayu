@@ -37,4 +37,26 @@ int crypto_aes_set_key(struct crypto_tfm *tfm, const u8 *in_key,
 		unsigned int key_len);
 int crypto_aes_expand_key(struct crypto_aes_ctx *ctx, const u8 *in_key,
 		unsigned int key_len);
+
+#undef aes_setkey
+#define aes_setkey             crypto_aes_set_key
+#undef aes_expandkey
+#define aes_expandkey          crypto_aes_expand_key
+#undef aes_ecb_encrypt
+#define aes_ecb_encrypt                neon_aes_ecb_encrypt
+#undef aes_ecb_decrypt
+#define aes_ecb_decrypt                neon_aes_ecb_decrypt
+#undef aes_cbc_encrypt
+#define aes_cbc_encrypt                neon_aes_cbc_encrypt
+#undef aes_cbc_decrypt
+#define aes_cbc_decrypt                neon_aes_cbc_decrypt
+#undef aes_ctr_encrypt
+#define aes_ctr_encrypt                neon_aes_ctr_encrypt
+#undef aes_xts_encrypt
+#define aes_xts_encrypt                neon_aes_xts_encrypt
+#undef aes_xts_decrypt
+#define aes_xts_decrypt                neon_aes_xts_decrypt
+#undef aes_mac_update
+#define aes_mac_update         neon_aes_mac_update
+
 #endif
