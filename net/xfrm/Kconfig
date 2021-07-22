@@ -15,7 +15,7 @@ config XFRM_ALGO
 	select XFRM
 	select CRYPTO
 	select CRYPTO_HASH
-	select CRYPTO_BLKCIPHER
+	select CRYPTO_SKCIPHER
 
 config XFRM_USER
 	tristate "Transformation user configuration interface"
