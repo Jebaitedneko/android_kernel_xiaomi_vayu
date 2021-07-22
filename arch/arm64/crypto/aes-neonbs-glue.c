@@ -312,7 +312,7 @@ static void ctr_encrypt_one(struct crypto_skcipher *tfm, const u8 *src, u8 *dst)
 
 static int ctr_encrypt_sync(struct skcipher_request *req)
 {
-	if (!crypto_simd_usable())
+	if (!may_use_simd())
 		return crypto_ctr_encrypt_walk(req, ctr_encrypt_one);
 
 	return ctr_encrypt(req);

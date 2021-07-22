@@ -21,7 +21,7 @@ static void sm4_ce_encrypt(struct crypto_tfm *tfm, u8 *out, const u8 *in)
 {
 	const struct crypto_sm4_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	if (!crypto_simd_usable()) {
+	if (!may_use_simd()) {
 		crypto_sm4_encrypt(tfm, out, in);
 	} else {
 		kernel_neon_begin();
@@ -34,7 +34,7 @@ static void sm4_ce_decrypt(struct crypto_tfm *tfm, u8 *out, const u8 *in)
 {
 	const struct crypto_sm4_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	if (!crypto_simd_usable()) {
+	if (!may_use_simd()) {
 		crypto_sm4_decrypt(tfm, out, in);
 	} else {
 		kernel_neon_begin();

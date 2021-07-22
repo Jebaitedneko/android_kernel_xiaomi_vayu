@@ -54,7 +54,7 @@ static void __sha512_block_data_order(struct sha512_state *sst, u8 const *src,
 static int sha512_ce_update(struct shash_desc *desc, const u8 *data,
 			    unsigned int len)
 {
-	sha512_block_fn *fn = crypto_simd_usable() ? __sha512_ce_transform
+	sha512_block_fn *fn = may_use_simd() ? __sha512_ce_transform
 						   : __sha512_block_data_order;
 
 	sha512_base_do_update(desc, data, len, fn);
@@ -64,7 +64,7 @@ static int sha512_ce_update(struct shash_desc *desc, const u8 *data,
 static int sha512_ce_finup(struct shash_desc *desc, const u8 *data,
 			   unsigned int len, u8 *out)
 {
-	sha512_block_fn *fn = crypto_simd_usable() ? __sha512_ce_transform
+	sha512_block_fn *fn = may_use_simd() ? __sha512_ce_transform
 						   : __sha512_block_data_order;
 
 	sha512_base_do_update(desc, data, len, fn);
@@ -74,7 +74,7 @@ static int sha512_ce_finup(struct shash_desc *desc, const u8 *data,
 
 static int sha512_ce_final(struct shash_desc *desc, u8 *out)
 {
-	sha512_block_fn *fn = crypto_simd_usable() ? __sha512_ce_transform
+	sha512_block_fn *fn = may_use_simd() ? __sha512_ce_transform
 						   : __sha512_block_data_order;
 
 	sha512_base_do_finalize(desc, fn);

@@ -103,7 +103,7 @@ void ghash_do_simd_update(int blocks, u64 dg[], const char *src,
 					      u64 const h[][2],
 					      const char *head))
 {
-	if (likely(crypto_simd_usable())) {
+	if (likely(may_use_simd())) {
 		kernel_neon_begin();
 		simd_update(blocks, dg, src, key->h, head);
 		kernel_neon_end();
@@ -369,7 +369,7 @@ static int gcm_encrypt(struct aead_request *req)
 
 	err = skcipher_walk_aead_encrypt(&walk, req, false);
 
-	if (likely(crypto_simd_usable())) {
+	if (likely(may_use_simd())) {
 		do {
 			const u8 *src = walk.src.virt.addr;
 			u8 *dst = walk.dst.virt.addr;
@@ -488,7 +488,7 @@ static int gcm_decrypt(struct aead_request *req)
 
 	err = skcipher_walk_aead_decrypt(&walk, req, false);
 
-	if (likely(crypto_simd_usable())) {
+	if (likely(may_use_simd())) {
 		int ret;
 
 		do {
