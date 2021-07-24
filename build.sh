@@ -23,12 +23,12 @@ if [[ $USER == "$USER_OVERRIDE" ]]; then
 fi
 
 #############################
-TOOLCHAIN="2"               #
+TOOLCHAIN="5"               #
 # 1) gcc-4.9                #
 # 2) eva-gcc-12             #
 # 3) proton-clang-13        #
 # 4) sdclang-12.1           #
-# 5) aosp-clang-r383902     #
+# 5) aosp-clang-r416183c    #
 # 6) aospa-gcc-10.2         #
 # 7) arter-gcc [9.3 & 11.1] #
 #############################
@@ -516,22 +516,22 @@ get_sdclang-12.1() {
 
 }
 
-get_aosp_clang-r383902() {
+get_aosp_clang-r416183c() {
 
 	get_gcc-4.9-aosp
 
 	CC_IS_GCC=0
 	CC_IS_CLANG=1
 
-	TC="$TOOLCHAIN_DIR/aosp-clang-r383902"
+	TC="$TOOLCHAIN_DIR/aosp-clang-r416183c"
 
 	if [ ! -d "$TC/bin" ]; then
 		mkdir -p "$TC"
 		(
 			cd "$TC"
-			if [ ! -f "clang-r383902.tar.gz" ]; then
-				run "wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master/clang-r383902.tar.gz &> /dev/null"
-				run "tar -xf clang-r383902.tar.gz -C . &> /dev/null"
+			if [ ! -f "clang-r416183c.tar.gz" ]; then
+				run "wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master/clang-r416183c.tar.gz &> /dev/null"
+				run "tar -xf clang-r416183c.tar.gz -C . &> /dev/null"
 			fi
 		)
 	fi
@@ -591,7 +591,7 @@ build() {
 		2) echo -e "\nSelecting EVA-GCC-12.0...\n" && get_eva_gcc-12.0 ;;
 		3) echo -e "\nSelecting PROTON-CLANG-13.0...\n" && get_proton_clang-13.0 ;;
 		4) echo -e "\nSelecting SDCLANG-12.1...\n" && get_sdclang-12.1 ;;
-		5) echo -e "\nSelecting AOSP-CLANG-R383902...\n" && get_aosp_clang-r383902 ;;
+		5) echo -e "\nSelecting AOSP-CLANG-R416183c...\n" && get_aosp_clang-r416183c ;;
 		6) echo -e "\nSelecting AOSPA-GCC-10.2...\n" && get_aospa_gcc-10.2 ;;
 		7) echo -e "\nSelecting ARTER-GCC...\n" && get_arter-gcc ;;
 	esac
