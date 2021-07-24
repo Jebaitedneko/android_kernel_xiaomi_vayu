@@ -1,0 +1,94 @@
+From 7b27ca7dadcf5b14524e400717db664bc2006817 Mon Sep 17 00:00:00 2001
+From: Jingwen Chen <jingwen@google.com>
+Date: Fri, 24 Jul 2020 09:13:49 +0000
+Subject: [PATCH] Fix droiddoc disting when WITHOUT_CHECK_API is true.
+
+When WITHOUT_CHECK_API=true, the droidstubs apiFile can be nil. Fix this
+by defensively checking for nil paths when making the TaggedDistFiles,
+and also in android.MakeDefaultDistFiles.
+
+The error message reported in r.android.com/1335521 was:
+
+"internal error: panic in GenerateBuildActions for singleton androidmk
+  Dist file should not be nil for the default tag in
+  android.net.ipsec.ike.stubs.source in translateAndroidMkModule for
+  module android.net.ipsec.ike.stubs.source variant android_common"
+
+Test: WITHOUT_CHECK_API=true m droid dist
+
+Bug: 152834186
+Signed-off-by: Jingwen Chen <jingwen@google.com>
+Change-Id: I1b1f7c0b7a0e1c0ed5e15957d0162c47fd3ec197
+---
+ android/androidmk.go |  5 ++++-
+ android/module.go    |  6 ++++++
+ java/androidmk.go    | 12 +++++++++---
+ 3 files changed, 19 insertions(+), 4 deletions(-)
+
+diff --git a/android/androidmk.go b/android/androidmk.go
+index 94b4b8175..b121b220a 100644
+--- a/android/androidmk.go
++++ b/android/androidmk.go
+@@ -163,12 +163,15 @@ func (a *AndroidMkEntries) GetDistForGoals(mod blueprint.Module) []string {
+ 	name := amod.BaseModuleName()
+ 
+ 	var ret []string
++	var availableTaggedDists TaggedDistFiles
+ 
+-	availableTaggedDists := TaggedDistFiles{}
+ 	if a.DistFiles != nil {
+ 		availableTaggedDists = a.DistFiles
+ 	} else if a.OutputFile.Valid() {
+ 		availableTaggedDists = MakeDefaultDistFiles(a.OutputFile.Path())
++	} else {
++		// Nothing dist-able for this module.
++		return nil
+ 	}
+ 
+ 	// Iterate over this module's dist structs, merged from the dist and dists properties.
+diff --git a/android/module.go b/android/module.go
+index 2062a4d4d..e4fb509c3 100644
+--- a/android/module.go
++++ b/android/module.go
+@@ -565,6 +565,12 @@ type commonProperties struct {
+ type TaggedDistFiles map[string]Paths
+ 
+ func MakeDefaultDistFiles(paths ...Path) TaggedDistFiles {
++	for _, path := range paths {
++		if path == nil {
++			panic("The path to a dist file cannot be nil.")
++		}
++	}
++
+ 	// The default OutputFile tag is the empty "" string.
+ 	return TaggedDistFiles{"": paths}
+ }
+diff --git a/java/androidmk.go b/java/androidmk.go
+index 03994bfd6..3fb73c5fc 100644
+--- a/java/androidmk.go
++++ b/java/androidmk.go
+@@ -563,15 +563,21 @@ func (dstubs *Droidstubs) AndroidMkEntries() []android.AndroidMkEntries {
+ 	// are created in make if only the api txt file is being generated. This is
+ 	// needed because an invalid output file would prevent the make entries from
+ 	// being written.
++	//
++	// Note that dstubs.apiFile can be also be nil if WITHOUT_CHECKS_API is true.
+ 	// TODO(b/146727827): Revert when we do not need to generate stubs and API separately.
+-	distFile := dstubs.apiFile
++
++	var distFiles android.TaggedDistFiles
++	if dstubs.apiFile != nil {
++		distFiles = android.MakeDefaultDistFiles(dstubs.apiFile)
++	}
+ 	outputFile := android.OptionalPathForPath(dstubs.stubsSrcJar)
+ 	if !outputFile.Valid() {
+-		outputFile = android.OptionalPathForPath(distFile)
++		outputFile = android.OptionalPathForPath(dstubs.apiFile)
+ 	}
+ 	return []android.AndroidMkEntries{android.AndroidMkEntries{
+ 		Class:      "JAVA_LIBRARIES",
+-		DistFiles:  android.MakeDefaultDistFiles(distFile),
++		DistFiles:  distFiles,
+ 		OutputFile: outputFile,
+ 		Include:    "$(BUILD_SYSTEM)/soong_droiddoc_prebuilt.mk",
+ 		ExtraEntries: []android.AndroidMkExtraEntriesFunc{
