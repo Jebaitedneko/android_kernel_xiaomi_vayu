@@ -626,12 +626,7 @@ void drm_dev_unplug(struct drm_device *dev);
  * unplugged, these two functions guarantee that any store before calling
  * drm_dev_unplug() is visible to callers of this function after it completes
  */
-static inline int drm_dev_is_unplugged(struct drm_device *dev)
-{
-	int ret = atomic_read(&dev->unplugged);
-	smp_rmb();
-	return ret;
-}
+#define drm_dev_is_unplugged(x) 0
 
 
 int drm_dev_set_unique(struct drm_device *dev, const char *name);
