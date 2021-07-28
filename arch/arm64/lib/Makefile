@@ -6,7 +6,7 @@ lib-y		:= clear_user.o delay.o copy_from_user.o		\
 		   strchr.o strrchr.o tishift.o csum.o
 
 ifeq ($(CONFIG_KERNEL_MODE_NEON), y)
-obj-$(CONFIG_XOR_BLOCKS)	+= xor-neon.o
+obj-y				+= xor-neon.o
 CFLAGS_REMOVE_xor-neon.o	+= -mgeneral-regs-only
 CFLAGS_xor-neon.o		+= -ffreestanding
 endif
