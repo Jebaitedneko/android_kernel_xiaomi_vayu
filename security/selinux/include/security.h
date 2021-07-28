@@ -15,6 +15,7 @@
 #include <linux/types.h>
 #include <linux/refcount.h>
 #include <linux/workqueue.h>
+#include "policycap.h"
 
 #define SELINUX_LABEL_LENGTH 128
 
@@ -72,21 +73,6 @@
 struct netlbl_lsm_secattr;
 
 extern int selinux_enabled;
-
-/* Policy capabilities */
-enum {
-	POLICYDB_CAPABILITY_NETPEER,
-	POLICYDB_CAPABILITY_OPENPERM,
-	POLICYDB_CAPABILITY_EXTSOCKCLASS,
-	POLICYDB_CAPABILITY_ALWAYSNETWORK,
-	POLICYDB_CAPABILITY_CGROUPSECLABEL,
-	POLICYDB_CAPABILITY_NNP_NOSUID_TRANSITION,
-	POLICYDB_CAPABILITY_GENFS_SECLABEL_SYMLINKS,
-	__POLICYDB_CAPABILITY_MAX
-};
-#define POLICYDB_CAPABILITY_MAX (__POLICYDB_CAPABILITY_MAX - 1)
-
-extern const char *selinux_policycap_names[__POLICYDB_CAPABILITY_MAX];
 
 /*
  * type_datum properties
