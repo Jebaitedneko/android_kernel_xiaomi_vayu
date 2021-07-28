@@ -443,6 +443,7 @@ static void dump_common_audit_data(struct audit_buffer *ab,
  * setup the audit buffer for common security information
  * uses callback to print LSM specific information
  */
+#ifdef CONFIG_AUDIT
 void common_lsm_audit(struct common_audit_data *a,
 	void (*pre_audit)(struct audit_buffer *, void *),
 	void (*post_audit)(struct audit_buffer *, void *))
@@ -468,3 +469,4 @@ void common_lsm_audit(struct common_audit_data *a,
 
 	audit_log_end(ab);
 }
+#endif
