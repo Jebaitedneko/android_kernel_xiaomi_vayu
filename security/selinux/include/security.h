@@ -13,6 +13,7 @@
 #include <linux/dcache.h>
 #include <linux/magic.h>
 #include <linux/types.h>
+#include <linux/rcupdate.h>
 #include <linux/refcount.h>
 #include <linux/workqueue.h>
 #include "policycap.h"
@@ -85,7 +86,6 @@ extern int selinux_enabled;
 #define POLICYDB_BOUNDS_MAXDEPTH	4
 
 struct selinux_avc;
-struct selinux_ss;
 struct selinux_policy;
 
 struct selinux_state {
@@ -103,10 +103,9 @@ struct selinux_state {
 	bool android_netlink_getneigh;
 
 	struct selinux_avc *avc;
-	struct selinux_ss *ss;
+	struct selinux_policy __rcu *policy;
 } __randomize_layout;
 
-void selinux_ss_init(struct selinux_ss **ss);
 void selinux_avc_init(struct selinux_avc **avc);
 
 extern struct selinux_state selinux_state;
