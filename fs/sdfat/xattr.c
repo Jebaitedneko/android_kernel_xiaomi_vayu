@@ -90,7 +90,7 @@ static int sdfat_xattr_get(const struct xattr_handler *handler,
 #else
 static int sdfat_xattr_get(const struct xattr_handler *handler,
 		struct dentry *dentry, struct inode *inode,
-		const char *name, void *buffer, size_t size)
+		const char *name, void *buffer, size_t size, int flags)
 {
 	return __sdfat_getxattr(name, buffer, size);
 }
