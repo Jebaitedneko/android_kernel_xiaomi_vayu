@@ -24,6 +24,20 @@
 
 #include "aes-ce-setkey.h"
 
+#undef aes_expandkey
+#undef aes_ecb_encrypt
+#undef aes_ecb_decrypt
+#undef aes_cbc_encrypt
+#undef aes_cbc_decrypt
+#undef aes_cbc_cts_encrypt
+#undef aes_cbc_cts_decrypt
+#undef aes_essiv_cbc_encrypt
+#undef aes_essiv_cbc_decrypt
+#undef aes_ctr_encrypt
+#undef aes_xts_encrypt
+#undef aes_xts_decrypt
+#undef aes_mac_update
+
 #ifdef USE_V8_CRYPTO_EXTENSIONS
 #define MODE			"ce"
 #define PRIO			300
