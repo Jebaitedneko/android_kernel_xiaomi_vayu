@@ -9,6 +9,7 @@
 #
 # Normal rules (sorted alphabetically)
 #
+out/*
 .*
 *.a
 *.bin
