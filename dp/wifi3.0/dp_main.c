@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -5792,6 +5792,7 @@ static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
 {
 	struct dp_ast_entry *ast_entry, *temp_ast_entry;
 
+	dp_debug("peer: %pK, self_ast: %pK", peer, peer->self_ast_entry);
 	DP_PEER_ITERATE_ASE_LIST(peer, ast_entry, temp_ast_entry)
 		dp_peer_del_ast(soc, ast_entry);
 
@@ -10572,6 +10573,8 @@ static QDF_STATUS dp_runtime_suspend(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 
 		/* perform a force flush if tx is pending */
 		for (i = 0; i < soc->num_tcl_data_rings; i++) {
+			if (i == IPA_TCL_DATA_RING_IDX)
+				continue;
 			hal_srng_set_event(soc->tcl_data_ring[i].hal_srng,
 					   HAL_SRNG_FLUSH_EVENT);
 			dp_flush_ring_hptp(soc, soc->tcl_data_ring[i].hal_srng);
