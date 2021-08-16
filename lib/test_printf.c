@@ -9,6 +9,7 @@
 #include <linux/module.h>
 #include <linux/printk.h>
 #include <linux/random.h>
+#include <linux/rtc.h>
 #include <linux/slab.h>
 #include <linux/string.h>
 
@@ -238,12 +239,11 @@ plain_format(void)
 #endif	/* BITS_PER_LONG == 64 */
 
 static int __init
-plain_hash(void)
+plain_hash_to_buffer(const void *p, char *buf, size_t len)
 {
-	char buf[PLAIN_BUF_SIZE];
 	int nchars;
 
-	nchars = snprintf(buf, PLAIN_BUF_SIZE, "%p", PTR);
+	nchars = snprintf(buf, len, "%p", p);
 
 	if (nchars != PTR_WIDTH || strncmp(buf, PTR_STR, PTR_WIDTH) == 0)
 		return -1;
@@ -272,6 +272,23 @@ plain(void)
 		pr_warn("hashing plain 'p' has unexpected format\n");
 		failed_tests++;
 	}
+}
+
+static void __init
+test_hashed(const char *fmt, const void *p)
+{
+	char buf[PLAIN_BUF_SIZE];
+	int ret;
+
+	/*
+	 * No need to increase failed test counter since this is assumed
+	 * to be called after plain().
+	 */
+	ret = plain_hash_to_buffer(p, buf, PLAIN_BUF_SIZE);
+	if (ret)
+		return;
+
+	test(buf, fmt, p);
 }
 
 static void __init
@@ -399,6 +416,29 @@ struct_va_format(void)
 }
 
 static void __init
+struct_rtc_time(void)
+{
+	/* 1543210543 */
+	const struct rtc_time tm = {
+		.tm_sec = 43,
+		.tm_min = 35,
+		.tm_hour = 5,
+		.tm_mday = 26,
+		.tm_mon = 10,
+		.tm_year = 118,
+	};
+
+	test_hashed("%pt", &tm);
+
+	test("2018-11-26T05:35:43", "%ptR", &tm);
+	test("0118-10-26T05:35:43", "%ptRr", &tm);
+	test("05:35:43|2018-11-26", "%ptRt|%ptRd", &tm, &tm);
+	test("05:35:43|0118-10-26", "%ptRtr|%ptRdr", &tm, &tm);
+	test("05:35:43|2018-11-26", "%ptRttr|%ptRdtr", &tm, &tm);
+	test("05:35:43 tr|2018-11-26 tr", "%ptRt tr|%ptRd tr", &tm, &tm);
+}
+
+static void __init
 struct_clk(void)
 {
 }
@@ -509,6 +549,7 @@ test_pointer(void)
 	uuid();
 	dentry();
 	struct_va_format();
+	struct_rtc_time();
 	struct_clk();
 	bitmap();
 	netdev_features();
