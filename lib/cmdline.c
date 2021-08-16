@@ -151,6 +151,7 @@ unsigned long long memparse(const char *ptr, char **retptr)
 	case 'k':
 		ret <<= 10;
 		endptr++;
+		fallthrough;
 	default:
 		break;
 	}
