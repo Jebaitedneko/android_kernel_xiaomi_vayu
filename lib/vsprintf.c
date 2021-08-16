@@ -583,14 +583,12 @@ char *widen_string(char *buf, int n, char *end, struct printf_spec spec)
 	return buf;
 }
 
-static noinline_for_stack
-char *string(char *buf, char *end, const char *s, struct printf_spec spec)
+/* Handle string from a well known address. */
+static char *string_nocheck(char *buf, char *end, const char *s,
+			    struct printf_spec spec)
 {
 	int len = 0;
 	size_t lim = spec.precision;
-
-	if ((unsigned long)s < PAGE_SIZE)
-		s = "(null)";
 
 	while (lim--) {
 		char c = *s++;
@@ -605,6 +603,15 @@ char *string(char *buf, char *end, const char *s, struct printf_spec spec)
 }
 
 static noinline_for_stack
+char *string(char *buf, char *end, const char *s,
+	     struct printf_spec spec)
+{
+	if ((unsigned long)s < PAGE_SIZE)
+		s = "(null)";
+
+	return string_nocheck(buf, end, s, spec);
+}
+
 char *pointer_string(char *buf, char *end, const void *ptr,
 		     struct printf_spec spec)
 {
@@ -691,7 +698,7 @@ static char *ptr_to_id(char *buf, char *end, const void *ptr,
 	if (static_branch_unlikely(&not_filled_random_ptr_key)) {
 		spec.field_width = 2 * sizeof(ptr);
 		/* string length must be less than default_width */
-		return string(buf, end, str, spec);
+		return string_nocheck(buf, end, str, spec);
 	}
 
 #ifdef CONFIG_64BIT
@@ -715,8 +722,8 @@ char *restricted_pointer(char *buf, char *end, const void *ptr,
 {
 	switch (kptr_restrict) {
 	case 0:
-		/* Always print %pK values */
-		break;
+		/* Handle as %p, hash and do _not_ leak addresses. */
+		return ptr_to_id(buf, end, ptr, spec);
 	case 1: {
 		const struct cred *cred;
 
@@ -727,7 +734,7 @@ char *restricted_pointer(char *buf, char *end, const void *ptr,
 		if (in_irq() || in_serving_softirq() || in_nmi()) {
 			if (spec.field_width == -1)
 				spec.field_width = 2 * sizeof(ptr);
-			return string(buf, end, "pK-error", spec);
+			return string_nocheck(buf, end, "pK-error", spec);
 		}
 
 		/*
@@ -841,7 +848,7 @@ char *symbol_string(char *buf, char *end, void *ptr,
 	else
 		sprint_symbol_no_offset(sym, value);
 
-	return string(buf, end, sym, spec);
+	return string_nocheck(buf, end, sym, spec);
 #else
 	return special_hex_number(buf, end, value, sizeof(void *));
 #endif
@@ -927,27 +934,27 @@ char *resource_string(char *buf, char *end, struct resource *res,
 
 	*p++ = '[';
 	if (res->flags & IORESOURCE_IO) {
-		p = string(p, pend, "io  ", str_spec);
+		p = string_nocheck(p, pend, "io  ", str_spec);
 		specp = &io_spec;
 	} else if (res->flags & IORESOURCE_MEM) {
-		p = string(p, pend, "mem ", str_spec);
+		p = string_nocheck(p, pend, "mem ", str_spec);
 		specp = &mem_spec;
 	} else if (res->flags & IORESOURCE_IRQ) {
-		p = string(p, pend, "irq ", str_spec);
+		p = string_nocheck(p, pend, "irq ", str_spec);
 		specp = &default_dec_spec;
 	} else if (res->flags & IORESOURCE_DMA) {
-		p = string(p, pend, "dma ", str_spec);
+		p = string_nocheck(p, pend, "dma ", str_spec);
 		specp = &default_dec_spec;
 	} else if (res->flags & IORESOURCE_BUS) {
-		p = string(p, pend, "bus ", str_spec);
+		p = string_nocheck(p, pend, "bus ", str_spec);
 		specp = &bus_spec;
 	} else {
-		p = string(p, pend, "??? ", str_spec);
+		p = string_nocheck(p, pend, "??? ", str_spec);
 		specp = &mem_spec;
 		decode = 0;
 	}
 	if (decode && res->flags & IORESOURCE_UNSET) {
-		p = string(p, pend, "size ", str_spec);
+		p = string_nocheck(p, pend, "size ", str_spec);
 		p = number(p, pend, resource_size(res), *specp);
 	} else {
 		p = number(p, pend, res->start, *specp);
@@ -958,21 +965,21 @@ char *resource_string(char *buf, char *end, struct resource *res,
 	}
 	if (decode) {
 		if (res->flags & IORESOURCE_MEM_64)
-			p = string(p, pend, " 64bit", str_spec);
+			p = string_nocheck(p, pend, " 64bit", str_spec);
 		if (res->flags & IORESOURCE_PREFETCH)
-			p = string(p, pend, " pref", str_spec);
+			p = string_nocheck(p, pend, " pref", str_spec);
 		if (res->flags & IORESOURCE_WINDOW)
-			p = string(p, pend, " window", str_spec);
+			p = string_nocheck(p, pend, " window", str_spec);
 		if (res->flags & IORESOURCE_DISABLED)
-			p = string(p, pend, " disabled", str_spec);
+			p = string_nocheck(p, pend, " disabled", str_spec);
 	} else {
-		p = string(p, pend, " flags ", str_spec);
+		p = string_nocheck(p, pend, " flags ", str_spec);
 		p = number(p, pend, res->flags, default_flag_spec);
 	}
 	*p++ = ']';
 	*p = '\0';
 
-	return string(buf, end, sym, spec);
+	return string_nocheck(buf, end, sym, spec);
 }
 
 static noinline_for_stack
@@ -1140,7 +1147,7 @@ char *mac_address_string(char *buf, char *end, u8 *addr,
 	}
 	*p = '\0';
 
-	return string(buf, end, mac_addr, spec);
+	return string_nocheck(buf, end, mac_addr, spec);
 }
 
 static noinline_for_stack
@@ -1303,7 +1310,7 @@ char *ip6_addr_string(char *buf, char *end, const u8 *addr,
 	else
 		ip6_string(ip6_addr, addr, fmt);
 
-	return string(buf, end, ip6_addr, spec);
+	return string_nocheck(buf, end, ip6_addr, spec);
 }
 
 static noinline_for_stack
@@ -1314,7 +1321,7 @@ char *ip4_addr_string(char *buf, char *end, const u8 *addr,
 
 	ip4_string(ip4_addr, addr, fmt);
 
-	return string(buf, end, ip4_addr, spec);
+	return string_nocheck(buf, end, ip4_addr, spec);
 }
 
 static noinline_for_stack
@@ -1376,7 +1383,7 @@ char *ip6_addr_string_sa(char *buf, char *end, const struct sockaddr_in6 *sa,
 	}
 	*p = '\0';
 
-	return string(buf, end, ip6_addr, spec);
+	return string_nocheck(buf, end, ip6_addr, spec);
 }
 
 static noinline_for_stack
@@ -1411,7 +1418,7 @@ char *ip4_addr_string_sa(char *buf, char *end, const struct sockaddr_in *sa,
 	}
 	*p = '\0';
 
-	return string(buf, end, ip4_addr, spec);
+	return string_nocheck(buf, end, ip4_addr, spec);
 }
 
 static noinline_for_stack
@@ -1512,7 +1519,7 @@ char *uuid_string(char *buf, char *end, const u8 *addr,
 
 	*p = 0;
 
-	return string(buf, end, uuid, spec);
+	return string_nocheck(buf, end, uuid, spec);
 }
 
 static noinline_for_stack
@@ -1726,13 +1733,13 @@ char *device_node_gen_full_name(const struct device_node *np, char *buf, char *e
 
 	/* special case for root node */
 	if (!parent)
-		return string(buf, end, "/", default_str_spec);
+		return string_nocheck(buf, end, "/", default_str_spec);
 
 	for (depth = 0; parent->parent; depth++)
 		parent = parent->parent;
 
 	for ( ; depth >= 0; depth--) {
-		buf = string(buf, end, "/", default_str_spec);
+		buf = string_nocheck(buf, end, "/", default_str_spec);
 		buf = string(buf, end, device_node_name_for_depth(np, depth),
 			     default_str_spec);
 	}
@@ -1760,10 +1767,10 @@ char *device_node_string(char *buf, char *end, struct device_node *dn,
 	str_spec.field_width = -1;
 
 	if (!IS_ENABLED(CONFIG_OF))
-		return string(buf, end, "(!OF)", spec);
+		return string_nocheck(buf, end, "(!OF)", spec);
 
 	if ((unsigned long)dn < PAGE_SIZE)
-		return string(buf, end, "(null)", spec);
+		return string_nocheck(buf, end, "(null)", spec);
 
 	/* simple case without anything any more format specifiers */
 	fmt++;
@@ -1804,7 +1811,7 @@ char *device_node_string(char *buf, char *end, struct device_node *dn,
 			tbuf[2] = of_node_check_flag(dn, OF_POPULATED) ? 'P' : '-';
 			tbuf[3] = of_node_check_flag(dn, OF_POPULATED_BUS) ? 'B' : '-';
 			tbuf[4] = 0;
-			buf = string(buf, end, tbuf, str_spec);
+			buf = string_nocheck(buf, end, tbuf, str_spec);
 			break;
 		case 'c':	/* major compatible string */
 			ret = of_property_read_string(dn, "compatible", &p);
@@ -1815,10 +1822,10 @@ char *device_node_string(char *buf, char *end, struct device_node *dn,
 			has_mult = false;
 			of_property_for_each_string(dn, "compatible", prop, p) {
 				if (has_mult)
-					buf = string(buf, end, ",", str_spec);
-				buf = string(buf, end, "\"", str_spec);
+					buf = string_nocheck(buf, end, ",", str_spec);
+				buf = string_nocheck(buf, end, "\"", str_spec);
 				buf = string(buf, end, p, str_spec);
-				buf = string(buf, end, "\"", str_spec);
+				buf = string_nocheck(buf, end, "\"", str_spec);
 
 				has_mult = true;
 			}
@@ -1956,7 +1963,7 @@ char *pointer(const char *fmt, char *buf, char *end, void *ptr,
 		 */
 		if (spec.field_width == -1)
 			spec.field_width = default_width;
-		return string(buf, end, "(null)", spec);
+		return string_nocheck(buf, end, "(null)", spec);
 	}
 
 	switch (*fmt) {
@@ -2012,7 +2019,7 @@ char *pointer(const char *fmt, char *buf, char *end, void *ptr,
 			case AF_INET6:
 				return ip6_addr_string_sa(buf, end, &sa->v6, spec, fmt);
 			default:
-				return string(buf, end, "(invalid address)", spec);
+				return string_nocheck(buf, end, "(invalid address)", spec);
 			}}
 		}
 		break;
