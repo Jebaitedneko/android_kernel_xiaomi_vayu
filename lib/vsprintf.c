@@ -1843,7 +1843,8 @@ char *device_node_string(char *buf, char *end, struct device_node *dn,
  *
  * - 'x' For printing the address. Equivalent to "%lx".
  *
- * ** Please update also Documentation/printk-formats.txt when making changes **
+ * ** When making changes please also update:
+ *	Documentation/core-api/printk-formats.rst
  *
  * Note: The default behaviour (unadorned %p) is to hash the address,
  * rendering it useful as a unique identifier.
