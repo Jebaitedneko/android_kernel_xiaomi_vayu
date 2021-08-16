@@ -147,6 +147,11 @@ For printing kernel pointers which should be hidden from unprivileged
 users. The behaviour of %pK depends on the kptr_restrict sysctl - see
 Documentation/sysctl/kernel.txt for more details.
 
+This modifier is *only* intended when producing content of a file read by
+userspace from e.g. procfs or sysfs, not for dmesg. Please refer to the
+section about %p above for discussion about how to manage hashing pointers
+in printk().
+
 Unmodified Addresses
 --------------------
 
