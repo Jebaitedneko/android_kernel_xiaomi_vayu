@@ -292,6 +292,24 @@ test_hashed(const char *fmt, const void *p)
 }
 
 static void __init
+null_pointer(void)
+{
+	test_hashed("%p", NULL);
+	test(ZEROS "00000000", "%px", NULL);
+	test("(null)", "%pE", NULL);
+}
+
+#define PTR_INVALID ((void *)0x000000ab)
+
+static void __init
+invalid_pointer(void)
+{
+	test_hashed("%p", PTR_INVALID);
+	test(ZEROS "000000ab", "%px", PTR_INVALID);
+	test("(efault)", "%pE", PTR_INVALID);
+}
+
+static void __init
 symbol_ptr(void)
 {
 }
@@ -537,6 +555,8 @@ static void __init
 test_pointer(void)
 {
 	plain();
+	null_pointer();
+	invalid_pointer();
 	symbol_ptr();
 	kernel_ptr();
 	struct_resource();
