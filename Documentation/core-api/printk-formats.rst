@@ -76,8 +76,6 @@ Symbols/Function Pointers
 
 ::
 
-	%pF	versatile_init+0x0/0x110
-	%pf	versatile_init
 	%pS	versatile_init+0x0/0x110
 	%pSR	versatile_init+0x9/0x110
 		(with __builtin_extract_return_addr() translation)
