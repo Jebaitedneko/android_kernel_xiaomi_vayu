@@ -391,6 +391,7 @@ gen_headers_out_arm64 = [
     "linux/ncp_fs.h",
     "linux/ncp_mount.h",
     "linux/ncp_no.h",
+	"linux/ncsi.h",
     "linux/ndctl.h",
     "linux/neighbour.h",
     "linux/net.h",
