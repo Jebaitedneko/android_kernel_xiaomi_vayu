@@ -1902,33 +1902,18 @@ bool dp_rx_is_raw_frame_dropped(qdf_nbuf_t nbuf)
 #endif
 
 #ifdef WLAN_FEATURE_DP_RX_RING_HISTORY
-/**
- * dp_rx_ring_record_entry() - Record an entry into the rx ring history.
- * @soc: Datapath soc structure
- * @ring_num: REO ring number
- * @ring_desc: REO ring descriptor
- *
- * Returns: None
- */
 static inline void
-dp_rx_ring_record_entry(struct dp_soc *soc, uint8_t ring_num,
-			hal_ring_desc_t ring_desc)
+dp_rx_ring_record_entry(struct dp_soc *soc, uint8_t ring_num, hal_ring_desc_t ring_desc)
 {
 	struct dp_buf_info_record *record;
 	uint8_t rbm;
 	struct hal_buf_info hbi;
 	uint32_t idx;
 
-	if (qdf_unlikely(!soc->rx_ring_history[ring_num]))
-		return;
-
 	hal_rx_reo_buf_paddr_get(ring_desc, &hbi);
 	rbm = hal_rx_ret_buf_manager_get(ring_desc);
 
-	idx = dp_history_get_next_index(&soc->rx_ring_history[ring_num]->index,
-					DP_RX_HIST_MAX);
-
-	/* No NULL check needed for record since its an array */
+	idx = dp_history_get_next_index(&soc->rx_ring_history[ring_num]->index, DP_RX_HIST_MAX);
 	record = &soc->rx_ring_history[ring_num]->entry[idx];
 
 	record->timestamp = qdf_get_log_timestamp();
@@ -1938,49 +1923,9 @@ dp_rx_ring_record_entry(struct dp_soc *soc, uint8_t ring_num,
 }
 #else
 static inline void
-dp_rx_ring_record_entry(struct dp_soc *soc, uint8_t ring_num,
-			hal_ring_desc_t ring_desc)
+dp_rx_ring_record_entry(struct dp_soc *soc, uint8_t ring_num, hal_ring_desc_t ring_desc)
 {
 }
-#endif
-
-#ifdef DISABLE_EAPOL_INTRABSS_FWD
-/*
- * dp_rx_intrabss_fwd_wrapper() - Wrapper API for intrabss fwd. For EAPOL
- *  pkt with DA not equal to vdev mac addr, fwd is not allowed.
- * @soc: core txrx main context
- * @ta_peer: source peer entry
- * @rx_tlv_hdr: start address of rx tlvs
- * @nbuf: nbuf that has to be intrabss forwarded
- * @msdu_metadata: msdu metadata
- *
- * Return: true if it is forwarded else false
- */
-static inline
-bool dp_rx_intrabss_fwd_wrapper(struct dp_soc *soc, struct dp_peer *ta_peer,
-				uint8_t *rx_tlv_hdr, qdf_nbuf_t nbuf,
-				struct hal_rx_msdu_metadata msdu_metadata)
-{
-	if (qdf_unlikely(qdf_nbuf_is_ipv4_eapol_pkt(nbuf) &&
-			 qdf_mem_cmp(qdf_nbuf_data(nbuf) +
-				     QDF_NBUF_DEST_MAC_OFFSET,
-				     ta_peer->vdev->mac_addr.raw,
-				     QDF_MAC_ADDR_SIZE))) {
-		qdf_nbuf_free(nbuf);
-		DP_STATS_INC(soc, rx.err.intrabss_eapol_drop, 1);
-		return true;
-	}
-
-	return dp_rx_intrabss_fwd(soc, ta_peer, rx_tlv_hdr, nbuf,
-				  msdu_metadata);
-
-}
-#define DP_RX_INTRABSS_FWD(soc, peer, rx_tlv_hdr, nbuf, msdu_metadata) \
-		dp_rx_intrabss_fwd_wrapper(soc, peer, rx_tlv_hdr, nbuf, \
-					   msdu_metadata)
-#else
-#define DP_RX_INTRABSS_FWD(soc, peer, rx_tlv_hdr, nbuf, msdu_metadata) \
-		dp_rx_intrabss_fwd(soc, peer, rx_tlv_hdr, nbuf, msdu_metadata)
 #endif
 
 /**
@@ -2106,7 +2051,6 @@ more_data:
 		rx_buf_cookie = HAL_RX_REO_BUF_COOKIE_GET(ring_desc);
 		status = dp_rx_cookie_check_and_invalidate(ring_desc);
 		if (qdf_unlikely(QDF_IS_STATUS_ERROR(status))) {
-			DP_STATS_INC(soc, rx.err.stale_cookie, 1);
 			break;
 		}
 
@@ -2116,9 +2060,6 @@ more_data:
 		if (QDF_IS_STATUS_ERROR(status)) {
 			if (qdf_unlikely(rx_desc && rx_desc->nbuf)) {
 				qdf_assert_always(rx_desc->unmapped);
-				dp_ipa_handle_rx_buf_smmu_mapping(soc,
-								  rx_desc->nbuf,
-								  false);
 				qdf_nbuf_unmap_single(soc->osdev,
 						      rx_desc->nbuf,
 						      QDF_DMA_FROM_DEVICE);
@@ -2207,7 +2148,6 @@ more_data:
 		 * move unmap after scattered msdu waiting break logic
 		 * in case double skb unmap happened.
 		 */
-		dp_ipa_handle_rx_buf_smmu_mapping(soc, rx_desc->nbuf, false);
 		qdf_nbuf_unmap_single(soc->osdev, rx_desc->nbuf,
 				      QDF_DMA_FROM_DEVICE);
 		rx_desc->unmapped = 1;
@@ -2264,9 +2204,6 @@ more_data:
 
 		qdf_nbuf_set_tid_val(rx_desc->nbuf,
 				     HAL_RX_REO_QUEUE_NUMBER_GET(ring_desc));
-		qdf_nbuf_set_rx_reo_dest_ind(
-				rx_desc->nbuf,
-				HAL_RX_REO_MSDU_REO_DST_IND_GET(ring_desc));
 
 		QDF_NBUF_CB_RX_PKT_LEN(rx_desc->nbuf) = msdu_desc_info.msdu_len;
 
@@ -2519,23 +2456,6 @@ done:
 			continue;
 		}
 
-		/*
-		 * Drop non-EAPOL frames from unauthorized peer.
-		 */
-		if (qdf_likely(peer) && qdf_unlikely(!peer->authorize)) {
-			bool is_eapol = qdf_nbuf_is_ipv4_eapol_pkt(nbuf) ||
-					qdf_nbuf_is_ipv4_wapi_pkt(nbuf);
-
-			if (!is_eapol) {
-				DP_STATS_INC(soc,
-					     rx.err.peer_unauth_rx_pkt_drop,
-					     1);
-				qdf_nbuf_free(nbuf);
-				nbuf = next;
-				continue;
-			}
-		}
-
 		if (soc->process_rx_status)
 			dp_rx_cksum_offload(vdev->pdev, nbuf, rx_tlv_hdr);
 
@@ -2599,7 +2519,7 @@ done:
 
 			/* Intrabss-fwd */
 			if (dp_rx_check_ap_bridge(vdev))
-				if (DP_RX_INTRABSS_FWD(soc,
+				if (dp_rx_intrabss_fwd(soc,
 							peer,
 							rx_tlv_hdr,
 							nbuf,
@@ -2932,7 +2852,6 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 	rx_desc_pool = &soc->rx_desc_buf[mac_for_pdev];
 	rx_sw_desc_weight = wlan_cfg_get_dp_soc_rx_sw_desc_weight(soc->wlan_cfg_ctx);
 
-	rx_desc_pool->desc_type = DP_RX_DESC_BUF_TYPE;
 	dp_rx_desc_pool_alloc(soc, mac_for_pdev,
 			      rx_sw_desc_weight * rxdma_entries,
 			      rx_desc_pool);

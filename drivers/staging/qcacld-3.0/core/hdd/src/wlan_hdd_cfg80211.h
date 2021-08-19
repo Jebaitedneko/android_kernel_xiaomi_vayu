@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -667,10 +667,12 @@ int wlan_hdd_send_mode_change_event(void);
  * wlan_hdd_restore_channels() - Restore the channels which were cached
  * and disabled in wlan_hdd_disable_channels api.
  * @hdd_ctx: Pointer to the HDD context
+ * @notify_sap_event: Indicates if SAP event needs to be notified
  *
  * Return: 0 on success, Error code on failure
  */
-int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx);
+int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx,
+			      bool notify_sap_event);
 
 /**
  * hdd_store_sar_config() - Store SAR config in HDD context
@@ -720,17 +722,4 @@ QDF_STATUS wlan_hdd_send_sta_authorized_event(
  */
 bool hdd_is_legacy_connection(struct hdd_adapter *adapter);
 
-/**
- * hdd_set_dynamic_antenna_mode() - set dynamic antenna mode
- * @adapter: Pointer to network adapter
- * @num_rx_chains: number of chains to be used for receiving data
- * @num_tx_chains: number of chains to be used for transmitting data
- *
- * This function will set dynamic antenna mode
- *
- * Return: 0 for success
- */
-int hdd_set_dynamic_antenna_mode(struct hdd_adapter *adapter,
-				 uint8_t num_rx_chains,
-				 uint8_t num_tx_chains);
 #endif

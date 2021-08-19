@@ -2960,9 +2960,19 @@ bool lim_fill_lim_assoc_ind_params(
 	return true;
 }
 
-QDF_STATUS lim_send_mlm_assoc_ind(struct mac_context *mac_ctx,
-				  tpDphHashNode sta_ds,
-				  struct pe_session *session_entry)
+/**
+ * lim_send_mlm_assoc_ind() - Sends assoc indication to SME
+ * @mac_ctx: Global Mac context
+ * @sta_ds: Station DPH hash entry
+ * @session_entry: PE session entry
+ *
+ * This function sends either LIM_MLM_ASSOC_IND
+ * or LIM_MLM_REASSOC_IND to SME.
+ *
+ * Return: None
+ */
+void lim_send_mlm_assoc_ind(struct mac_context *mac_ctx,
+	tpDphHashNode sta_ds, struct pe_session *session_entry)
 {
 	tpLimMlmAssocInd assoc_ind;
 	tpSirAssocReq assoc_req;
@@ -2972,7 +2982,7 @@ QDF_STATUS lim_send_mlm_assoc_ind(struct mac_context *mac_ctx,
 
 	if (!session_entry->parsedAssocReq) {
 		pe_err(" Parsed Assoc req is NULL");
-		return QDF_STATUS_E_INVAL;
+		return;
 	}
 
 	/* Get a copy of the already parsed Assoc Request */
@@ -2981,7 +2991,7 @@ QDF_STATUS lim_send_mlm_assoc_ind(struct mac_context *mac_ctx,
 
 	if (!assoc_req) {
 		pe_err("assoc req for assoc_id:%d is NULL", sta_ds->assocId);
-		return QDF_STATUS_E_INVAL;
+		return;
 	}
 
 	/* Get the phy_mode */
@@ -3005,17 +3015,17 @@ QDF_STATUS lim_send_mlm_assoc_ind(struct mac_context *mac_ctx,
 		if (!assoc_ind) {
 			lim_release_peer_idx(mac_ctx, sta_ds->assocId,
 					     session_entry);
-			return QDF_STATUS_E_INVAL;
+			return;
 		}
 		if (!lim_fill_lim_assoc_ind_params(assoc_ind, mac_ctx,
 						   sta_ds, session_entry)) {
 			qdf_mem_free(assoc_ind);
-			return QDF_STATUS_E_INVAL;
+			return;
 		}
 		lim_post_sme_message(mac_ctx, LIM_MLM_ASSOC_IND,
 				     (uint32_t *)assoc_ind);
 		qdf_mem_free(assoc_ind);
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return;
 }

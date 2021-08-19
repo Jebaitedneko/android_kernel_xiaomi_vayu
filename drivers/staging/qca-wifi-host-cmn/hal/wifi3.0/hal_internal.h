@@ -409,26 +409,6 @@ struct hal_hw_srng_config {
 };
 
 #define MAX_SHADOW_REGISTERS 36
-#define MAX_GENERIC_SHADOW_REG 5
-
-/**
- * struct shadow_reg_config - Hal soc structure that contains
- * the list of generic shadow registers
- * @target_register: target reg offset
- * @shadow_config_index: shadow config index in shadow config
- *				list sent to FW
- * @va: virtual addr of shadow reg
- *
- * This structure holds the generic registers that are mapped to
- * the shadow region and holds the mapping of the target
- * register offset to shadow config index provided to FW during
- * init
- */
-struct shadow_reg_config {
-	uint32_t target_register;
-	int shadow_config_index;
-	uint64_t va;
-};
 
 /* REO parameters to be passed to hal_reo_setup */
 struct hal_reo_params {
@@ -582,16 +562,12 @@ struct hal_hw_txrx_ops {
 	bool (*hal_rx_get_fisa_flow_agg_continuation)(uint8_t *buf);
 	uint8_t (*hal_rx_get_fisa_flow_agg_count)(uint8_t *buf);
 	bool (*hal_rx_get_fisa_timeout)(uint8_t *buf);
-	void (*hal_rx_msdu_get_reo_destination_indication)(uint8_t *buf,
-							uint32_t *reo_destination_indication);
 };
 
 /**
  * struct hal_soc_stats - Hal layer stats
  * @reg_write_fail: number of failed register writes
  * @wstats: delayed register write stats
- * @shadow_reg_write_fail: shadow reg write failure stats
- * @shadow_reg_write_succ: shadow reg write success stats
  *
  * This structure holds all the statistics at HAL layer.
  */
@@ -599,10 +575,6 @@ struct hal_soc_stats {
 	uint32_t reg_write_fail;
 #ifdef FEATURE_HAL_DELAYED_REG_WRITE
 	struct hal_reg_write_soc_stats wstats;
-#endif
-#ifdef GENERIC_SHADOW_REGISTER_ACCESS_ENABLE
-	uint32_t shadow_reg_write_fail;
-	uint32_t shadow_reg_write_succ;
 #endif
 };
 
@@ -641,13 +613,8 @@ struct hal_reg_write_fail_history {
 #endif
 
 /**
- * struct hal_soc - HAL context to be used to access SRNG APIs
- *		    (currently used by data path and
- *		    transport (CE) modules)
- * @list_shadow_reg_config: array of generic regs mapped to
- *			    shadow regs
- * @num_generic_shadow_regs_configured: number of generic regs
- *					mapped to shadow regs
+ * HAL context to be used to access SRNG APIs (currently used by data path
+ * and transport (CE) modules)
  */
 struct hal_soc {
 	/* HIF handle to access HW registers */
@@ -712,11 +679,6 @@ struct hal_soc {
 	uint32_t read_idx;
 #endif
 	qdf_atomic_t active_work_cnt;
-#ifdef GENERIC_SHADOW_REGISTER_ACCESS_ENABLE
-	struct shadow_reg_config
-		list_shadow_reg_config[MAX_GENERIC_SHADOW_REG];
-	int num_generic_shadow_regs_configured;
-#endif
 };
 
 #ifdef FEATURE_HAL_DELAYED_REG_WRITE
