@@ -149,7 +149,7 @@
  *
  * @Min: 10
  * @Max: 30
- * @Default: 14
+ * @Default: 20
  *
  * Related: None
  *
@@ -164,7 +164,7 @@
 			"gNdpKeepAlivePeriod", \
 			10, \
 			30, \
-			14, \
+			20, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Keep alive timeout of a peer")
 

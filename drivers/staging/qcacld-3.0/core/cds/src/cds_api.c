@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -90,14 +90,11 @@ static struct __qdf_device g_qdf_ctx;
 
 static uint8_t cds_multicast_logging;
 
-#define DRIVER_VER_LEN (11)
-#define HANG_EVENT_VER_LEN (1)
-
 struct cds_hang_event_fixed_param {
 	uint16_t tlv_header;
 	uint8_t recovery_reason;
-	char driver_version[DRIVER_VER_LEN];
-	char hang_event_version[HANG_EVENT_VER_LEN];
+	char driver_version[11];
+	char hang_event_version;
 } qdf_packed;
 
 #ifdef QCA_WIFI_QCA8074
@@ -120,14 +117,11 @@ static struct ol_if_ops  dp_ol_if_ops = {
 	.get_con_mode = cds_get_conparam,
 	.send_delba = cds_send_delba,
 #ifdef DP_MEM_PRE_ALLOC
-	.dp_prealloc_get_context = dp_prealloc_get_context_memory,
-	.dp_prealloc_put_context = dp_prealloc_put_context_memory,
 	.dp_prealloc_get_consistent = dp_prealloc_get_coherent,
 	.dp_prealloc_put_consistent = dp_prealloc_put_coherent,
 	.dp_get_multi_pages = dp_prealloc_get_multi_pages,
-	.dp_put_multi_pages = dp_prealloc_put_multi_pages,
+	.dp_put_multi_pages = dp_prealloc_put_multi_pages
 #endif
-	.dp_rx_get_pending = dp_rx_tm_get_pending,
     /* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 #else
@@ -227,22 +221,6 @@ static QDF_STATUS cds_wmi_send_recv_qmi(void *buf, uint32_t len, void * cb_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * cds_update_recovery_reason() - update the recovery reason code
- * @reason: recovery reason
- *
- * Return: None
- */
-static void cds_update_recovery_reason(enum qdf_hang_reason recovery_reason)
-{
-	if (!gp_cds_context) {
-		cds_err("gp_cds_context is null");
-		return;
-	}
-
-	gp_cds_context->recovery_reason = recovery_reason;
-}
-
 QDF_STATUS cds_init(void)
 {
 	QDF_STATUS status;
@@ -266,8 +244,6 @@ QDF_STATUS cds_init(void)
 	qdf_register_drv_connected_callback(cds_is_drv_connected);
 	qdf_register_drv_supported_callback(cds_is_drv_supported);
 	qdf_register_wmi_send_recv_qmi_callback(cds_wmi_send_recv_qmi);
-	qdf_register_recovery_reason_update(cds_update_recovery_reason);
-	qdf_register_get_bus_reg_dump(pld_get_bus_reg_dump);
 
 	return QDF_STATUS_SUCCESS;
 
@@ -289,8 +265,6 @@ void cds_deinit(void)
 	if (!gp_cds_context)
 		return;
 
-	qdf_register_get_bus_reg_dump(NULL);
-	qdf_register_recovery_reason_update(NULL);
 	qdf_register_recovering_state_query_callback(NULL);
 	qdf_register_fw_down_callback(NULL);
 	qdf_register_is_driver_unloading_callback(NULL);
@@ -596,9 +570,10 @@ static int cds_hang_event_notifier_call(struct notifier_block *block,
 	if (!cds_hang_evt_buff)
 		return NOTIFY_STOP_MASK;
 
-	total_len = sizeof(*cmd);
-	if (cds_hang_data->offset + total_len > QDF_WLAN_HANG_FW_OFFSET)
+	if (cds_hang_data->offset >= QDF_WLAN_MAX_HOST_OFFSET)
 		return NOTIFY_STOP_MASK;
+
+	total_len = sizeof(*cmd);
 
 	cds_hang_evt_buff = cds_hang_data->hang_data + cds_hang_data->offset;
 	cmd = (struct cds_hang_event_fixed_param *)cds_hang_evt_buff;
@@ -608,10 +583,10 @@ static int cds_hang_event_notifier_call(struct notifier_block *block,
 	cmd->recovery_reason = gp_cds_context->recovery_reason;
 
 	qdf_mem_copy(&cmd->driver_version, QWLAN_VERSIONSTR,
-		     DRIVER_VER_LEN);
+		     sizeof(QWLAN_VERSIONSTR));
 
 	qdf_mem_copy(&cmd->hang_event_version, QDF_HANG_EVENT_VERSION,
-		     HANG_EVENT_VER_LEN);
+		     sizeof(QDF_HANG_EVENT_VERSION));
 
 	cds_hang_data->offset += total_len;
 	return NOTIFY_OK;
@@ -1301,8 +1276,6 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 
 	dispatcher_psoc_close(psoc);
 
-	qdf_flush_work(&gp_cds_context->cds_recovery_work);
-
 	qdf_status = wma_wmi_work_close();
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		cds_err("Failed to close wma_wmi_work");
@@ -1941,6 +1914,8 @@ static void cds_trigger_recovery_work(void *context)
 void __cds_trigger_recovery(enum qdf_hang_reason reason, const char *func,
 			    const uint32_t line)
 {
+	bool is_work_queue_needed = false;
+
 	if (!gp_cds_context) {
 		cds_err("gp_cds_context is null");
 		return;
@@ -1948,10 +1923,19 @@ void __cds_trigger_recovery(enum qdf_hang_reason reason, const char *func,
 
 	gp_cds_context->recovery_reason = reason;
 
-	__cds_recovery_caller.func = func;
-	__cds_recovery_caller.line = line;
-	qdf_queue_work(0, gp_cds_context->cds_recovery_wq,
-		       &gp_cds_context->cds_recovery_work);
+	if (in_atomic() ||
+	    (QDF_RESUME_TIMEOUT == reason || QDF_SUSPEND_TIMEOUT == reason))
+		is_work_queue_needed = true;
+
+	if (is_work_queue_needed) {
+		__cds_recovery_caller.func = func;
+		__cds_recovery_caller.line = line;
+		qdf_queue_work(0, gp_cds_context->cds_recovery_wq,
+			       &gp_cds_context->cds_recovery_work);
+		return;
+	}
+
+	cds_trigger_recovery_handler(func, line);
 }
 
 void cds_trigger_recovery_psoc(void *psoc, enum qdf_hang_reason reason,
@@ -2796,9 +2780,7 @@ uint32_t cds_get_arp_stats_gw_ip(void *context)
 void cds_incr_arp_stats_tx_tgt_delivered(void)
 {
 	struct hdd_context *hdd_ctx;
-	struct hdd_adapter *adapter, *next_adapter = NULL;
-	wlan_net_dev_ref_dbgid dbgid =
-			NET_DEV_HOLD_CDS_INCR_ARP_STATS_TX_TGT_DELIVERED;
+	struct hdd_adapter *adapter = NULL;
 
 	hdd_ctx = gp_cds_context->hdd_context;
 	if (!hdd_ctx) {
@@ -2806,15 +2788,9 @@ void cds_incr_arp_stats_tx_tgt_delivered(void)
 		return;
 	}
 
-	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
-					   dbgid) {
-		if (adapter->device_mode == QDF_STA_MODE) {
-			hdd_adapter_dev_put_debug(adapter, dbgid);
-			if (next_adapter)
-				hdd_adapter_dev_put_debug(next_adapter, dbgid);
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (QDF_STA_MODE == adapter->device_mode)
 			break;
-		}
-		hdd_adapter_dev_put_debug(adapter, dbgid);
 	}
 
 	if (adapter)
@@ -2829,9 +2805,7 @@ void cds_incr_arp_stats_tx_tgt_delivered(void)
 void cds_incr_arp_stats_tx_tgt_acked(void)
 {
 	struct hdd_context *hdd_ctx;
-	struct hdd_adapter *adapter, *next_adapter = NULL;
-	wlan_net_dev_ref_dbgid dbgid =
-			NET_DEV_HOLD_CDS_INCR_ARP_STATS_TX_TGT_ACKED;
+	struct hdd_adapter *adapter = NULL;
 
 	hdd_ctx = gp_cds_context->hdd_context;
 	if (!hdd_ctx) {
@@ -2839,15 +2813,9 @@ void cds_incr_arp_stats_tx_tgt_acked(void)
 		return;
 	}
 
-	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
-					   dbgid) {
-		if (adapter->device_mode == QDF_STA_MODE) {
-			hdd_adapter_dev_put_debug(adapter, dbgid);
-			if (next_adapter)
-				hdd_adapter_dev_put_debug(next_adapter, dbgid);
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (QDF_STA_MODE == adapter->device_mode)
 			break;
-		}
-		hdd_adapter_dev_put_debug(adapter, dbgid);
 	}
 
 	if (adapter)

@@ -529,7 +529,7 @@ static void hif_cpuhp_unregister(struct hif_softc *scn)
 }
 #endif /* ifdef HIF_CPU_PERF_AFFINE_MASK */
 
-#if defined(HIF_CE_LOG_INFO) || defined(HIF_BUS_LOG_INFO)
+#ifdef HIF_CE_LOG_INFO
 /**
  * hif_recovery_notifier_cb - Recovery notifier callback to log
  *  hang event data
@@ -546,7 +546,6 @@ int hif_recovery_notifier_cb(struct notifier_block *block, unsigned long state,
 	struct qdf_notifer_data *notif_data = data;
 	qdf_notif_block *notif_block;
 	struct hif_softc *hif_handle;
-	bool bus_id_invalid;
 
 	if (!data || !block)
 		return -EINVAL;
@@ -556,11 +555,6 @@ int hif_recovery_notifier_cb(struct notifier_block *block, unsigned long state,
 	hif_handle = notif_block->priv_data;
 	if (!hif_handle)
 		return -EINVAL;
-
-	bus_id_invalid = hif_log_bus_info(hif_handle, notif_data->hang_data,
-					  &notif_data->offset);
-	if (bus_id_invalid)
-		return NOTIFY_STOP_MASK;
 
 	hif_log_ce_info(hif_handle, notif_data->hang_data,
 			&notif_data->offset);
@@ -648,7 +642,6 @@ struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx,
 		     sizeof(struct hif_driver_state_callbacks));
 	scn->bus_type  = bus_type;
 
-	hif_pm_set_link_state(GET_HIF_OPAQUE_HDL(scn), HIF_PM_LINK_STATE_DOWN);
 	hif_get_cfg_from_psoc(scn, psoc);
 
 	hif_set_event_hist_mask(GET_HIF_OPAQUE_HDL(scn));
@@ -709,7 +702,6 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 	}
 
 	hif_uninit_rri_on_ddr(scn);
-	hif_cleanup_static_buf_to_target(scn);
 	hif_cpuhp_unregister(scn);
 
 	hif_bus_close(scn);
@@ -855,7 +847,6 @@ QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 		return status;
 	}
 
-	hif_pm_set_link_state(GET_HIF_OPAQUE_HDL(scn), HIF_PM_LINK_STATE_UP);
 	status = hif_hal_attach(scn);
 	if (status != QDF_STATUS_SUCCESS) {
 		HIF_ERROR("%s: hal attach failed", __func__);
@@ -909,7 +900,6 @@ void hif_disable(struct hif_opaque_softc *hif_ctx, enum hif_disable_type type)
 
 	hif_hal_detach(scn);
 
-	hif_pm_set_link_state(hif_ctx, HIF_PM_LINK_STATE_DOWN);
 	hif_disable_bus(scn);
 
 	hif_wlan_disable(scn);
@@ -1497,64 +1487,6 @@ int hif_get_bandwidth_level(struct hif_opaque_softc *hif_handle)
 }
 
 qdf_export_symbol(hif_get_bandwidth_level);
-
-#ifdef DP_MEM_PRE_ALLOC
-void *hif_mem_alloc_consistent_unaligned(struct hif_softc *scn,
-					 qdf_size_t size,
-					 qdf_dma_addr_t *paddr,
-					 uint32_t ring_type,
-					 uint8_t *is_mem_prealloc)
-{
-	void *vaddr = NULL;
-	struct hif_driver_state_callbacks *cbk =
-				hif_get_callbacks_handle(scn);
-
-	*is_mem_prealloc = false;
-	if (cbk && cbk->prealloc_get_consistent_mem_unaligned) {
-		vaddr = cbk->prealloc_get_consistent_mem_unaligned(size,
-								   paddr,
-								   ring_type);
-		if (vaddr) {
-			*is_mem_prealloc = true;
-			goto end;
-		}
-	}
-
-	vaddr = qdf_mem_alloc_consistent(scn->qdf_dev,
-					 scn->qdf_dev->dev,
-					 size,
-					 paddr);
-end:
-	dp_info("%s va_unaligned %pK pa_unaligned %pK size %d ring_type %d",
-		*is_mem_prealloc ? "pre-alloc" : "dynamic-alloc", vaddr,
-		(void *)*paddr, (int)size, ring_type);
-
-	return vaddr;
-}
-
-void hif_mem_free_consistent_unaligned(struct hif_softc *scn,
-				       qdf_size_t size,
-				       void *vaddr,
-				       qdf_dma_addr_t paddr,
-				       qdf_dma_context_t memctx,
-				       uint8_t is_mem_prealloc)
-{
-	struct hif_driver_state_callbacks *cbk =
-				hif_get_callbacks_handle(scn);
-
-	if (is_mem_prealloc) {
-		if (cbk && cbk->prealloc_put_consistent_mem_unaligned) {
-			cbk->prealloc_put_consistent_mem_unaligned(vaddr);
-		} else {
-			dp_warn("dp_prealloc_put_consistent_unligned NULL");
-			QDF_BUG(0);
-		}
-	} else {
-		qdf_mem_free_consistent(scn->qdf_dev, scn->qdf_dev->dev,
-					size, vaddr, paddr, memctx);
-	}
-}
-#endif
 
 /**
  * hif_batch_send() - API to access hif specific function

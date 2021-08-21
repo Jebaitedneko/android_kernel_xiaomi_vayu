@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -72,8 +72,7 @@ extern "C" {
 #ifdef FEATURE_FW_LOG_PARSING
 /*
  * set the dbglog parser type
- */
-int
+ */int
 dbglog_parser_type_init(wmi_unified_t wmi_handle, int type);
 
 /** dbglog_int - Registers a WMI event handle for WMI_DBGMSG_EVENT
@@ -103,7 +102,7 @@ int
 dbglog_set_timestamp_resolution(wmi_unified_t wmi_handle,
 				uint16_t tsr);
 
-/** Enable reporting. If it is set to false then Target wont deliver
+/** Enable reporting. If it is set to false then Traget wont deliver
  * any debug information
  */
 int
@@ -129,19 +128,6 @@ dbglog_set_log_lvl(wmi_unified_t wmi_handle, DBGLOG_LOG_LVL log_lvl);
  */
 int
 dbglog_set_mod_log_lvl(wmi_unified_t wmi_handle, uint32_t mod_id_lvl);
-
-/*
- * set the debug log level for wow module
- *  mod_id_lvl : the format is more user friendly.
- *    module_id =  mod_id_lvl/10;
- *    log_level =  mod_id_lvl%10;
- * example : mod_id_lvl is 153. then module id is 15 and log level is 3.
- *           this format allows user to pass a sinlge value
- *           (which is the most convenient way for most of the OSs)
- *           to be passed from user to the driver.
- */
-int
-dbglog_set_mod_wow_log_lvl(wmi_unified_t wmi_handle, uint32_t mod_id_lvl);
 
 /** Enable/Disable the logging for VAP */
 int
@@ -248,12 +234,6 @@ dbglog_vap_log_enable(wmi_unified_t wmi_handle, uint16_t vap_id,
 
 static inline int
 dbglog_set_mod_log_lvl(wmi_unified_t wmi_handle, uint32_t mod_id_lvl)
-{
-	return A_OK;
-}
-
-static inline int
-dbglog_set_mod_wow_log_lvl(wmi_unified_t wmi_handle, uint32_t mod_id_lvl)
 {
 	return A_OK;
 }

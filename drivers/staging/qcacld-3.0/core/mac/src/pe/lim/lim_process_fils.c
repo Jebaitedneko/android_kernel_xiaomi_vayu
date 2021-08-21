@@ -885,11 +885,6 @@ static QDF_STATUS lim_process_auth_wrapped_data(struct pe_session *pe_session,
 		pe_err("invalid remaining len %d",
 			remaining_len);
 	}
-
-	if (sizeof(hash) < auth_tag_len) {
-		pe_err("sizeof(hash) < auth_tag_len check failed");
-		return QDF_STATUS_E_FAILURE;
-	}
 	if (qdf_mem_cmp(wrapped_data, hash, auth_tag_len)) {
 		pe_err("integratity check failed for auth, crypto %d",
 			crypto);
@@ -2245,11 +2240,6 @@ QDF_STATUS aead_decrypt_assoc_rsp(struct mac_context *mac_ctx,
 	uint32_t data_len, fils_ies_len;
 	uint8_t *fils_ies;
 	struct pe_fils_session *fils_info = session->fils_info;
-
-	if (*n_frame < FIXED_PARAM_OFFSET_ASSOC_RSP) {
-		pe_debug("payload len is less than ASSOC RES offset");
-		return QDF_STATUS_E_FAILURE;
-	}
 
 	status = find_ie_data_after_fils_session_ie(mac_ctx, p_frame +
 					      FIXED_PARAM_OFFSET_ASSOC_RSP,

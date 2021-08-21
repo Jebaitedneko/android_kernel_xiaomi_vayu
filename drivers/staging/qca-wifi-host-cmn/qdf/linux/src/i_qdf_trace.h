@@ -102,19 +102,8 @@
 		} \
 	} while (0)
 #else
-static inline void __printf(3, 4) no_qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
-		   char *str_format, ...)
-{
-}
-static inline void no_qdf_trace_hex_dump(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
-			void *data, int buf_len)
-{
-}
-#define QDF_TRACE_RATE_LIMITED(rate, module, level, format, ...) \
-	no_qdf_trace_msg(module, level, format, ##__VA_ARGS__)
-
-#define QDF_TRACE_HEX_DUMP_RATE_LIMITED(rate, module, level, format, ...) \
-	no_qdf_trace_hex_dump(module, level, format, ##__VA_ARGS__)
+#define __QDF_TRACE_RATE_LIMITED(arg ...)
+#define __QDF_TRACE_HEX_DUMP_RATE_LIMITED(arg ...)
 #endif
 
 #define __QDF_TRACE_NO_FL(log_level, module_id, format, args...) \
@@ -269,7 +258,7 @@ static inline void __qdf_trace_hexdump_dummy(QDF_MODULE_ID module,
 #define QDF_TRACE_EXIT(params...) __qdf_trace_noop(params)
 #endif
 
-// #define QDF_ENABLE_TRACING
+#define QDF_ENABLE_TRACING
 #define qdf_scnprintf scnprintf
 
 #ifdef QDF_ENABLE_TRACING
