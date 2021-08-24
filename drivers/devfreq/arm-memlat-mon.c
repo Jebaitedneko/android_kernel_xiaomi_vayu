@@ -131,6 +131,14 @@ static unsigned long get_cnt(struct memlat_hwmon *hw)
 	int cpu;
 	struct cpu_grp_info *cpu_grp = to_cpu_grp(hw);
 
+	/*
+	 * Some of SCM call is very heavy(+20ms) so perf IPI could
+	 * be stuck on the CPU which contributes long latency.
+	 */
+	if (under_scm_call()) {
+		return 0;
+	}
+
 	for_each_cpu(cpu, &cpu_grp->cpus)
 		read_perf_counters(cpu, cpu_grp);
 
@@ -140,13 +148,6 @@ static unsigned long get_cnt(struct memlat_hwmon *hw)
 static void delete_events(struct cpu_pmu_stats *cpustats)
 {
 	int i;
-
-	/*
-	 * Some of SCM call is very heavy(+20ms) so perf IPI could
-	 * be stuck on the CPU which contributes long latency.
-	 */
-	if (under_scm_call())
-		return;
 
 	for (i = 0; i < ARRAY_SIZE(cpustats->events); i++) {
 		cpustats->events[i].prev_count = 0;
