@@ -885,8 +885,8 @@ build_zip() {
 upload_zip() {
 	KERNEL="$(ls -1 "$KERNEL_ROOT_DIR"/out/*.zip)"
 	echo "$(curl -s -F f[]=@$KERNEL "https://oshi.at" | grep DL | sed 's/DL: //g')"
-	echo "https://pixeldrain.com/u/$(curl -s -F file=@$KERNEL "https://pixeldrain.com/api/file" | grep -Po '(?<="id":")[^"]*')"
-	echo "$(curl -s -F files[]=@$KERNEL "https://tmp.ninja/upload.php?output=text")"
+# 	echo "https://pixeldrain.com/u/$(curl -s -F file=@$KERNEL "https://pixeldrain.com/api/file" | grep -Po '(?<="id":")[^"]*')"
+# 	echo "$(curl -s -F files[]=@$KERNEL "https://tmp.ninja/upload.php?output=text")"
 }
 
 case "${1}" in
