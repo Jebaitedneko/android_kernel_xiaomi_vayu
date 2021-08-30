@@ -636,16 +636,6 @@ static inline void armv8pmu_write_event_type(struct perf_event *event)
 	}
 }
 
-static u32 armv8pmu_event_cnten_mask(struct perf_event *event)
-{
-	int counter = ARMV8_IDX_TO_COUNTER(event->hw.idx);
-	u32 mask = BIT(counter);
-
-	if (armv8pmu_event_is_chained(event))
-		mask |= BIT(counter - 1);
-	return mask;
-}
-
 static inline void armv8pmu_enable_counter(u32 mask)
 {
 	/*
