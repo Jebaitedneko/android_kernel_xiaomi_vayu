@@ -1356,6 +1356,7 @@ void arch_perf_update_userpage(struct perf_event *event,
 
 	userpg->cap_user_time = 0;
 	userpg->cap_user_time_zero = 0;
+	userpg->cap_user_time_short = 0;
 
 	do {
 		rd = sched_clock_read_begin(&seq);
@@ -1366,13 +1367,13 @@ void arch_perf_update_userpage(struct perf_event *event,
 		userpg->time_mult = rd->mult;
 		userpg->time_shift = rd->shift;
 		userpg->time_zero = rd->epoch_ns;
+		userpg->time_cycles = rd->epoch_cyc;
+		userpg->time_mask = rd->sched_clock_mask;
 
 		/*
-		 * This isn't strictly correct, the ARM64 counter can be
-		 * 'short' and then we get funnies when it wraps. The correct
-		 * thing would be to extend the perf ABI with a cycle and mask
-		 * value, but because wrapping on ARM64 is very rare in
-		 * practise this 'works'.
+		 * Subtract the cycle base, such that software that
+		 * doesn't know about cap_user_time_short still 'works'
+		 * assuming no wraps.
 		 */
 		ns = mul_u64_u32_shr(rd->epoch_cyc, rd->mult, rd->shift);
 		userpg->time_zero -= ns;
@@ -1398,4 +1399,5 @@ void arch_perf_update_userpage(struct perf_event *event,
 	 */
 	userpg->cap_user_time = 1;
 	userpg->cap_user_time_zero = 1;
+	userpg->cap_user_time_short = 1;
 }
