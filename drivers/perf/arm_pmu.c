@@ -777,6 +777,11 @@ static inline void cpu_pm_pmu_unregister(struct arm_pmu *cpu_pmu) { }
 static void cpu_pm_pmu_common(void *info) { }
 #endif
 
+bool arm_pmu_irq_is_nmi(void)
+{
+	return has_nmi;
+}
+
 /*
  * PMU hardware loses all context when a CPU goes offline.
  * When a CPU is hotplugged back in, since some hardware registers are
