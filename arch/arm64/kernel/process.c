@@ -279,7 +279,7 @@ void __show_regs(struct pt_regs *regs)
 	printk("\n");
 }
 
-void show_regs(struct pt_regs * regs)
+void show_regs(struct pt_regs *regs)
 {
 	__show_regs(regs);
 	dump_backtrace(regs, NULL);
@@ -520,7 +520,7 @@ unsigned long get_wchan(struct task_struct *p)
 			ret = frame.pc;
 			goto out;
 		}
-	} while (count ++ < 16);
+	} while (count++ < 16);
 
 out:
 	put_task_stack(p);

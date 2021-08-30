@@ -53,7 +53,7 @@
 #include <asm/sysreg.h>
 #include <trace/events/exception.h>
 
-static const char *handler[]= {
+static const char *handler[] = {
 	"Synchronous Abort",
 	"IRQ",
 	"FIQ",

@@ -41,7 +41,7 @@ u64 module_emit_plt_entry(struct module *mod, void *loc, const Elf64_Rela *rela,
 	return (u64)&plt[i];
 }
 
-#define cmp_3way(a,b)	((a) < (b) ? -1 : (a) > (b))
+#define cmp_3way(a, b)	((a) < (b) ? -1 : (a) > (b))
 
 static int cmp_rela(const void *a, const void *b)
 {
