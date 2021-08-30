@@ -28,7 +28,6 @@
 
 #include <linux/acpi.h>
 #include <linux/clocksource.h>
-#include <linux/kvm_host.h>
 #include <linux/of.h>
 #include <linux/perf/arm_pmu.h>
 #include <linux/platform_device.h>
@@ -659,14 +658,10 @@ static inline void armv8pmu_enable_counter(u32 mask)
 
 static inline void armv8pmu_enable_event_counter(struct perf_event *event)
 {
-	struct perf_event_attr *attr = &event->attr;
-	u32 mask = armv8pmu_event_cnten_mask(event);
-
-	kvm_set_pmu_events(mask, attr);
-
-	/* We rely on the hypervisor switch code to enable guest counters */
-	if (!kvm_pmu_counter_deferred(attr))
-		armv8pmu_enable_counter(mask);
+	int idx = event->hw.idx;
+	armv8pmu_enable_counter(idx);
+	if (armv8pmu_event_is_chained(event))
+		armv8pmu_enable_counter(idx - 1);
 }
 
 static inline void armv8pmu_disable_counter(u32 mask)
@@ -681,14 +676,11 @@ static inline void armv8pmu_disable_counter(u32 mask)
 
 static inline void armv8pmu_disable_event_counter(struct perf_event *event)
 {
-	struct perf_event_attr *attr = &event->attr;
-	u32 mask = armv8pmu_event_cnten_mask(event);
-
-	kvm_clr_pmu_events(mask);
-
-	/* We rely on the hypervisor switch code to disable guest counters */
-	if (!kvm_pmu_counter_deferred(attr))
-		armv8pmu_disable_counter(mask);
+	struct hw_perf_event *hwc = &event->hw;
+	int idx = hwc->idx;
+	if (armv8pmu_event_is_chained(event))
+		armv8pmu_disable_counter(idx - 1);
+	armv8pmu_disable_counter(idx);
 }
 
 static inline void armv8pmu_enable_intens(u32 mask)
@@ -985,15 +977,11 @@ static int armv8pmu_set_event_filter(struct hw_perf_event *event,
 		if (!attr->exclude_kernel)
 			config_base |= ARMV8_PMU_INCLUDE_EL2;
 	} else {
-		if (!attr->exclude_hv && !attr->exclude_host)
+		if (attr->exclude_kernel)
+			config_base |= ARMV8_PMU_EXCLUDE_EL1;
+		if (!attr->exclude_hv)
 			config_base |= ARMV8_PMU_INCLUDE_EL2;
 	}
-
-	/*
-	 * Filter out !VHE kernels and guest kernels
-	 */
-	if (attr->exclude_kernel)
-		config_base |= ARMV8_PMU_EXCLUDE_EL1;
 
 	if (attr->exclude_user)
 		config_base |= ARMV8_PMU_EXCLUDE_EL0;
@@ -1021,9 +1009,6 @@ static void armv8pmu_reset(void *info)
 	/* The counter and interrupt enable registers are unknown at reset. */
 	armv8pmu_disable_counter(U32_MAX);
 	armv8pmu_disable_intens(U32_MAX);
-
-	/* Clear the counters we flip at guest entry/exit */
-	kvm_clr_pmu_events(U32_MAX);
 
 	/*
 	 * Initialize & Reset PMNC. Request overflow interrupt for
