@@ -120,7 +120,6 @@ struct arm_pmu {
 	int		num_events;
 	int		pmu_state;
 	int		percpu_irq;
-	u64		max_period;
 	bool		secure_access; /* 32-bit ARM only */
 #define ARMV8_PMUV3_MAX_COMMON_EVENTS 0x40
 	DECLARE_BITMAP(pmceid_bitmap, ARMV8_PMUV3_MAX_COMMON_EVENTS);
