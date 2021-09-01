@@ -371,6 +371,7 @@
 		sensor-position-pitch = <0>;
 		sensor-position-yaw = <180>;
 		eeprom-src = <&eeprom_rear_aux>;
+		led-flash-src = <&led_flash_rear>;
 		cam_vio-supply = <&pm8150l_l1>;
 		cam_vana-supply = <&pm8150l_bob>;
 		cam_clk-supply = <&titan_top_gdsc>;
@@ -418,7 +419,7 @@
 		sensor-position-pitch = <0>;
 		sensor-position-yaw = <180>;
 		eeprom-src = <&eeprom_rear_ultra>;
-		led-flash-src = <&led_flash_rear_aux1>;
+		led-flash-src = <&led_flash_rear>;
 		cam_vio-supply = <&pm8150l_l1>;
 		cam_vana-supply = <&pm8150l_bob>;
 		cam_vdig-supply = <&pm8150l_s8>;
@@ -463,7 +464,7 @@
 		sensor-position-pitch = <0>;
 		sensor-position-yaw = <180>;
 		eeprom-src = <&eeprom_rear_macro>;
-		led-flash-src = <&led_flash_rear_aux2>;
+		led-flash-src = <&led_flash_rear>;
 		cam_vio-supply = <&pm8150l_l1>;
 		cam_vana-supply = <&pm8150l_bob>;
 		cam_clk-supply = <&titan_top_gdsc>;
