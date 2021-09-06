@@ -54,6 +54,7 @@
 #include <linux/vmalloc.h>
 #include <asm/current.h>
 #include <asm/unaligned.h>
+#include <linux/iversion.h>
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 16, 0)
 #include <linux/iversion.h>
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
