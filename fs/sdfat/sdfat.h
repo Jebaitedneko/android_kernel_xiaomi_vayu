@@ -375,7 +375,7 @@ int sdfat_mpage_writepages(struct address_space *mapping,
 #ifdef CONFIG_SDFAT_VIRTUAL_XATTR
 void setup_sdfat_xattr_handler(struct super_block *sb);
 extern int sdfat_setxattr(struct dentry *dentry, const char *name, const void *value, size_t size, int flags);
-extern ssize_t sdfat_getxattr(struct dentry *dentry, const char *name, void *value, size_t size);
+extern ssize_t sdfat_getxattr(struct dentry *dentry, const char *name, void *value, size_t size, int flags);
 extern ssize_t sdfat_listxattr(struct dentry *dentry, char *list, size_t size);
 extern int sdfat_removexattr(struct dentry *dentry, const char *name);
 #else

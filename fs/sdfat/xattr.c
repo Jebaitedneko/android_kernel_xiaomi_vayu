@@ -125,7 +125,7 @@ int sdfat_setxattr(struct dentry *dentry, const char *name, const void *value, s
 	return __sdfat_xattr_check_support(name);
 }
 
-ssize_t sdfat_getxattr(struct dentry *dentry, const char *name, void *value, size_t size)
+ssize_t sdfat_getxattr(struct dentry *dentry, const char *name, void *value, size_t size, int flags)
 {
 	return __sdfat_getxattr(name, value, size);
 }
