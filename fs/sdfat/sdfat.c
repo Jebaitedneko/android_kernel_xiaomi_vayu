@@ -142,11 +142,11 @@ static int __sdfat_cmpi(const struct dentry *dentry, unsigned int len,
  * FUNCTIONS WHICH HAS KERNEL VERSION DEPENDENCY
  *************************************************************************/
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 16, 0)
-static inline void inode_set_iversion(struct inode *inode, u64 val)
+static inline void sdfat_inode_set_iversion(struct inode *inode, u64 val)
 {
 	inode->i_version = val;
 }
-static inline u64 inode_peek_iversion(struct inode *inode)
+static inline u64 sdfat_inode_peek_iversion(struct inode *inode)
 {
 	return inode->i_version;
 }
@@ -1255,7 +1255,7 @@ static int __sdfat_revalidate_common(struct dentry *dentry)
 	spin_lock(&dentry->d_lock);
 	if ((!dentry->d_inode) && (!__check_dstate_locked(dentry) &&
 		(dentry->d_time !=
-		(unsigned long)inode_peek_iversion(dentry->d_parent->d_inode)))) {
+		(unsigned long)sdfat_inode_peek_iversion(dentry->d_parent->d_inode)))) {
 		ret = 0;
 	}
 	spin_unlock(&dentry->d_lock);
@@ -2546,7 +2546,7 @@ static struct dentry *__sdfat_lookup(struct inode *dir, struct dentry *dentry)
 	dput(alias);
 out:
 	/* initialize d_time even though it is positive dentry */
-	dentry->d_time = (unsigned long)inode_peek_iversion(dir);
+	dentry->d_time = (unsigned long)sdfat_inode_peek_iversion(dir);
 	__unlock_super(sb);
 
 	dentry = d_splice_alias(inode, dentry);
@@ -2593,7 +2593,7 @@ static int sdfat_unlink(struct inode *dir, struct dentry *dentry)
 	clear_nlink(inode);
 	inode->i_mtime = inode->i_atime = ts;
 	sdfat_detach(inode);
-	dentry->d_time = (unsigned long)inode_peek_iversion(dir);
+	dentry->d_time = (unsigned long)sdfat_inode_peek_iversion(dir);
 out:
 	__unlock_d_revalidate(dentry);
 	__unlock_super(sb);
@@ -2751,7 +2751,7 @@ static int sdfat_rmdir(struct inode *dir, struct dentry *dentry)
 	clear_nlink(inode);
 	inode->i_mtime = inode->i_atime = ts;
 	sdfat_detach(inode);
-	dentry->d_time = (unsigned long)inode_peek_iversion(dir);
+	dentry->d_time = (unsigned long)sdfat_inode_peek_iversion(dir);
 out:
 	__unlock_d_revalidate(dentry);
 	__unlock_super(sb);
@@ -4025,7 +4025,7 @@ static struct inode *sdfat_build_inode(struct super_block *sb,
 		goto out;
 	}
 	inode->i_ino = iunique(sb, SDFAT_ROOT_INO);
-	inode_set_iversion(inode, 1);
+	sdfat_inode_set_iversion(inode, 1);
 	err = sdfat_fill_inode(inode, fid);
 	if (err) {
 		iput(inode);
@@ -5063,7 +5063,7 @@ static int sdfat_fill_super(struct super_block *sb, void *data, int silent)
 	}
 
 	root_inode->i_ino = SDFAT_ROOT_INO;
-	inode_set_iversion(root_inode, 1);
+	sdfat_inode_set_iversion(root_inode, 1);
 
 	err = sdfat_read_root(root_inode);
 	if (err) {
