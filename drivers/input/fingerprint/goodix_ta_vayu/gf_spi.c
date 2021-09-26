@@ -151,6 +151,28 @@ static inline irqreturn_t gf_irq(int irq, void *handle) {
 	return IRQ_HANDLED;
 }
 
+static inline void irq_switch(struct gf_dev *gf_dev, int status) {
+	if (status) {
+		if (!gf_dev->irq_enabled) {
+			enable_irq_wake(gf_dev->irq);
+			irq_set_affinity(gf_dev->irq, cpumask_of(7));
+		}
+		gf_dev->irq_enabled = 1;
+	} else {
+		if (gf_dev->irq_enabled)
+			disable_irq(gf_dev->irq);
+		gf_dev->irq_enabled = 0;
+	}
+}
+
+static inline void gpio_reset(struct gf_dev *gf_dev) {
+	gpio_direction_output(gf_dev->reset_gpio, 1);
+	gpio_set_value(gf_dev->reset_gpio, 0);
+	mdelay(3);
+	gpio_set_value(gf_dev->reset_gpio, 1);
+	mdelay(3);
+}
+
 static inline int irq_setup(struct gf_dev *gf_dev) {
 	int status;
 	gf_dev->irq = gpio_to_irq(gf_dev->irq_gpio);
@@ -159,9 +181,7 @@ static inline int irq_setup(struct gf_dev *gf_dev) {
 							 IRQF_TRIGGER_RISING | IRQF_ONESHOT, "gf", gf_dev);
 	if (status)
 		return status;
-	if (!gf_dev->irq_enabled)
-		enable_irq_wake(gf_dev->irq);
-	gf_dev->irq_enabled = 1;
+	irq_switch(gf_dev, 1);
 	return status;
 }
 
@@ -187,21 +207,13 @@ static inline long gf_ioctl(struct file *filp, unsigned int cmd,
 		}
 		break;
 	case GF_IOC_DISABLE_IRQ:
-		if (gf_dev->irq_enabled)
-			disable_irq(gf_dev->irq);
-		gf_dev->irq_enabled = 0;
+		irq_switch(gf_dev, 0);
 		break;
 	case GF_IOC_ENABLE_IRQ:
-		if (!gf_dev->irq_enabled)
-			enable_irq(gf_dev->irq);
-		gf_dev->irq_enabled = 1;
+		irq_switch(gf_dev, 1);
 		break;
 	case GF_IOC_RESET:
-		gpio_direction_output(gf_dev->reset_gpio, 1);
-		gpio_set_value(gf_dev->reset_gpio, 0);
-		mdelay(3);
-		gpio_set_value(gf_dev->reset_gpio, 1);
-		mdelay(3);
+		gpio_reset(gf_dev);
 		break;
 	default:
 		break;
@@ -231,11 +243,7 @@ static inline int gf_open(struct inode *inode, struct file *filp) {
 			if (status)
 				gf_cleanup(gf_dev);
 		}
-		gpio_direction_output(gf_dev->reset_gpio, 1);
-		gpio_set_value(gf_dev->reset_gpio, 0);
-		mdelay(3);
-		gpio_set_value(gf_dev->reset_gpio, 1);
-		mdelay(3);
+		gpio_reset(gf_dev);
 	}
 	gf_dev->vreg = regulator_get(NULL, "pm8150_l17");
 	if (!regulator_is_enabled(gf_dev->vreg)) {
