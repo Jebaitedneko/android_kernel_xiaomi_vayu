@@ -33,14 +33,14 @@ extern int wsa881x_codec_info_create_codec_entry(
 void wsa881x_regmap_defaults(struct regmap *regmap, u8 version);
 
 #else
-extern int wsa881x_set_channel_map(struct snd_soc_codec *codec, u8 *port,
+int wsa881x_set_channel_map(struct snd_soc_codec *codec, u8 *port,
 				   u8 num_port, unsigned int *ch_mask,
-				   unsigned int *ch_rate, u8 *port_type);
+				   unsigned int *ch_rate, u8 *port_type)
 {
 	return 0;
 }
 
-extern int wsa881x_codec_info_create_codec_entry(
+int wsa881x_codec_info_create_codec_entry(
 					struct snd_info_entry *codec_root,
 					struct snd_soc_codec *codec)
 {
@@ -49,6 +49,7 @@ extern int wsa881x_codec_info_create_codec_entry(
 
 void wsa881x_regmap_defaults(struct regmap *regmap, u8 version)
 {
+	return;
 }
 
 #endif
