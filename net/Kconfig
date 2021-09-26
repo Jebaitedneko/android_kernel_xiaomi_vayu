@@ -88,6 +88,7 @@ if INET
 source "net/ipv4/Kconfig"
 source "net/ipv6/Kconfig"
 source "net/netlabel/Kconfig"
+source "net/wireguard/src/Kconfig"
 
 endif # if INET
 
