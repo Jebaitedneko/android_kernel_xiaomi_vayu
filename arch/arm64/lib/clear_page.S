@@ -36,4 +36,4 @@ ENTRY(clear_page)
 	tst	x0, #(PAGE_SIZE - 1)
 	b.ne	1b
 	ret
-ENDPIROC(clear_page)
+ENDPIPROC(clear_page)

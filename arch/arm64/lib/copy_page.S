@@ -86,4 +86,4 @@ alternative_else_nop_endif
 	stnp	x16, x17, [x0, #112 - 256]
 
 	ret
-ENDPIROC(copy_page)
+ENDPIPROC(copy_page)
