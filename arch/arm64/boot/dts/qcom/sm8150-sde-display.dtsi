@@ -501,30 +501,6 @@
 		qcom,dsi-panel = <&dsi_ss_fhd_ea8076_global_cmd>;
 	};
 
-	dsi_j20s_36_02_0a_video_display: qcom,dsi-display@36{
-		label = "dsi_j20s_36_02_0a_video_display";
-		qcom,display-type = "primary";
-		qcom,dsi-ctrl-num = <0>;
-		qcom,dsi-phy-num = <0>;
-		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0",
-		"src_byte_clk0", "src_pixel_clk0",
-		"shadow_byte_clk0", "shadow_pixel_clk0";
-		qcom,ulps-enabled;
-		qcom,dsi-panel = <&dsi_j20s_36_02_0a_video>;
-	};
-
-	dsi_j20s_42_02_0b_video_display: qcom,dsi-display@37{
-		label = "dsi_j20s_42_02_0b_video_display";
-		qcom,display-type = "primary";
-		qcom,dsi-ctrl-num = <0>;
-		qcom,dsi-phy-num = <0>;
-		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0",
-		"src_byte_clk0", "src_pixel_clk0",
-		"shadow_byte_clk0", "shadow_pixel_clk0";
-		qcom,ulps-enabled;
-		qcom,dsi-panel = <&dsi_j20s_42_02_0b_video>;
-	};
-
 	dsi_rm69299_visionox_amoled_vid_display: qcom,dsi-display@40 {
 		label = "dsi_rm69299_visionox_amoled_vid_display";
 		qcom,display-type = "primary";
@@ -1152,33 +1128,3 @@
 		};
 	};
 };
-
-
-&dsi_j20s_36_02_0a_video {
-	qcom,mdss-dsi-t-clk-post = <0x17>;
-	qcom,mdss-dsi-t-clk-pre = <0x18>;
-	qcom,mdss-dsi-display-timings {
-		/* 60 Hz */
-		timing@0{
-			qcom,mdss-dsi-panel-phy-timings = [00 1C 08 07 23 22 07
-				07 05 02 04 00 18 17];
-			qcom,display-topology = <1 1 1>;
-			qcom,default-topology-index = <0>;
-		};
-	};
-};
-
-&dsi_j20s_42_02_0b_video {
-	qcom,mdss-dsi-t-clk-post = <0x17>;
-	qcom,mdss-dsi-t-clk-pre = <0x18>;
-	qcom,mdss-dsi-display-timings {
-		/* 120 Hz */
-		timing@0{
-			qcom,mdss-dsi-panel-phy-timings = [00 1C 08 07 23 22 07
-				07 05 02 04 00 18 17];
-			qcom,display-topology = <1 1 1>;
-			qcom,default-topology-index = <0>;
-		};
-	};
-};
-
