@@ -5221,6 +5221,42 @@ static irqreturn_t dsi_display_esd_err_irq_handler(int irq, void *data)
 	return IRQ_HANDLED;
 }
 
+static void dsi_display_esd_err_irq_setup(struct dsi_display *display)
+{
+	int rc = 0;
+	struct platform_device *pdev;
+	struct device *dev;
+
+	pr_info("%s: init", __func__);
+
+	pdev = display->pdev;
+	if (!pdev) {
+		pr_err("invalid platform device\n");
+		return;
+	}
+
+	dev = &pdev->dev;
+	if (!dev) {
+		pr_err("invalid device\n");
+		return;
+	}
+
+	if (display->esd_err_irq) {
+		rc = devm_request_irq(dev, display->esd_err_irq,
+							dsi_display_esd_err_irq_handler,
+							IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
+							"ESD_ERR_GPIO", display);
+		if (rc)
+			pr_err("TE request_irq failed for ESD rc:%d\n", rc);
+		else
+			enable_irq(display->esd_err_irq);
+			display->esd_err_irq_enabled = 1;
+	}
+	pr_info("%s: exit", __func__);
+
+	return;
+}
+
 /**
  * dsi_display_bind - bind dsi device with controlling device
  * @dev:        Pointer to base of platform device
@@ -5442,6 +5478,9 @@ static int dsi_display_bind(struct device *dev,
 
 	/* register te irq handler */
 	dsi_display_register_te_irq(display);
+
+	/* setup esd err irq handler */
+	dsi_display_esd_err_irq_setup(display);
 
 	goto error;
 

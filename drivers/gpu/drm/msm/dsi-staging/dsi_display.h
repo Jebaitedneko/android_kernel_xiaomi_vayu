@@ -211,6 +211,7 @@ struct dsi_display {
 	int disp_te_gpio;
 	int esd_err_irq_gpio;
 	int esd_err_irq;
+	int esd_err_irq_enabled;
 	bool is_te_irq_enabled;
 	struct completion esd_te_gate;
 
