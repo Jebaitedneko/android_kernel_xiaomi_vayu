@@ -5210,6 +5210,17 @@ static void dsi_display_parse_esd_err_irq_gpio(struct dsi_display *display)
 	pr_info("%s: exit", __func__);
 }
 
+static irqreturn_t dsi_display_esd_err_irq_handler(int irq, void *data)
+{
+	struct dsi_display *display = (struct dsi_display *)data;
+
+	if (!display)
+		return IRQ_HANDLED;
+
+	pr_info("%s: irq handler invoked", __func__);
+	return IRQ_HANDLED;
+}
+
 /**
  * dsi_display_bind - bind dsi device with controlling device
  * @dev:        Pointer to base of platform device
