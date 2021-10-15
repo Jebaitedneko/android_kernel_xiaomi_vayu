@@ -5176,6 +5176,40 @@ static int dsi_display_sysfs_deinit(struct dsi_display *display)
 
 }
 
+static void dsi_display_parse_esd_err_irq_gpio(struct dsi_display *display)
+{
+	struct platform_device *pdev;
+	struct device *dev;
+	int rc = 0;
+	display->esd_err_irq = 0;
+
+	pr_info("%s: init", __func__);
+
+	pdev = display->pdev;
+	if (!pdev) {
+		pr_err("Inavlid platform device\n");
+		return;
+	}
+
+	dev = &pdev->dev;
+	if (!dev) {
+		pr_err("Inavlid platform device\n");
+		return;
+	}
+	display->esd_err_irq_gpio = of_get_named_gpio(dev->of_node,
+					"qcom,esd-err-irq-gpio", 0);
+	if (gpio_is_valid(display->esd_err_irq_gpio)) {
+		display->esd_err_irq = gpio_to_irq(display->esd_err_irq_gpio);
+		rc = gpio_request(display->esd_err_irq_gpio, "esd_err_irq_gpio");
+		if (rc)
+			pr_err("%s: Failed to get esd irq gpio %d (code: %d)",
+						__func__, display->esd_err_irq_gpio, rc);
+		else
+			gpio_direction_input(display->esd_err_irq_gpio);
+	}
+	pr_info("%s: exit", __func__);
+}
+
 /**
  * dsi_display_bind - bind dsi device with controlling device
  * @dev:        Pointer to base of platform device
@@ -5612,6 +5646,8 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 	dsi_display_parse_cmdline_topology(display, index);
 
 	platform_set_drvdata(pdev, display);
+
+	dsi_display_parse_esd_err_irq_gpio(display);
 
 	rc = dsi_display_init(display);
 	if (rc)
