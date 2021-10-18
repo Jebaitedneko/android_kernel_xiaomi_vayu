@@ -1846,6 +1846,7 @@ static void _sde_connector_report_panel_dead(struct sde_connector *conn,
 	bool skip_pre_kickoff)
 {
 	struct drm_event event;
+	struct dsi_display *display = (struct dsi_display *)(conn->display);
 
 	if (!conn)
 		return;
@@ -1859,6 +1860,7 @@ static void _sde_connector_report_panel_dead(struct sde_connector *conn,
 		return;
 
 	conn->panel_dead = true;
+	display->panel->panel_dead_flag = true;
 	event.type = DRM_EVENT_PANEL_DEAD;
 	event.length = sizeof(bool);
 	msm_mode_object_event_notify(&conn->base.base,
