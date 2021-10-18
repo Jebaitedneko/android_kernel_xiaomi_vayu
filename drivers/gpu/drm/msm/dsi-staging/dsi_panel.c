@@ -436,12 +436,14 @@ static int dsi_panel_power_on(struct dsi_panel *panel)
 {
 	int rc = 0;
 
-	if (!panel->tddi_doubleclick_flag)
+	if (!panel->tddi_doubleclick_flag || panel->panel_dead_flag)
 	rc = dsi_pwr_enable_regulator(&panel->power_info, true);
 	if (rc) {
 		pr_err("[%s] failed to enable vregs, rc=%d\n", panel->name, rc);
 		goto exit;
 	}
+	else
+		panel->panel_dead_flag = false;
 
 	rc = dsi_panel_set_pinctrl_state(panel, true);
 	if (rc) {
@@ -480,7 +482,7 @@ static int dsi_panel_power_off(struct dsi_panel *panel)
 	if (gpio_is_valid(panel->reset_config.disp_en_gpio))
 		gpio_set_value(panel->reset_config.disp_en_gpio, 0);
 
-	if (!panel->tddi_doubleclick_flag)
+	if (!panel->tddi_doubleclick_flag  || panel->panel_dead_flag)
 	if (gpio_is_valid(panel->reset_config.reset_gpio))
 		gpio_set_value(panel->reset_config.reset_gpio, 0);
 
@@ -493,7 +495,7 @@ static int dsi_panel_power_off(struct dsi_panel *panel)
 		       rc);
 	}
 
-	if(!panel->tddi_doubleclick_flag)
+	if(!panel->tddi_doubleclick_flag || panel->panel_dead_flag)
 	rc = dsi_pwr_enable_regulator(&panel->power_info, false);
 	if (rc)
 		pr_err("[%s] failed to enable vregs, rc=%d\n", panel->name, rc);
@@ -3425,6 +3427,7 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 		pr_debug("failed to parse esd config, rc=%d\n", rc);
 
 	panel->tddi_doubleclick_flag = false;
+	panel->panel_dead_flag = false;
 	panel->power_mode = SDE_MODE_DPMS_OFF;
 	drm_panel_init(&panel->drm_panel);
 	mutex_init(&panel->panel_lock);
