@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Linux/arm64 4.14.246 Kernel Configuration
+# Linux/arm64 4.14.250 Kernel Configuration
 #
 CONFIG_ARM64=y
 CONFIG_64BIT=y
@@ -4568,7 +4568,7 @@ CONFIG_RNDIS_IPA=y
 CONFIG_IPA3_MHI_PROXY=y
 CONFIG_IPA3_MHI_PRIME_MANAGER=y
 CONFIG_IPA_UT=y
-CONFIG_MSM_11AD=y
+# CONFIG_MSM_11AD is not set
 CONFIG_SEEMP_CORE=y
 CONFIG_IPA3_REGDUMP=y
 # CONFIG_QCOM_ETHERNET_UTIL is not set
