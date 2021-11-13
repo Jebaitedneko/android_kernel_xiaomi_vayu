@@ -3295,5 +3295,6 @@ static void __exit nvt_driver_exit(void)
 }
 late_initcall(nvt_driver_init);
 
+module_param_named(touch_fw_override, touch_fw_override, int, 0664);
 MODULE_DESCRIPTION("Novatek Touchscreen Driver");
 MODULE_LICENSE("GPL");
