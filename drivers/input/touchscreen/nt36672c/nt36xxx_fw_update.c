@@ -300,20 +300,30 @@ static void update_firmware_release(void)
 
 int touch_fw_override = 0;
 char *touch_fw_name = "j20s_novatek_ts_fw01.bin";
+int panel_is_tianma = 0;
 
 static void update_firmware_override(int choice) {
-	switch (choice) {
-		case 1:  touch_fw_name = "j20s_novatek_ts_fw01.2f0c.bin"; break;
-		case 2:  touch_fw_name = "j20s_novatek_ts_fw01.2fa7.bin"; break;
-		case 3:  touch_fw_name = "j20s_novatek_ts_fw01.3a42.bin"; break;
-		case 4:  touch_fw_name = "j20s_novatek_ts_fw01.8ac8.bin"; break;
-		case 5:  touch_fw_name = "j20s_novatek_ts_fw02.71e7.bin"; break;
-		case 6:  touch_fw_name = "j20s_novatek_ts_fw02.9874.bin"; break;
-		case 7:  touch_fw_name = "j20s_novatek_ts_fw02.fd13.bin"; break;
-		case 8:  touch_fw_name = "j20s_novatek_ts_mp01.1b3b.bin"; break;
-		case 9:  touch_fw_name = "j20s_novatek_ts_mp01.8cb5.bin"; break;
-		case 10: touch_fw_name = "j20s_novatek_ts_mp02.2c1f.bin"; break;
-		case 11: touch_fw_name = "j20s_novatek_ts_mp02.9fb2.bin"; break;
+	if (panel_is_tianma) {
+		switch (choice) {
+			case 1:  touch_fw_name = "j20s_novatek_ts_fw01.2f0c.bin"; break;
+			case 2:  touch_fw_name = "j20s_novatek_ts_fw01.2fa7.bin"; break;
+			case 3:  touch_fw_name = "j20s_novatek_ts_fw01.3a42.bin"; break;
+			case 4:  touch_fw_name = "j20s_novatek_ts_fw01.8ac8.bin"; break;
+			case 8:  touch_fw_name = "j20s_novatek_ts_mp01.1b3b.bin"; break;
+			case 9:  touch_fw_name = "j20s_novatek_ts_mp01.8cb5.bin"; break;
+			default: touch_fw_name = "j20s_novatek_ts_fw01.bin"; break;
+		}
+		NVT_LOG("tianma: override");
+	} else {
+		switch (choice) {
+			case 5:  touch_fw_name = "j20s_novatek_ts_fw02.71e7.bin"; break;
+			case 6:  touch_fw_name = "j20s_novatek_ts_fw02.9874.bin"; break;
+			case 7:  touch_fw_name = "j20s_novatek_ts_fw02.fd13.bin"; break;
+			case 10: touch_fw_name = "j20s_novatek_ts_mp02.2c1f.bin"; break;
+			case 11: touch_fw_name = "j20s_novatek_ts_mp02.9fb2.bin"; break;
+			default: touch_fw_name = "j20s_novatek_ts_fw02.bin"; break;
+		}
+		NVT_LOG("huaxing: override");
 	}
 }
 
