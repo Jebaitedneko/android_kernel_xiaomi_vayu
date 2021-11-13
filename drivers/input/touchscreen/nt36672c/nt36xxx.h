@@ -102,6 +102,7 @@
 #define DEFAULT_DEBUG_FW_NAME "novatek_debug_fw.bin"
 #define DEFAULT_DEBUG_MP_NAME "novatek_debug_mp.bin"
 
+extern int touch_fw_override;
 
 /* ---ESD Protect.--- */
 #define NVT_TOUCH_ESD_PROTECT 1
