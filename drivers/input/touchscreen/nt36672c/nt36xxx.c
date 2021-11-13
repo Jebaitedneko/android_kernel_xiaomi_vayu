@@ -66,6 +66,7 @@ static unsigned long irq_timer = 0;
 uint8_t esd_check = false;
 uint8_t esd_retry = 0;
 static int esd_check_force = 0;
+static int esd_check_scale = 8;
 #endif /* #if NVT_TOUCH_ESD_PROTECT */
 
 #if NVT_TOUCH_EXT_PROC
@@ -1332,12 +1333,18 @@ static uint8_t nvt_fw_recovery(uint8_t *point_data)
 	return detected;
 }
 
+module_param_named(esd_check_scale, esd_check_scale, int, 0664);
 static void nvt_esd_check_func(struct work_struct *work)
 {
 	unsigned int timer = jiffies_to_msecs(jiffies - irq_timer);
 
-	if ((timer > NVT_TOUCH_ESD_CHECK_PERIOD + 50)
-		&& (timer < 2 * NVT_TOUCH_ESD_CHECK_PERIOD - 50) && esd_check) {
+	if (esd_check_scale > 24)
+		esd_check_scale = 24;
+	if (esd_check_scale < 4)
+		esd_check_scale = 4;
+
+	if ((timer > esd_check_scale * NVT_TOUCH_ESD_CHECK_PERIOD + 50)
+		&& (timer < 2 * esd_check_scale * NVT_TOUCH_ESD_CHECK_PERIOD - 50) && esd_check) {
 		mutex_lock(&ts->lock);
 		NVT_LOG("do ESD recovery, timer = %d, retry = %d\n", timer, esd_retry);
 		/* do esd recovery, reload fw */
