@@ -270,4 +270,5 @@ int32_t nvt_set_pocket_palm_switch(uint8_t pocket_palm_switch);
 #if NVT_TOUCH_ESD_PROTECT
 extern void nvt_esd_check_enable(uint8_t enable);
 #endif /* #if NVT_TOUCH_ESD_PROTECT */
+extern int panel_is_tianma;
 #endif /* _LINUX_NVT_TOUCH_H */
