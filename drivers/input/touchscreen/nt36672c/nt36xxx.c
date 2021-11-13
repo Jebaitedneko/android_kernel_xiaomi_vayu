@@ -1139,6 +1139,7 @@ static bool nvt_cmds_panel_info(void)
 		if (!strncmp(display_node, "dsi_j20s_36_02_0a_video_display",
 					strlen("dsi_j20s_36_02_0a_video_display"))) {
 			panel_id = true;
+			panel_is_tianma = 1;
 		}
 	}
 	return panel_id;
@@ -2669,6 +2670,7 @@ static int32_t nvt_ts_probe(struct platform_device *pdev)
 		debugfs_create_file("touch_boost", 0660, ts->debugfs, ts, &nvt_touch_test_fops);
 	}
 #endif
+	nvt_cmds_panel_info();
 #ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
 			xiaomi_touch_interfaces.touch_vendor_read = nvt_touch_vendor_read;
 			xiaomi_touch_interfaces.panel_display_read = nvt_panel_display_read;
