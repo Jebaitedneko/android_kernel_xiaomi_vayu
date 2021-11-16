@@ -349,7 +349,7 @@ static int32_t update_firmware_request(const char *filename)
 	}
 
 	while (1) {
-		NVT_LOG("filename is %s\n", filename);
+		pr_info("[NVT-ts-spi] %s: filename is %s\n", __func__, filename);
 
 		ret = request_firmware(&fw_entry, filename, &ts->client->dev);
 		if (ret) {
