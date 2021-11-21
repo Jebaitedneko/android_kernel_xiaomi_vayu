@@ -211,31 +211,14 @@ get_gcc-4.9-aosp() {
 
 	TC_64="$TOOLCHAIN_DIR/gcc-4.9-64"
 	REPO_64="https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9"
-	BRANCH_64="master"
+	BRANCH_64="android-12.0.0_r15"
 
 	TC_32="$TOOLCHAIN_DIR/gcc-4.9-32"
 	REPO_32="https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9"
-	BRANCH_32="master"
+	BRANCH_32="android-12.0.0_r15"
 
-	if [[ $USER != "$USER_OVERRIDE" ]]; then
-
-		git_clone "${REPO_64}" "${BRANCH_64}" "${TC_64}" &
-		check_updates_from_github "${REPO_64}" "${BRANCH_64}" "${TC_64}" &
-
-		git_clone "${REPO_32}" "${BRANCH_32}" "${TC_32}" &
-		check_updates_from_github "${REPO_32}" "${BRANCH_32}" "${TC_32}" &
-
-		wait
-
-		TC_64="$TC_64/$(echo ${REPO_64} | cut -f5 -d/)-${BRANCH_64}"
-		TC_32="$TC_32/$(echo ${REPO_32} | cut -f5 -d/)-${BRANCH_32}"
-	else
-		git_clone "${REPO_64}" "${BRANCH_64}" "${TC_64}"
-		check_updates_from_github "${REPO_64}" "${BRANCH_64}" "${TC_64}"
-
-		git_clone "${REPO_32}" "${BRANCH_32}" "${TC_32}"
-		check_updates_from_github "${REPO_32}" "${BRANCH_32}" "${TC_32}"
-	fi
+	[ ! -d "${TC_64}/bin" ] && git clone --depth=1 "${REPO_64}" -b "${BRANCH_64}" "${TC_64}"
+	[ ! -d "${TC_32}/bin" ] && git clone --depth=1 "${REPO_32}" -b "${BRANCH_32}" "${TC_32}"
 
 	CROSS="$TC_64/bin/aarch64-linux-android-"
 	CROSS_ARM32="$TC_32/bin/arm-linux-androideabi-"
