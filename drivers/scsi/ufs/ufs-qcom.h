@@ -305,6 +305,7 @@ struct ufs_qcom_host {
 	struct ufs_vreg *vccq_parent;
 	bool work_pending;
 	bool is_phy_pwr_on;
+	bool err_occurred;
 };
 
 static inline u32
