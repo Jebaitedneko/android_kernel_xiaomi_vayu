@@ -363,7 +363,8 @@ int cmdq_crypto_qti_init_crypto(struct cmdq_host *host,
 	if (!cmdq_ice_memres) {
 		pr_debug("%s ICE not supported\n", __func__);
 		host->icemmio = NULL;
-		return PTR_ERR(cmdq_ice_memres);
+		host->caps &= ~CMDQ_CAP_CRYPTO_SUPPORT;
+		return err;
 	}
 
 	host->icemmio = devm_ioremap(&msm_host->pdev->dev,
