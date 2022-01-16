@@ -1502,6 +1502,7 @@ static int ufs_qcom_setup_clocks(struct ufs_hba *hba, bool on,
 				 enum ufs_notify_change_status status)
 {
 	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
+	int err = 0;
 
 	/*
 	 * In case ufs_qcom_init() is not yet done, simply ignore.
@@ -1513,13 +1514,14 @@ static int ufs_qcom_setup_clocks(struct ufs_hba *hba, bool on,
 
 	if (on && (status == POST_CHANGE)) {
 		if (!host->is_phy_pwr_on) {
-			phy_power_on(host->generic_phy);
+			err = phy_power_on(host->generic_phy);
 			host->is_phy_pwr_on = true;
 		}
 		/* enable the device ref clock for HS mode*/
 		if (ufshcd_is_hs_mode(&hba->pwr_info))
 			ufs_qcom_dev_ref_clk_ctrl(host, true);
-
+		if (!err)
+			atomic_set(&host->clks_on, on);
 	} else if (!on && (status == PRE_CHANGE)) {
 		if (!ufs_qcom_is_link_active(hba)) {
 			/* disable device ref_clk */
@@ -1965,6 +1967,8 @@ static int ufs_qcom_clk_scale_notify(struct ufs_hba *hba,
 		break;
 	}
 
+	if (!err)
+		atomic_set(&host->scale_up, scale_up);
 	return err;
 }
 
@@ -2340,9 +2344,79 @@ static ssize_t power_mode_show(struct device *dev,
 
 static DEVICE_ATTR_RO(power_mode);
 
+static ssize_t bus_speed_mode_show(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	struct ufs_hba *hba = dev_get_drvdata(dev);
+	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
+
+	return scnprintf(buf, PAGE_SIZE, "%d\n",
+			 !!atomic_read(&host->scale_up));
+}
+
+static DEVICE_ATTR_RO(bus_speed_mode);
+
+static ssize_t clk_status_show(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	struct ufs_hba *hba = dev_get_drvdata(dev);
+	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
+
+	return scnprintf(buf, PAGE_SIZE, "%d\n",
+			 !!atomic_read(&host->clks_on));
+}
+
+static DEVICE_ATTR_RO(clk_status);
+
+static unsigned int ufs_qcom_gec(struct ufs_hba *hba,
+				struct ufs_uic_err_reg_hist *err_hist,
+				 char *err_name)
+{
+	unsigned long flags;
+	int i, cnt_err = 0;
+
+	spin_lock_irqsave(hba->host->host_lock, flags);
+	for (i = 0; i < UIC_ERR_REG_HIST_LENGTH; i++) {
+		int p = (i + err_hist->pos) % UIC_ERR_REG_HIST_LENGTH;
+
+		if (err_hist->tstamp[p] == 0)
+			continue;
+		dev_err(hba->dev, "%s[%d] = 0x%x at %lld us\n", err_name, p,
+			err_hist->reg[p], ktime_to_us(err_hist->tstamp[p]));
+
+		++cnt_err;
+	}
+
+	spin_unlock_irqrestore(hba->host->host_lock, flags);
+	return cnt_err;
+}
+
+static ssize_t err_count_show(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	struct ufs_hba *hba = dev_get_drvdata(dev);
+
+	return scnprintf(buf, PAGE_SIZE,
+			 "%s: %d\n%s: %d\n%s: %d\n",
+			 "pa_err_cnt_total",
+			 ufs_qcom_gec(hba, &hba->ufs_stats.pa_err,
+				      "pa_err_cnt_total"),
+			 "dl_err_cnt_total",
+			 ufs_qcom_gec(hba, &hba->ufs_stats.dl_err,
+				      "dl_err_cnt_total"),
+			 "dme_err_cnt",
+			 ufs_qcom_gec(hba, &hba->ufs_stats.dme_err,
+				      "dme_err_cnt"));
+}
+
+static DEVICE_ATTR_RO(err_count);
+
 static struct attribute *ufs_qcom_sysfs_attrs[] = {
 	&dev_attr_err_state.attr,
 	&dev_attr_power_mode.attr,
+	&dev_attr_bus_speed_mode.attr,
+	&dev_attr_clk_status.attr,
+	&dev_attr_err_count.attr,
 	NULL
 };
 
