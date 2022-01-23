@@ -11,20 +11,23 @@ tg_msg() {
     -F chat_id="-$TG_CHAT_ID" -F text="$1" -F parse_mode="Markdown" &> /dev/null
 }
 BLDHST="mochi" && DEVICE="vayu"
+DOCKER_64=/usr/gcc64 && DOCKER_32=/usr/gcc32
+LOCAL_64=~/.local/gcc64 && LOCAL_32=~/.local/gcc32
 PRE_64="aarch64-elf" && PRE_32="arm-eabi"
 [[ $(which ccache) ]] && CCACHE="$(which ccache) "
-[ -d /usr/gcc64 ] && CROSS=/usr/gcc64/bin/$PRE_64- || CROSS=~/.local/gcc64/bin/$PRE_64-
-[ -d /usr/gcc32 ] && CROSSCOMPAT=/usr/gcc32/bin/$PRE_32- || CROSSCOMPAT=~/.local/gcc32/bin/$PRE_32-
+[ -d $DOCKER_64 ] && CROSS=$DOCKER_64/bin || CROSS=$LOCAL_64/bin
+[ -d $DOCKER_32 ] && CROSSCOMPAT=$DOCKER_32/bin || CROSSCOMPAT=$LOCAL_32/bin
 export KBUILD_BUILD_USER="$BLDHST"
 export KBUILD_BUILD_HOST="$BLDHST"
-CROSS_TRIM=$(echo $CROSSCOMPAT | sed "s/$(basename $CROSS)//g;s/\/$//g")
-CROSSCOMPAT_TRIM=$(echo $CROSS | sed "s/$(basename $CROSS)//g;s/\/$//g")
-MAKEOPTS="-j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=$CROSS CROSS_COMPILE_ARM32=$CROSSCOMPAT"
-env PATH="$CROSS_TRIM:$CROSSCOMPAT_TRIM:$PATH" make $MAKEOPTS CC="$CCACHE${CROSS}gcc" vayu_defconfig
+MAKEOPTS="-j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=$CROSS/$PRE_64- CROSS_COMPILE_ARM32=$CROSSCOMPAT/$PRE_32-"
+if [ -d $LOCAL_64 ] && [ -d $LOCAL_32 ]; then
+	MAKEOPTS="$MAKEOPTS LD=ld.lld AR=llvm-ar NM=llvm-nm STRIP=llvm-strip OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf"
+fi
+env PATH="$CROSS:$CROSSCOMPAT:$PATH" make $MAKEOPTS CC="$CCACHE${CROSS}/$PRE_64-gcc" vayu_defconfig
 echo "CONFIG_FORTIFY_SOURCE=n" >> out/.config
 START=$(date +"%s")
 tg_msg "Build started"
-env PATH="$CROSS_TRIM:$CROSSCOMPAT_TRIM:$PATH" make $MAKEOPTS CC="$CCACHE${CROSS}gcc" | tee out/build.log
+env PATH="$CROSS:$CROSSCOMPAT:$PATH" make $MAKEOPTS CC="$CCACHE${CROSS}/$PRE_64-gcc" | tee out/build.log
 DIFF=$(($(date +"%s") - START))
 [ ! -d out/ak3 ] && git clone --depth=1 https://github.com/osm0sis/AnyKernel3 out/ak3
 echo -e "
