@@ -24,6 +24,9 @@ if [ -d $LOCAL_64 ] && [ -d $LOCAL_32 ]; then
 	MAKEOPTS="$MAKEOPTS LD=ld.lld AR=llvm-ar NM=llvm-nm STRIP=llvm-strip OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf"
 fi
 env PATH="$CROSS:$CROSSCOMPAT:$PATH" make $MAKEOPTS CC="$CCACHE${CROSS}/$PRE_64-gcc" vayu_defconfig
+if [[ $1 != '' ]] && [ $1 == 'regen' ]; then
+	cp out/.config arch/arm64/configs/vayu_defconfig && exit
+fi
 echo "CONFIG_FORTIFY_SOURCE=n" >> out/.config
 START=$(date +"%s")
 tg_msg "Build started"
