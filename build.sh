@@ -20,11 +20,11 @@ PRE_64="aarch64-elf" && PRE_32="arm-eabi"
 export KBUILD_BUILD_USER="$BLDHST"
 export KBUILD_BUILD_HOST="$BLDHST"
 MAKEOPTS="-j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=$CROSS/$PRE_64- CROSS_COMPILE_ARM32=$CROSSCOMPAT/$PRE_32-"
-if [ -d $LOCAL_64 ] && [ -d $LOCAL_32 ]; then
+if [[ "$@" != '' ]] && [[ "$@" == *'llvm'* ]]; then
 	MAKEOPTS="$MAKEOPTS LD=ld.lld AR=llvm-ar NM=llvm-nm STRIP=llvm-strip OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf"
 fi
 env PATH="$CROSS:$CROSSCOMPAT:$PATH" make $MAKEOPTS CC="$CCACHE${CROSS}/$PRE_64-gcc" vayu_defconfig
-if [[ $1 != '' ]] && [ $1 == 'regen' ]; then
+if [[ "$@" != '' ]] && [[ "$@" == *'regen'* ]]; then
 	cp out/.config arch/arm64/configs/vayu_defconfig && exit
 fi
 echo "CONFIG_FORTIFY_SOURCE=n" >> out/.config
