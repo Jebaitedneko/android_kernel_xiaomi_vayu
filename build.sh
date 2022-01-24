@@ -78,6 +78,7 @@ case "$@" in
 esac
 
 echo "CONFIG_FORTIFY_SOURCE=n" >> out/.config
+echo "CONFIG_LTO_GCC=y" >> out/.config
 START=$(date +"%s")
 tg_msg "Build started"
 
