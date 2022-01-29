@@ -67,7 +67,7 @@ And public attribution of xiaomi platforms(like J20S and so and)
 	qcom,sec-charger-config = <0>;
 	qcom,usb-icl-ua = <3000000>;
 	qcom,fcc-max-ua = <5900000>;
-	qcom,fv-max-uv = <4475000>;
+	qcom,fv-max-uv = <4460000>;
 	qcom,non-fcc-fv-max-uv = <4450000>;
 	//qcom,chg-warm-th= <450>;
 	//qcom,chg-cool-th= <150>;
