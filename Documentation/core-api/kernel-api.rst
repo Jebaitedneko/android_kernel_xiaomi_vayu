@@ -108,6 +108,9 @@ The Slab Cache
 .. kernel-doc:: mm/slab.c
    :export:
 
+.. kernel-doc:: include/linux/string.h
+   :internal:
+
 .. kernel-doc:: mm/util.c
    :export:
 
