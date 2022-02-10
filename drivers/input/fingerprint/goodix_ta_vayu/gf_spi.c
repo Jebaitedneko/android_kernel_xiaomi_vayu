@@ -281,18 +281,6 @@ static const struct file_operations gf_fops = {
 	.release = gf_release,
 };
 
-static void set_fingerprintd_nice(int nice)
-{
-	struct task_struct *p;
-
-	read_lock(&tasklist_lock);
-	for_each_process(p) {
-		if (strstr(p->comm, "erprint"))
-			set_user_nice(p, nice);
-	}
-	read_unlock(&tasklist_lock);
-}
-
 static inline int gf_state_chg_cb(struct notifier_block *nb,
 					unsigned long val, void *data)
 {
@@ -309,12 +297,10 @@ static inline int gf_state_chg_cb(struct notifier_block *nb,
 
 		switch (blank) {
 			case MSM_DRM_BLANK_POWERDOWN:
-				set_fingerprintd_nice(MIN_NICE);
 				temp[0] = 2;
 				sendnlmsg(temp);
 				break;
 			case MSM_DRM_BLANK_UNBLANK:
-				set_fingerprintd_nice(0);
 				temp[0] = 3;
 				sendnlmsg(temp);
 				break;
