@@ -60,6 +60,7 @@ BLDHST="mochi" && DEVICE="vayu"
 DOCKER_64=/usr/gcc64 && DOCKER_32=/usr/gcc32
 LOCAL_64=~/.local/gcc64 && LOCAL_32=~/.local/gcc32
 PRE_64="aarch64-elf" && PRE_32="arm-eabi"
+DEFCONFIG="vayu_defconfig"
 export KBUILD_BUILD_USER="$BLDHST"
 export KBUILD_BUILD_HOST="$BLDHST"
 
@@ -67,18 +68,18 @@ export KBUILD_BUILD_HOST="$BLDHST"
 [ -d $DOCKER_64 ] && CROSS=$DOCKER_64/bin || CROSS=$LOCAL_64/bin
 [ -d $DOCKER_32 ] && CROSSCOMPAT=$DOCKER_32/bin || CROSSCOMPAT=$LOCAL_32/bin
 
-kmake vayu_defconfig
+kmake $DEFCONFIG
 
 case "$@" in
 	'') ;;
 	*'llvm'*) MAKEOPTS="$MAKEOPTS LD=ld.lld AR=llvm-ar NM=llvm-nm STRIP=llvm-strip OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf" ;;
-	*'regen'*) cp out/.config arch/arm64/configs/vayu_defconfig && exit ;;
+	*'regen'*) cp out/.config arch/arm64/configs/$DEFCONFIG && exit ;;
+	*'lto'*) echo "CONFIG_LTO_GCC=y" >> out/.config ;;
 	*'zip'*) kzip && exit ;;
 	*) kmake "$@" && exit ;;
 esac
 
 echo "CONFIG_FORTIFY_SOURCE=n" >> out/.config
-echo "CONFIG_LTO_GCC=y" >> out/.config
 START=$(date +"%s")
 tg_msg "Build started"
 
