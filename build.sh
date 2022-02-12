@@ -70,15 +70,11 @@ export KBUILD_BUILD_HOST="$BLDHST"
 
 kmake $DEFCONFIG
 
-case "$@" in
-	'') ;;
-	*'llvm'*) MAKEOPTS="$MAKEOPTS LD=ld.lld AR=llvm-ar NM=llvm-nm STRIP=llvm-strip OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf" ;;
-	*'regen'*) cp out/.config arch/arm64/configs/$DEFCONFIG && exit ;;
-	*'lld'*) MAKEOPTS="$MAKEOPTS LD=ld.lld" ;;
-	*'lto'*) echo "CONFIG_LTO_GCC=y" >> out/.config ;;
-	*'zip'*) kzip && exit ;;
-	*) kmake "$@" && exit ;;
-esac
+[[ $@ =~ "llvm" ]] && MAKEOPTS="$MAKEOPTS LD=ld.lld AR=llvm-ar NM=llvm-nm STRIP=llvm-strip OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf"
+[[ $@ =~ "regen" ]] && cp out/.config arch/arm64/configs/$DEFCONFIG && exit
+[[ $@ =~ "lld" ]] && MAKEOPTS="$MAKEOPTS LD=ld.lld"
+[[ $@ =~ "lto" ]] && echo "CONFIG_LTO_GCC=y" >> out/.config
+[[ $@ =~ "zip" ]] && kzip && exit
 
 echo "CONFIG_FORTIFY_SOURCE=n" >> out/.config
 START=$(date +"%s")
