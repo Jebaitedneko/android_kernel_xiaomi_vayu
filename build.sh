@@ -14,7 +14,7 @@ tg_msg() {
 }
 
 kmake() {
-	MAKEOPTS="-j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=$CROSS/$PRE_64- CROSS_COMPILE_ARM32=$CROSSCOMPAT/$PRE_32-"
+	MAKEOPTS="$MAKEOPTS -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=$CROSS/$PRE_64- CROSS_COMPILE_ARM32=$CROSSCOMPAT/$PRE_32-"
 	env PATH="$CROSS:$CROSSCOMPAT:$PATH" make $MAKEOPTS CC="$CCACHE${CROSS}/$PRE_64-gcc" "$@"
 }
 
@@ -74,6 +74,7 @@ case "$@" in
 	'') ;;
 	*'llvm'*) MAKEOPTS="$MAKEOPTS LD=ld.lld AR=llvm-ar NM=llvm-nm STRIP=llvm-strip OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf" ;;
 	*'regen'*) cp out/.config arch/arm64/configs/$DEFCONFIG && exit ;;
+	*'lld'*) MAKEOPTS="$MAKEOPTS LD=ld.lld" ;;
 	*'lto'*) echo "CONFIG_LTO_GCC=y" >> out/.config ;;
 	*'zip'*) kzip && exit ;;
 	*) kmake "$@" && exit ;;
