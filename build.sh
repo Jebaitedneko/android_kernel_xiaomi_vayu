@@ -1,14 +1,12 @@
 #!/bin/bash
 set -x
 
-tg_up() {
-    curl "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMediaGroup" \
-    -F chat_id="-$TG_CHAT_ID" \
-    -F media='[{"type":"document","media":"attach://f1"},{"type":"document","media":"attach://f2"}]' \
-    -F f1="@$1" -F f2="@$2" &> /dev/null
+tg_sendDocument() {
+    curl "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendDocument" \
+    -F chat_id="-$TG_CHAT_ID" -F document=@"$1" -F caption="$2" &> /dev/null
 }
 
-tg_msg() {
+tg_sendMessage() {
     curl "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage" \
     -F chat_id="-$TG_CHAT_ID" -F text="$1" -F parse_mode="Markdown" &> /dev/null
 }
@@ -54,7 +52,12 @@ kzip() {
 	ZIP_PREFIX_STR="$BLDHST-$DEVICE"
 	ZIP_FMT=${ZIP_PREFIX_STR}_"${ZIP_PREFIX_KVER}"_"${ZIP_POSTFIX_DATE}"
 	( cd out/ak3 && zip -r9 ../"${ZIP_FMT}".zip . -x '*.git*' )
+	if [[ $@ =~ "upload" ]]; then
+		( cd out && tg_sendDocument "${ZIP_FMT}.zip" "$(curl -s -F f[]=@${ZIP_FMT}.zip oshi.at)" )
+	fi
 }
+
+tg_sendMessage "Build started"
 
 BLDHST="mochi" && DEVICE="vayu"
 DOCKER_64=/usr/gcc64 && DOCKER_32=/usr/gcc32
@@ -70,20 +73,24 @@ export KBUILD_BUILD_HOST="$BLDHST"
 
 kmake $DEFCONFIG
 
-[[ $@ =~ "llvm" ]] && MAKEOPTS="$MAKEOPTS LD=ld.lld AR=llvm-ar NM=llvm-nm STRIP=llvm-strip OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf"
-[[ $@ =~ "regen" ]] && cp out/.config arch/arm64/configs/$DEFCONFIG && exit
+[[ $@ =~ "llv" ]] && MAKEOPTS="$MAKEOPTS LD=ld.lld AR=llvm-ar NM=llvm-nm STRIP=llvm-strip OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf"
+[[ $@ =~ "reg" ]] && cp out/.config arch/arm64/configs/$DEFCONFIG && exit
 [[ $@ =~ "lld" ]] && MAKEOPTS="$MAKEOPTS LD=ld.lld"
 [[ $@ =~ "lto" ]] && echo "CONFIG_LTO_GCC=y" >> out/.config
-[[ $@ =~ "zip" ]] && kzip && exit
+[[ $@ =~ "gra" ]] && echo "CONFIG_GCC_GRAPHITE=y" >> out/.config
+[[ $@ =~ "zip" ]] && kzip $@ && exit
 
 echo "CONFIG_FORTIFY_SOURCE=n" >> out/.config
-START=$(date +"%s")
-tg_msg "Build started"
 
-kmake | tee out/build.log
+if [[ ${CI} ]]; then
+	kmake &> out/build.log
+	if [ ! -f out/arch/arm64/boot/Image ]; then
+		tg_sendDocument "out/build.log" "Build failed" && exit
+	else
+		tg_sendDocument "out/build.log" "Build done"
+	fi
+else
+	kmake
+fi
 
-DIFF=$(($(date +"%s") - START))
-[ ! -f out/arch/arm64/boot/Image ] && tg_msg "Build failed" && exit || MSG="Build success"
-MSG="$MSG. Time: \`$((DIFF / 60))\`m\`$((DIFF % 60))\`s" && tg_msg "$MSG" && kzip
-
-[ -f out/arch/arm64/boot/Image ] && ( cd out && tg_up "${ZIP_FMT}.zip" "build.log" && tg_msg "\`$(curl -s -F f[]=@${ZIP_FMT}.zip oshi.at)\`" )
+kzip upload
