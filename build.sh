@@ -13,7 +13,7 @@ tg_sendMessage() {
 
 kmake() {
 	MAKEOPTS="$MAKEOPTS -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=$CROSS/$PRE_64- CROSS_COMPILE_ARM32=$CROSSCOMPAT/$PRE_32-"
-	env PATH="$CROSS:$CROSSCOMPAT:$PATH" make $MAKEOPTS CC="$CCACHE${CROSS}/$PRE_64-gcc" "$@"
+	env PATH="$CROSS:$CROSSCOMPAT:$PATH" make $MAKEOPTS CC="$CCACHE${CROSS}/$CC_CHOICE" "$@"
 }
 
 kzip() {
@@ -60,9 +60,18 @@ kzip() {
 tg_sendMessage "Build started"
 
 BLDHST="mochi" && DEVICE="vayu"
-DOCKER_64=/usr/gcc64 && DOCKER_32=/usr/gcc32
-LOCAL_64=~/.local/gcc64 && LOCAL_32=~/.local/gcc32
-PRE_64="aarch64-elf" && PRE_32="arm-eabi"
+if [[ $@ =~ "gcc" ]]; then
+	DOCKER_64=/usr/gcc64 && DOCKER_32=/usr/gcc32
+	LOCAL_64=~/.local/gcc64 && LOCAL_32=~/.local/gcc32
+	PRE_64="aarch64-elf" && PRE_32="arm-eabi"
+	CC_CHOICE="$PRE_64-gcc"
+fi
+if [[ $@ =~ "cla" ]]; then
+	DOCKER_64=/usr/clang && DOCKER_32=/usr/clang
+	LOCAL_64=~/.local/clang && LOCAL_32=~/.local/clang
+	PRE_64="aarch64-linux-gnu" && PRE_32="arm-linux-gnueabi"
+	CC_CHOICE=clang
+fi
 DEFCONFIG="vayu_defconfig"
 export KBUILD_BUILD_USER="$BLDHST"
 export KBUILD_BUILD_HOST="$BLDHST"
@@ -76,8 +85,16 @@ kmake $DEFCONFIG
 [[ $@ =~ "llv" ]] && MAKEOPTS="$MAKEOPTS LD=ld.lld AR=llvm-ar NM=llvm-nm STRIP=llvm-strip OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf"
 [[ $@ =~ "reg" ]] && cp out/.config arch/arm64/configs/$DEFCONFIG && exit
 [[ $@ =~ "lld" ]] && MAKEOPTS="$MAKEOPTS LD=ld.lld"
-[[ $@ =~ "lto" ]] && echo "CONFIG_LTO_GCC=y" >> out/.config
-[[ $@ =~ "gra" ]] && echo "CONFIG_GCC_GRAPHITE=y" >> out/.config
+if [[ $@ =~ "gcc" ]]; then
+	[[ $@ =~ "lto" ]] && echo "CONFIG_LTO_GCC=y" >> out/.config
+	[[ $@ =~ "gra" ]] && echo "CONFIG_GCC_GRAPHITE=y" >> out/.config
+fi
+if [[ $@ =~ "cla" ]]; then
+	[[ $@ =~ "lto" ]] && echo -e "CONFIG_LTO_CLANG=y\nCONFIG_THINLTO=n" >> out/.config
+	[[ $@ =~ "thi" ]] && echo "CONFIG_THINLTO=y" >> out/.config
+	echo "CONFIG_CFI_CLANG=n" >> out/.config
+fi
+
 [[ $@ =~ "zip" ]] && kzip $@ && exit
 
 echo "CONFIG_FORTIFY_SOURCE=n" >> out/.config
