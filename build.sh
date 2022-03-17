@@ -72,7 +72,7 @@ if [[ $@ =~ "cla" ]]; then
 	PRE_64="aarch64-linux-gnu" && PRE_32="arm-linux-gnueabi"
 	CC_CHOICE=clang
 fi
-DEFCONFIG="vayu_defconfig"
+DEFCONFIG="vendor/sm8150-perf_defconfig"
 export KBUILD_BUILD_USER="$BLDHST"
 export KBUILD_BUILD_HOST="$BLDHST"
 
