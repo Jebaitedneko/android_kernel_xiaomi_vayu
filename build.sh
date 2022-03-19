@@ -53,7 +53,15 @@ kzip() {
 	ZIP_FMT=${ZIP_PREFIX_STR}_"${ZIP_PREFIX_KVER}"_"${ZIP_POSTFIX_DATE}"
 	( cd out/ak3 && zip -r9 ../"${ZIP_FMT}".zip . -x '*.git*' )
 	if [[ $@ =~ "upload" ]]; then
-		( cd out && tg_sendDocument "${ZIP_FMT}.zip" "$(curl -s -F f[]=@${ZIP_FMT}.zip oshi.at)" )
+		(
+			cd out
+			[[ $@ =~ "tel" ]] && tg_sendDocument "${ZIP_FMT}.zip" "$(md5sum "${ZIP_FMT}.zip" | grep -oE "[0-9a-f]{32}")"
+			[[ $@ =~ "osh" ]] && curl -sF f[]=@${ZIP_FMT}.zip "https://oshi.at" | tee upload.log && tg_sendMessage "$(cat upload.log)"
+			[[ $@ =~ "bas" ]] && curl -sT ${ZIP_FMT}.zip "https://bashupload.com" | tee upload.log && tg_sendMessage "$(cat upload.log | grep wget | cut -c6-)"
+			[[ $@ =~ "tmp" ]] && curl -sF files[]=@${ZIP_FMT}.zip "https://tmp.ninja/upload.php?output=text" | tee upload.log && tg_sendMessage "$(cat upload.log)"
+			[[ $@ =~ "pix" ]] && echo "https://pixeldrain.com/u/$(curl -sF file=@${ZIP_FMT}.zip "https://pixeldrain.com/api/file" | grep -Po '(?<="id":")[^"]*')" | tee upload.log && tg_sendMessage "$(cat upload.log)"
+			rm upload.log
+		)
 	fi
 }
 
@@ -80,6 +88,8 @@ export KBUILD_BUILD_HOST="$BLDHST"
 [ -d $DOCKER_64 ] && CROSS=$DOCKER_64/bin || CROSS=$LOCAL_64/bin
 [ -d $DOCKER_32 ] && CROSSCOMPAT=$DOCKER_32/bin || CROSSCOMPAT=$LOCAL_32/bin
 
+[[ $@ =~ "zip" ]] && kzip $@ && exit
+
 kmake $DEFCONFIG
 
 [[ $@ =~ "llv" ]] && MAKEOPTS="$MAKEOPTS LD=ld.lld AR=llvm-ar NM=llvm-nm STRIP=llvm-strip OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf"
@@ -95,8 +105,6 @@ if [[ $@ =~ "cla" ]]; then
 	echo "CONFIG_CFI_CLANG=n" >> out/.config
 fi
 
-[[ $@ =~ "zip" ]] && kzip $@ && exit
-
 echo "CONFIG_FORTIFY_SOURCE=n" >> out/.config
 
 if [[ ${CI} ]]; then
@@ -110,4 +118,4 @@ else
 	kmake
 fi
 
-kzip upload
+kzip upload pixeldrain $@
