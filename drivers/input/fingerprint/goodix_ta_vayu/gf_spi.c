@@ -99,8 +99,7 @@ static inline void gf_setup(struct gf_dev *gf_dev) {
 	gpio_direction_input(gf_dev->irq_gpio);
 	gf_dev->irq = gpio_to_irq(gf_dev->irq_gpio);
 	if (request_threaded_irq(gf_dev->irq, NULL, gf_irq,
-			IRQF_TRIGGER_RISING | IRQF_ONESHOT | IRQF_NO_SUSPEND | IRQF_FORCE_RESUME,
-				"gf", gf_dev))
+			IRQF_TRIGGER_RISING | IRQF_ONESHOT, "gf", gf_dev))
 		irq_switch(gf_dev, 1);
 	gf_dev->vreg = regulator_get(NULL, "pm8150_l17");
 	if (!regulator_is_enabled(gf_dev->vreg)) {
