@@ -1812,6 +1812,8 @@ int report_iommu_fault(struct iommu_domain *domain, struct device *dev,
 	if (domain->handler)
 		ret = domain->handler(domain, dev, iova, flags,
 						domain->handler_token);
+		if (ret)
+			panic("iommu fault detected");
 
 	trace_io_page_fault(dev, iova, flags);
 	return ret;
