@@ -142,10 +142,6 @@ struct xiaomi_touch_pdata{
 
 struct xiaomi_touch *xiaomi_touch_dev_get(int minor);
 
-extern struct class *get_xiaomi_touch_class(void);
-
-extern struct device *get_xiaomi_touch_dev(void);
-
 extern int update_palm_sensor_value(int value);
 
 extern int update_p_sensor_value(int value);
