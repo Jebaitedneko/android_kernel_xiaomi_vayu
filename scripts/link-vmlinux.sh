@@ -100,16 +100,14 @@ lto_lds()
 # ${1} output file
 modpost_link()
 {
-	local objects
-
 	if [ -n "${CONFIG_THIN_ARCHIVES}" ]; then
-		objects="--whole-archive				\
+		_modpost_link_objects="--whole-archive			\
 			built-in.o					\
 			--start-group					\
 			${KBUILD_VMLINUX_LIBS}				\
 			--end-group"
 	else
-		objects="${KBUILD_VMLINUX_INIT}				\
+		_modpost_link_objects="${KBUILD_VMLINUX_INIT}		\
 			--start-group					\
 			${KBUILD_VMLINUX_MAIN}				\
 			${KBUILD_VMLINUX_LIBS}				\
@@ -124,7 +122,7 @@ modpost_link()
 		info LD vmlinux.o
 	fi
 
-	${LDFINAL} ${LDFLAGS} -r -o ${1} $(lto_lds) ${objects}
+	${LDFINAL} ${LDFLAGS} -r -o ${1} $(lto_lds) ${_modpost_link_objects}
 }
 
 # If CONFIG_LTO_CLANG is selected, we postpone running recordmcount until
@@ -145,27 +143,28 @@ recordmcount()
 # ${2} - output file
 vmlinux_link()
 {
-	local lds="${objtree}/${KBUILD_LDS}"
-	local objects
+	_vmlinux_link_lds="${objtree}/${KBUILD_LDS}"
 
 	if [ "${SRCARCH}" != "um" ]; then
-		local ld=${LDFINAL}
-		local ldflags="${LDFLAGS} ${LDFLAGS_vmlinux}"
+		_vmlinux_link_ld=${LDFINAL}
+		_vmlinux_link_ldflags="${LDFLAGS} ${LDFLAGS_vmlinux}"
 
 		if [ -n "${LDFINAL_vmlinux}" ]; then
-			ld=${LDFINAL_vmlinux}
-			ldflags="${LDFLAGS_FINAL_vmlinux} ${LDFLAGS_vmlinux}"
+			_vmlinux_link_ld=${LDFINAL_vmlinux}
+			_vmlinux_link_ldflags="${LDFLAGS_FINAL_vmlinux} ${LDFLAGS_vmlinux}"
 		fi
 
-		if [[ -n "${CONFIG_THIN_ARCHIVES}" && -z "${CONFIG_LTO_CLANG}" ]]; then
-			objects="--whole-archive 			\
-				built-in.o				\
-				--start-group				\
-				${KBUILD_VMLINUX_LIBS}			\
-				--end-group				\
-				${1}"
+		if [ -n "${CONFIG_THIN_ARCHIVES}" ]; then
+			if [ -z "${CONFIG_LTO_CLANG}" ]; then
+				_vmlinux_link_objects="--whole-archive 		\
+					built-in.o				\
+					--start-group				\
+					${KBUILD_VMLINUX_LIBS}			\
+					--end-group				\
+					${1}"
+			fi
 		else
-			objects="${KBUILD_VMLINUX_INIT}			\
+			_vmlinux_link_objects="${KBUILD_VMLINUX_INIT}	\
 				--start-group				\
 				${KBUILD_VMLINUX_MAIN}			\
 				${KBUILD_VMLINUX_LIBS}			\
@@ -173,17 +172,17 @@ vmlinux_link()
 				${1}"
 		fi
 
-		${ld} ${ldflags} -o ${2} -T ${lds} ${objects}
+		${_vmlinux_link_ld} ${_vmlinux_link_ldflags} -o ${2} -T ${_vmlinux_link_lds} ${_vmlinux_link_objects}
 	else
 		if [ -n "${CONFIG_THIN_ARCHIVES}" ]; then
-			objects="-Wl,--whole-archive			\
+			_vmlinux_link_objects="-Wl,--whole-archive	\
 				built-in.o				\
 				-Wl,--start-group			\
 				${KBUILD_VMLINUX_LIBS}			\
 				-Wl,--end-group				\
 				${1}"
 		else
-			objects="${KBUILD_VMLINUX_INIT}			\
+			_vmlinux_link_objects="${KBUILD_VMLINUX_INIT}	\
 				-Wl,--start-group			\
 				${KBUILD_VMLINUX_MAIN}			\
 				${KBUILD_VMLINUX_LIBS}			\
@@ -192,8 +191,8 @@ vmlinux_link()
 		fi
 
 		${CC} ${CFLAGS_vmlinux} -o ${2}				\
-			-Wl,-T,${lds}					\
-			${objects}					\
+			-Wl,-T,${_vmlinux_link_lds}			\
+			${_vmlinux_link_objects}			\
 			-lutil -lrt -lpthread
 		rm -f linux
 	fi
@@ -203,31 +202,30 @@ vmlinux_link()
 kallsyms()
 {
 	info KSYM ${2}
-	local kallsymopt;
 
 	if [ -n "${CONFIG_HAVE_UNDERSCORE_SYMBOL_PREFIX}" ]; then
-		kallsymopt="${kallsymopt} --symbol-prefix=_"
+		_kallsyms_kallsymopt="${_kallsyms_kallsymopt} --symbol-prefix=_"
 	fi
 
 	if [ -n "${CONFIG_KALLSYMS_ALL}" ]; then
-		kallsymopt="${kallsymopt} --all-symbols"
+		_kallsyms_kallsymopt="${_kallsyms_kallsymopt} --all-symbols"
 	fi
 
 	if [ -n "${CONFIG_KALLSYMS_ABSOLUTE_PERCPU}" ]; then
-		kallsymopt="${kallsymopt} --absolute-percpu"
+		_kallsyms_kallsymopt="${_kallsyms_kallsymopt} --absolute-percpu"
 	fi
 
 	if [ -n "${CONFIG_KALLSYMS_BASE_RELATIVE}" ]; then
-		kallsymopt="${kallsymopt} --base-relative"
+		_kallsyms_kallsymopt="${_kallsyms_kallsymopt} --base-relative"
 	fi
 
-	local aflags="${KBUILD_AFLAGS} ${KBUILD_AFLAGS_KERNEL}               \
+	_kallsyms_aflags="${KBUILD_AFLAGS} ${KBUILD_AFLAGS_KERNEL}           \
 		      ${NOSTDINC_FLAGS} ${LINUXINCLUDE} ${KBUILD_CPPFLAGS}"
 
-	local afile="`basename ${2} .o`.S"
+	_kallsyms_afile="`basename ${2} .o`.S"
 
-	${NM} -n ${1} 2>/dev/null | scripts/kallsyms ${kallsymopt} > ${afile}
-	${CC} ${aflags} -c -o ${2} ${afile}
+	${NM} -n ${1} 2>/dev/null | scripts/kallsyms ${_kallsyms_kallsymopt} > ${_kallsyms_afile}
+	${CC} ${_kallsyms_aflags} -c -o ${2} ${_kallsyms_afile}
 }
 
 # Generates ${2} .o file with RTIC MP's from the ${1} object file (vmlinux)
@@ -239,12 +237,12 @@ rtic_mp()
 	# assume that RTIC_MP_O generation may fail
 	RTIC_MP_O=
 
-	local aflags="${KBUILD_AFLAGS} ${KBUILD_AFLAGS_KERNEL}               \
+	_rtic_mp_aflags="${KBUILD_AFLAGS} ${KBUILD_AFLAGS_KERNEL}            \
 		      ${NOSTDINC_FLAGS} ${LINUXINCLUDE} ${KBUILD_CPPFLAGS}"
 
 	${RTIC_MPGEN} --objcopy="${OBJCOPY}" --objdump="${OBJDUMP}" \
 	--binpath='' --vmlinux=${1} --config=${KCONFIG_CONFIG} && \
-	cat rtic_mp.c | ${CC} ${aflags} -c -o ${2} -x c - && \
+	cat rtic_mp.c | ${CC} ${_rtic_mp_aflags} -c -o ${2} -x c - && \
 	cp rtic_mp.c ${4} && \
 	${NM} --print-size --size-sort ${2} > ${3} && \
 	RTIC_MP_O=${2} || echo “RTIC MP generation has failed”
@@ -359,8 +357,8 @@ fi
 # this needs to be done before generating kallsyms
 if [ ! -z ${RTIC_MPGEN+x} ]; then
 	rtic_mp vmlinux.o rtic_mp.o .tmp_rtic_mp_sz1 .tmp_rtic_mp1.c
-	KBUILD_VMLINUX_LIBS+=" "
-	KBUILD_VMLINUX_LIBS+=$RTIC_MP_O
+	KBUILD_VMLINUX_LIBS=KBUILD_VMLINUX_LIBS+" "
+	KBUILD_VMLINUX_LIBS=KBUILD_VMLINUX_LIBS+$RTIC_MP_O
 fi
 
 kallsymso=""
