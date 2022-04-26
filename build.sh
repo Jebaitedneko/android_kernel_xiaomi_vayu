@@ -79,6 +79,7 @@ if [[ $@ =~ "cla" ]]; then
 	LOCAL_64=~/.local/clang && LOCAL_32=~/.local/clang
 	PRE_64="aarch64-linux-gnu" && PRE_32="arm-linux-gnueabi"
 	CC_CHOICE=clang
+	if [[ $@ =~ "aos" ]]; then MAKEOPTS="$MAKEOPTS CLANG_TRIPLE=$CROSS/$PRE_64-" ;fi
 fi
 DEFCONFIG="vayu_defconfig"
 export KBUILD_BUILD_USER="$BLDHST"
@@ -92,7 +93,8 @@ export KBUILD_BUILD_HOST="$BLDHST"
 
 kmake $DEFCONFIG
 
-[[ $@ =~ "llv" ]] && MAKEOPTS="$MAKEOPTS LD=ld.lld AR=llvm-ar NM=llvm-nm STRIP=llvm-strip OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf"
+[[ $@ =~ "llv" ]] && MAKEOPTS="$MAKEOPTS LLVM=1 LLVM_IAS=1"
+[[ $@ =~ "ias" ]] && MAKEOPTS="$MAKEOPTS LLVM_IAS=1"
 [[ $@ =~ "reg" ]] && cp out/.config arch/arm64/configs/$DEFCONFIG && exit
 [[ $@ =~ "lld" ]] && MAKEOPTS="$MAKEOPTS LD=ld.lld"
 if [[ $@ =~ "gcc" ]]; then
