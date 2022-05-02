@@ -17,7 +17,7 @@ endif
 ifeq ($(LLVM),1)
 LD_COMPAT ?= $(LD)
 else
-LD_COMPAT ?= $(CROSS_COMPILE_COMPAT)ld
+LD_COMPAT ?= $(CROSS_COMPILE_ARM32)ld
 endif
 
 # Same as cc-*option, but using CC_ARM32 instead of CC
