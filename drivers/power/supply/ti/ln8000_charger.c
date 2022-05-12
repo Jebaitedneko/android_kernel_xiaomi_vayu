@@ -807,9 +807,9 @@ static int psy_chg_get_ti_alarm_status(struct ln8000_info *info)
         v_offset = 0;
     else
         v_offset = info->vbus_uV - (info->vbat_uV * 2);
-    /* after charging-enabled, When the input current rises above rcp_th(over 200mA), it activates rcp. */
+    /* after charging-enabled, When the input current rises above rcp_th(over 400mA), it activates rcp. */
     if (info->chg_en && !(info->rcp_en)) {
-        if (info->iin_uA > 200000 && v_offset > 300000) {
+        if (info->iin_uA > 400000) {
             ln8000_enable_rcp(info, 1);
             ln_info("enabled rcp\n");
         }
