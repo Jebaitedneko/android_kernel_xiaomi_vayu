@@ -1182,44 +1182,54 @@ static int ln8000_read_int_value(struct ln8000_info *info, u32 *reg_val)
 static void vac_ov_control_work(struct work_struct *work)
 {
 	struct ln8000_info *info = container_of(work, struct ln8000_info, vac_ov_work.work);
-    int i, cnt, ta_detached, delay = 50;
+    int i, cnt, adc_check_cnt, ta_detach_cnt, delay = 50;
     u32 sys_st;
     bool enable_vac_ov = 1;
 
-    ta_detached = 0;
-    cnt = 5000 / delay;
+    adc_check_cnt = 0;
+    ta_detach_cnt = 0;
+    cnt = 10000 / delay;
     for (i = 0; i < cnt; ++i) {
         ln8000_get_adc_data(info, LN8000_ADC_CH_VIN, &info->vbus_uV);
         ln8000_read_reg(info, LN8000_REG_SYS_STS, &sys_st);
 
         if (enable_vac_ov) {
-            /* Check ADC_VIN during the 5sec, if vin higher then 10V, disable to vac_ov */
+            /* Check ADC_VIN during the 10sec, if vin higher then 10V, disable to vac_ov */
             if (info->vbus_uV > 10000000) {
-                enable_vac_ov = 0;
-                ln8000_enable_vac_ov(info, enable_vac_ov);
-                ln_info("vac_ov=disable, vin=%dmV, i=%d, cnt=%d, delay=%d\n", info->vbus_uV/1000, i, cnt, delay);
+                adc_check_cnt++;
+                ln_info("vin=%dmV, adc_check_cnt=%d\n", info->vbus_uV / 1000, adc_check_cnt);
+                if (adc_check_cnt > 2) {
+                    enable_vac_ov = 0;
+                    ln8000_enable_vac_ov(info, enable_vac_ov);
+                    ln_info("vac_ov=disable, vin=%dmV, i=%d, cnt=%d, delay=%d\n", info->vbus_uV / 1000, i, cnt, delay);
+                    adc_check_cnt = 0;
+                }
             }
         } else {
             /* After disabled vac_ov, if ADC_VIN lower then 7V goto the terminate work */
             if (info->vbus_uV < 7000000) {
-                enable_vac_ov = 1;
-                ln_info("vac_ov=enable, vin=%dmV, i=%d, cnt=%d, delay=%d\n", info->vbus_uV/1000, i, cnt, delay);
-                goto teminate_work;
+                adc_check_cnt++;
+                ln_info("vin=%dmV, adc_check_cnt=%d\n", info->vbus_uV / 1000, adc_check_cnt);
+                if (adc_check_cnt > 2) {
+                    enable_vac_ov = 1;
+                    ln_info("vac_ov=enable, vin=%dmV, i=%d, cnt=%d, delay=%d\n", info->vbus_uV / 1000, i, cnt, delay);
+                    goto teminate_work;
+                }
             }
         }
         /* If judged 3 times by TA disconnected, goto the terminate work */
         if (sys_st == 0x1) { /* it's means entered shutdown mode */
-            ta_detached += 1;
-            ln_info("sys_st=0x%x, ta_detached=%d\n", sys_st, ta_detached);
-            if (ta_detached > 2) {
+            ta_detach_cnt++;
+            ln_info("sys_st=0x%x, ta_detach_cnt=%d\n", sys_st, ta_detach_cnt);
+            if (ta_detach_cnt > 2)
                 goto teminate_work;
-            }
         }
 
         msleep(delay);
     }
 
 teminate_work:
+    ln_info("terminate_work:enable_vac_ov (i=%d, cnt=%d)\n", i, cnt);
     ln8000_enable_vac_ov(info, 1);
     info->vac_ov_work_on = 0;
 }
