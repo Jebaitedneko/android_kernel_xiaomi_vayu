@@ -803,7 +803,10 @@ static int psy_chg_get_ti_alarm_status(struct ln8000_info *info)
              (info->tbus_tbat_alarm << BUS_THERM_ALARM_SHIFT) |
              (info->tdie_alarm << DIE_THERM_ALARM_SHIFT));
 
-    v_offset = info->vbus_uV - (info->vbat_uV * 2);
+    if (info->vbus_uV < (info->vbat_uV * 2))
+        v_offset = 0;
+    else
+        v_offset = info->vbus_uV - (info->vbat_uV * 2);
     /* after charging-enabled, When the input current rises above rcp_th(over 200mA), it activates rcp. */
     if (info->chg_en && !(info->rcp_en)) {
         if (info->iin_uA > 200000 && v_offset > 300000) {
