@@ -962,6 +962,10 @@ static int psy_chg_set_charging_enable(struct ln8000_info *info, int val)
 {
     int op_mode;
 
+    /* skip duplicate command of charging enable */
+    if (val == info->chg_en)
+        return 0;
+
     if (val) {
         ln_info("start charging\n");
         op_mode = LN8000_OPMODE_SWITCHING;
