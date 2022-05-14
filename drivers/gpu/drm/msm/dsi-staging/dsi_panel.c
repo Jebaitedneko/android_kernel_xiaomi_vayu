@@ -1412,6 +1412,29 @@ static int dsi_panel_parse_dyn_clk_caps(struct dsi_panel *panel)
 	return 0;
 }
 
+unsigned int __read_mostly dfps_list_size = 0;
+static int __init read_dfps_list_size(char *s)
+{
+	if (s)
+		dfps_list_size = simple_strtoul(s, NULL, 0);
+	return 1;
+}
+__setup("dfps.list_size=", read_dfps_list_size);
+
+char *dfps_list_custom[10];
+static int __init read_dfps_list(char *input)
+{
+	#define bufsz 40
+	int i;
+	char buf[bufsz], *sptr = buf, *token, *res[10], *delim = ",";
+	strcpy(buf, input);
+	for (i = 0; i < bufsz; i++)
+		if ((token = strsep(&sptr, delim)))
+			dfps_list_custom[i] = token;
+	return 1;
+}
+__setup("dfps.list=", read_dfps_list);
+
 static int dsi_panel_parse_dfps_caps(struct dsi_panel *panel)
 {
 	int rc = 0;
@@ -1420,7 +1443,8 @@ static int dsi_panel_parse_dfps_caps(struct dsi_panel *panel)
 	struct dsi_parser_utils *utils = &panel->utils;
 	const char *name = panel->name;
 	const char *type;
-	u32 i;
+	u32 i, value;
+	int j;
 
 	supported = utils->read_bool(utils->data,
 			"qcom,mdss-dsi-pan-enable-dynamic-fps");
@@ -1451,12 +1475,17 @@ static int dsi_panel_parse_dfps_caps(struct dsi_panel *panel)
 		goto error;
 	}
 
-	dfps_caps->dfps_list_len = utils->count_u32_elems(utils->data,
-				  "qcom,dsi-supported-dfps-list");
-	if (dfps_caps->dfps_list_len < 1) {
-		pr_err("[%s] dfps refresh list not present\n", name);
-		rc = -EINVAL;
-		goto error;
+	if (!dfps_list_size) {
+		dfps_caps->dfps_list_len = utils->count_u32_elems(utils->data,
+					"qcom,dsi-supported-dfps-list");
+		if (dfps_caps->dfps_list_len < 1) {
+			pr_err("[%s] dfps refresh list not present\n", name);
+			rc = -EINVAL;
+			goto error;
+		}
+	} else {
+		dfps_caps->dfps_list_len = dfps_list_size;
+		pr_info("DEBUG :: %s:%d :: OVERRIDE dfps_caps->dfps_list_len = %d", __func__, __LINE__, dfps_list_size);
 	}
 
 	dfps_caps->dfps_list = kcalloc(dfps_caps->dfps_list_len, sizeof(u32),
@@ -1466,14 +1495,23 @@ static int dsi_panel_parse_dfps_caps(struct dsi_panel *panel)
 		goto error;
 	}
 
-	rc = utils->read_u32_array(utils->data,
-			"qcom,dsi-supported-dfps-list",
-			dfps_caps->dfps_list,
-			dfps_caps->dfps_list_len);
-	if (rc) {
-		pr_err("[%s] dfps refresh rate list parse failed\n", name);
-		rc = -EINVAL;
-		goto error;
+	if (!dfps_list_size) {
+		rc = utils->read_u32_array(utils->data,
+				"qcom,dsi-supported-dfps-list",
+				dfps_caps->dfps_list,
+				dfps_caps->dfps_list_len);
+		if (rc) {
+			pr_err("[%s] dfps refresh rate list parse failed\n", name);
+			rc = -EINVAL;
+			goto error;
+		}
+	} else {
+		for (j = 0; j < dfps_list_size; j++) {
+			if (!kstrtou32(dfps_list_custom[j], 0, &value)) {
+				dfps_caps->dfps_list[j] = value;
+				pr_info("DEBUG :: %s:%d :: OVERRIDE dfps_caps->dfps_list[%d] = %u", __func__, __LINE__, j, value);
+			}
+		}
 	}
 	dfps_caps->dfps_support = true;
 
