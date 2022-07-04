@@ -1,0 +1,87 @@
+/ {
+	aliases {
+		spi1 = &qupv3_se1_spi;
+	};
+};
+
+&shared_meta {
+	parts = "vbmeta,boot,system,vendor,dtbo";
+};
+
+&android_q_fstab {
+	odm {
+		status = "disabled";
+	};
+	vendor {
+		fsmgr_flags = "wait,avb";
+	};
+};
+
+&reserved_memory {
+	xbl_dump_mem: xbl_dump_mem {
+		no-map;
+		reg = <0x0 0x85d00000 0x0 0x100000>;
+	};
+};
+
+&pil_adsp_mem {
+	reg = <0x0 0x8be00000 0x0 0x2200000>;
+};
+
+&pil_modem_mem {
+	reg = <0x0 0x8e000000 0x0 0x9600000>;
+};
+
+&pil_video_mem {
+	reg = <0x0 0x97600000 0x0 0x500000>;
+};
+
+&pil_slpi_mem {
+	reg = <0x0 0x97b00000 0x0 0x1400000>;
+};
+
+&pil_ipa_fw_mem {
+	reg = <0x0 0x98f00000 0x0 0x10000>;
+};
+
+&pil_ipa_gsi_mem {
+	reg = <0x0 0x98f10000 0x0 0x5000>;
+};
+
+&pil_gpu_mem {
+	reg = <0x0 0x98f15000 0x0 0x2000>;
+};
+
+&pil_spss_mem {
+	reg = <0x0 0x99000000 0x0 0x100000>;
+};
+
+&pil_cdsp_mem {
+	reg = <0x0 0x99100000 0x0 0x1400000>;
+};
+
+&disp_rdump_memory {
+	status = "disabled";
+};
+
+#include "trusty.dtsi"
+
+&qcom_seecom {
+	reg = <0x87900000 0x3E00000>;
+};
+
+&qcom_smcinvoke {
+	reg = <0x87900000 0x3E00000>;
+};
+
+&soc {
+	qcom,rmtfs_sharedmem@0 {
+		reg = <0x0 0x300000>;
+	};
+};
+
+#include "sm8150-audio.dtsi"
+#include "sm8150-camera.dtsi"
+#include "sm8150-pcie.dtsi"
+#include "sm8150-pinctrl.dtsi"
+#include "sm8150-regulator.dtsi"

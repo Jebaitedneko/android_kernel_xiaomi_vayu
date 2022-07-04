@@ -1,0 +1,23 @@
+&i2c_freq_100Khz_cci0 {
+    hw-scl-stretch-en = <1>;
+};
+
+&i2c_freq_400Khz_cci0 {
+    hw-scl-stretch-en = <1>;
+};
+
+&i2c_freq_custom_cci0 {
+    hw-scl-stretch-en = <0>;
+};
+
+&i2c_freq_100Khz_cci1 {
+    hw-scl-stretch-en = <1>;
+};
+
+&i2c_freq_400Khz_cci1 {
+    hw-scl-stretch-en = <1>;
+};
+
+&i2c_freq_custom_cci1 {
+    hw-scl-stretch-en = <0>;
+};

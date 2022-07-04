@@ -334,7 +334,7 @@
 			qcom,num-lpg-channels = <3>;
 			qcom,lut-patterns = <0 10 20 30 40 50 60 70 80 90 100
 						90 80 70 60 50 40 30 20 10 0>;
-			lpg1 {
+			pwm_lpg1: lpg1 {
 				qcom,lpg-chan-id = <1>;
 				qcom,ramp-step-ms = <100>;
 				qcom,ramp-pause-hi-count = <2>;
@@ -345,7 +345,7 @@
 				qcom,ramp-pattern-repeat;
 			};
 
-			lpg2 {
+			pwm_lpg2: lpg2 {
 				qcom,lpg-chan-id = <2>;
 				qcom,ramp-step-ms = <100>;
 				qcom,ramp-pause-hi-count = <2>;
@@ -356,7 +356,7 @@
 				qcom,ramp-pattern-repeat;
 			};
 
-			lpg3 {
+			pwm_lpg3: lpg3 {
 				qcom,lpg-chan-id = <3>;
 				qcom,ramp-step-ms = <100>;
 				qcom,ramp-pause-hi-count = <2>;
@@ -379,19 +379,19 @@
 		pm8150l_rgb_led: qcom,leds@d000 {
 			compatible = "qcom,tri-led";
 			reg = <0xd000 0x100>;
-			red {
+			red_led: red {
 				label = "red";
 				pwms = <&pm8150l_lpg 0 1000000>;
 				led-sources = <0>;
 				linux,default-trigger = "timer";
 			};
-			green {
+			green_led: green {
 				label = "green";
 				pwms = <&pm8150l_lpg 1 1000000>;
 				led-sources = <1>;
 				linux,default-trigger = "timer";
 			};
-			blue {
+			blue_led: blue {
 				label = "blue";
 				pwms = <&pm8150l_lpg 2 1000000>;
 				led-sources = <2>;
