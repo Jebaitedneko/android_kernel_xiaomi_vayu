@@ -1,0 +1,532 @@
+#include "../../../sm8150-sde-display.dtsi"
+
+#include "display/dsi-panel-ss-notch-fhd-ea8074-cmd.dtsi"
+#include "display/dsi-panel-samsung-fhd-ea8076-cmd.dtsi"
+#include "display/dsi-panel-samsung-fhd-ea8076-f1-cmd.dtsi"
+#include "display/dsi-panel-samsung-fhd-ea8076-f1p2-cmd.dtsi"
+#include "display/dsi-panel-samsung-fhd-ea8076-f1p2-2-cmd.dtsi"
+#include "display/dsi-panel-samsung-fhd-ea8076-f1mp-cmd.dtsi"
+#include "display/dsi-panel-tianma-fhd-nt36672a-video.dtsi"
+#include "display/dsi-panel-ss-fhd-ea8076-cmd.dtsi"
+#include "display/dsi-panel-ss-fhd-ea8076-global-cmd.dtsi"
+#include "display/dsi-panel-visionox-fhd-r66456-f11-cmd.dtsi"
+#include "display/dsi-panel-samsung-fhd-ea8076-f1s-cmd.dtsi"
+#include "display/dsi-panel-j20s-36-02-0a-lcd-dsc-vid.dtsi"
+#include "display/dsi-panel-j20s-42-02-0b-lcd-dsc-vid.dtsi"
+#include "display/dsi-panel-k82-42-02-0a-video.dtsi"
+#include "display/dsi-panel-k82-36-02-0b-video.dtsi"
+
+&display_panel_avdd_eldo {
+	status = "disabled";
+};
+
+&soc {
+	dsi_amoled_panel_pwr_supply: dsi_amoled_panel_pwr_supply {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		qcom,panel-supply-entry@0 {
+			reg = <0>;
+			qcom,supply-name = "vddio";
+			qcom,supply-min-voltage = <1800000>;
+			qcom,supply-max-voltage = <1800000>;
+			qcom,supply-enable-load = <62000>;
+			qcom,supply-disable-load = <80>;
+			//qcom,supply-post-on-sleep = <20>;
+		};
+
+		qcom,panel-supply-entry@1 {
+			reg = <1>;
+			qcom,supply-name = "vci";
+			qcom,supply-min-voltage = <3000000>;
+			qcom,supply-max-voltage = <3000000>;
+			qcom,supply-enable-load = <62000>;
+			qcom,supply-disable-load = <80>;
+			qcom,supply-post-on-sleep = <10>;
+			qcom,supply-pre-off-sleep = <10>;
+		};
+	};
+
+	dsi_amoled_panel_pwr_external_supply: dsi_amoled_panel_pwr_external_supply {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		qcom,panel-supply-entry@0 {
+			reg = <0>;
+			qcom,supply-name = "vddio";
+			qcom,supply-min-voltage = <1800000>;
+			qcom,supply-max-voltage = <1800000>;
+			qcom,supply-enable-load = <62000>;
+			qcom,supply-disable-load = <80>;
+			//qcom,supply-post-on-sleep = <20>;
+		};
+
+		qcom,panel-supply-entry@1 {
+			reg = <1>;
+			qcom,supply-name = "vcie";
+			qcom,supply-min-voltage = <3000000>;
+			qcom,supply-max-voltage = <3000000>;
+			qcom,supply-enable-load = <62000>;
+			qcom,supply-disable-load = <80>;
+			qcom,supply-post-on-sleep = <10>;
+			qcom,supply-pre-off-sleep = <10>;
+		};
+	};
+
+	dsi_panel_pwr_supply_k82_vddio: dsi_panel_pwr_supply_k82_vddio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		qcom,panel-supply-entry@0 {
+			reg = <0>;
+			qcom,supply-name = "vddio";
+			qcom,supply-min-voltage = <1800000>;
+			qcom,supply-max-voltage = <1800000>;
+			qcom,supply-enable-load = <62000>;
+			qcom,supply-disable-load = <80>;
+			qcom,supply-post-on-sleep = <20>;
+			qcom,supply-post-off-sleep = <10>;
+		};
+		qcom,panel-supply-entry@1 {
+			reg = <1>;
+			qcom,supply-name = "enp";
+			qcom,supply-min-voltage = <5500000>;
+			qcom,supply-max-voltage = <5500000>;
+			qcom,supply-enable-load = <100000>;
+			qcom,supply-disable-load = <100>;
+			qcom,supply-pre-on-sleep = <0>;
+			qcom,supply-pre-off-sleep = <0>;
+			qcom,supply-post-on-sleep = <10>;
+			qcom,supply-post-off-sleep = <10>;
+		};
+		qcom,panel-supply-entry@2 {
+			reg = <2>;
+			qcom,supply-name = "enn";
+			qcom,supply-min-voltage = <5500000>;
+			qcom,supply-max-voltage = <5500000>;
+			qcom,supply-enable-load = <100000>;
+			qcom,supply-disable-load = <100>;
+			qcom,supply-pre-on-sleep = <0>;
+			qcom,supply-pre-off-sleep = <0>;
+			qcom,supply-post-on-sleep = <10>;
+			qcom,supply-post-off-sleep = <10>;
+		};
+	};
+};
+
+&soc {
+	dsi_ss_ea8074_fhd_cmd_display: qcom,dsi-display@24 {
+		label = "dsi_ss_ea8074_fhd_cmd_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl-num = <0>;
+		qcom,dsi-phy-num = <0>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0";
+
+		qcom,dsi-panel = <&dsi_ss_notch_fhd_ea8074_cmd>;
+	};
+
+	dsi_samsung_fhd_ea8076_cmd_display: qcom,dsi-display@25 {
+		label = "dsi_samsung_fhd_ea8076_cmd_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl-num = <0>;
+		qcom,dsi-phy-num = <0>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0";
+
+		qcom,dsi-panel = <&dsi_samsung_fhd_ea8076_cmd>;
+	};
+
+	dsi_samsung_fhd_ea8076_f1_cmd_display: qcom,dsi-display@26 {
+		label = "dsi_samsung_fhd_ea8076_f1_cmd_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl-num = <0>;
+		qcom,dsi-phy-num = <0>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0";
+
+		qcom,dsi-panel = <&dsi_samsung_fhd_ea8076_f1_cmd>;
+	};
+
+	dsi_samsung_fhd_ea8076_f1mp_cmd_display: qcom,dsi-display@27 {
+		label = "dsi_samsung_fhd_ea8076_f1mp_cmd_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl-num = <0>;
+		qcom,dsi-phy-num = <0>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0";
+
+		qcom,dsi-panel = <&dsi_samsung_fhd_ea8076_f1mp_cmd>;
+	};
+
+	dsi_samsung_fhd_ea8076_f1p2_2_cmd_display: qcom,dsi-display@28 {
+		label = "dsi_samsung_fhd_ea8076_f1p2_2_cmd_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl-num = <0>;
+		qcom,dsi-phy-num = <0>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0";
+
+		qcom,dsi-panel = <&dsi_samsung_fhd_ea8076_f1p2_2_cmd>;
+	};
+
+	dsi_samsung_fhd_ea8076_f1p2_cmd_display: qcom,dsi-display@29 {
+		label = "dsi_samsung_fhd_ea8076_f1p2_cmd_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl-num = <0>;
+		qcom,dsi-phy-num = <0>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0";
+
+		qcom,dsi-panel = <&dsi_samsung_fhd_ea8076_f1p2_cmd>;
+	};
+
+	dsi_tianma_fhd_nt36672a_video_display: qcom,dsi-display@30 {
+		label = "dsi_tianma_fhd_nt36672a_video_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl-num = <0>;
+		qcom,dsi-phy-num = <0>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0";
+
+		qcom,dsi-panel = <&dsi_tianma_fhd_nt36672a_video>;
+	};
+
+	dsi_ss_fhd_ea8076_cmd_display: qcom,dsi-display@31 {
+		label = "dsi_ss_fhd_ea8076_cmd_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl-num = <0>;
+		qcom,dsi-phy-num = <0>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0";
+
+		qcom,dsi-panel = <&dsi_ss_fhd_ea8076_cmd>;
+	};
+
+	dsi_visionox_fhd_r66456_f11_cmd_display: qcom,dsi-display@32 {
+		label = "dsi_visionox_fhd_r66456_f11_cmd_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl-num = <0>;
+		qcom,dsi-phy-num = <0>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0";
+
+		qcom,dsi-panel = <&dsi_visionox_fhd_r66456_f11_cmd>;
+	};
+
+	dsi_ss_fhd_ea8076_global_cmd_display: qcom,dsi-display@33 {
+		label = "dsi_ss_fhd_ea8076_global_cmd_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl-num = <0>;
+		qcom,dsi-phy-num = <0>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0";
+
+		qcom,dsi-panel = <&dsi_ss_fhd_ea8076_global_cmd>;
+	};
+
+	dsi_samsung_fhd_ea8076_f1s_cmd_display: qcom,dsi-display@34 {
+		label = "dsi_samsung_fhd_ea8076_f1s_cmd_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl-num = <0>;
+		qcom,dsi-phy-num = <0>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0";
+
+		qcom,dsi-panel = <&dsi_samsung_fhd_ea8076_f1s_cmd>;
+	};
+
+	dsi_j20s_36_02_0a_video_display: qcom,dsi-display@35{
+		label = "dsi_j20s_36_02_0a_video_display";
+		qcom,display-type = "primary";
+		qcom,dsi-ctrl-num = <0>;
+		qcom,dsi-phy-num = <0>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0",
+		"src_byte_clk0", "src_pixel_clk0",
+		"shadow_byte_clk0", "shadow_pixel_clk0";
+		qcom,ulps-enabled;
+		qcom,dsi-panel = <&dsi_j20s_36_02_0a_video>;
+	};
+
+	dsi_j20s_42_02_0b_video_display: qcom,dsi-display@36 {
+		label = "dsi_j20s_42_02_0b_video_display";
+		qcom,display-type = "primary";
+		qcom,dsi-ctrl-num = <0>;
+		qcom,dsi-phy-num = <0>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0",
+		"src_byte_clk0", "src_pixel_clk0",
+		"shadow_byte_clk0", "shadow_pixel_clk0";
+		qcom,ulps-enabled;
+		qcom,dsi-panel = <&dsi_j20s_42_02_0b_video>;
+	};
+
+	dsi_k82_42_02_0a_dual_cphy_vid_display: qcom,dsi-display@37 {
+		label = "dsi_k82_42_02_0a_dual_cphy_vid_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl-num = <0 1>;
+		qcom,dsi-phy-num = <0 1>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0",
+					"cphy_byte_clk0", "cphy_pixel_clk0";
+
+		qcom,dsi-panel = <&dsi_k82_42_02_0a_dual_cphy_video>;
+	};
+
+	dsi_k82_36_02_0b_dual_cphy_vid_display: qcom,dsi-display@38 {
+		label = "dsi_k82_36_02_0b_dual_cphy_vid_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl-num = <0 1>;
+		qcom,dsi-phy-num = <0 1>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0",
+					"cphy_byte_clk0", "cphy_pixel_clk0";
+
+		qcom,dsi-panel = <&dsi_k82_36_02_0b_dual_cphy_video>;
+	};
+};
+
+&sde_dsi {
+	/delete-property/ vdd-supply;
+	vci-supply = <&pm8150_l13>;
+
+	qcom,dsi-display-list =
+		<&dsi_sharp_4k_dsc_video_display
+		&dsi_sharp_4k_dsc_cmd_display
+		&dsi_sharp_1080_cmd_display
+		&dsi_dual_sharp_1080_120hz_cmd_display
+		&dsi_dual_nt35597_truly_video_display
+		&dsi_dual_nt35597_truly_cmd_display
+		&dsi_nt35597_truly_dsc_cmd_display
+		&dsi_nt35597_truly_dsc_video_display
+		&dsi_sim_vid_display
+		&dsi_dual_sim_vid_display
+		&dsi_sim_cmd_display
+		&dsi_dual_sim_cmd_display
+		&dsi_sim_dsc_375_cmd_display
+		&dsi_dual_sim_dsc_375_cmd_display
+		&dsi_sw43404_amoled_cmd_display
+		&dsi_nt35695b_truly_fhd_cmd_display
+		&dsi_nt35695b_truly_fhd_video_display
+		&dsi_sw43404_amoled_video_display
+		&dsi_sw43404_amoled_fhd_plus_cmd_display
+		&dsi_ss_ea8074_fhd_cmd_display
+		&dsi_samsung_fhd_ea8076_cmd_display
+		&dsi_samsung_fhd_ea8076_f1_cmd_display
+		&dsi_samsung_fhd_ea8076_f1mp_cmd_display
+		&dsi_samsung_fhd_ea8076_f1p2_2_cmd_display
+		&dsi_samsung_fhd_ea8076_f1p2_cmd_display
+		&dsi_tianma_fhd_nt36672a_video_display
+		&dsi_dual_nt36850_truly_cmd_display
+		&dsi_ss_fhd_ea8076_cmd_display
+		&dsi_visionox_fhd_r66456_f11_cmd_display
+		&dsi_ss_fhd_ea8076_global_cmd_display
+		&dsi_samsung_fhd_ea8076_f1s_cmd_display
+		&dsi_rm69299_visionox_amoled_vid_display
+		&dsi_j20s_36_02_0a_video_display
+		&dsi_j20s_42_02_0b_video_display
+		&dsi_k82_42_02_0a_dual_cphy_vid_display
+		&dsi_k82_36_02_0b_dual_cphy_vid_display>;
+};
+
+&sde_dsi1 {
+	/delete-property/ vdd-supply;
+};
+
+/*
+&sde_dp {
+	/delete-property/ qcom,dp-aux-switch;
+};
+*/
+
+&dsi_ss_notch_fhd_ea8074_cmd {
+	qcom,mdss-dsi-t-clk-post = <0x19>;
+	qcom,mdss-dsi-t-clk-pre = <0x1C>;
+	qcom,mdss-dsi-display-timings {
+		timing@0{
+			qcom,mdss-dsi-panel-phy-timings = [00 22 08 09 25 23 09
+				09 06 03 04 00 1C 19];
+			qcom,display-topology = <1 0 1>;
+			qcom,default-topology-index = <0>;
+		};
+	};
+};
+
+&dsi_samsung_fhd_ea8076_cmd {
+	qcom,mdss-dsi-t-clk-post = <0x1A>;
+	qcom,mdss-dsi-t-clk-pre = <0x1E>;
+	qcom,mdss-dsi-display-timings {
+		timing@0{
+			qcom,mdss-dsi-panel-phy-timings = [00 24 0A 0A 26 25 09
+			    0A 06 03 04 00 1E 1A];
+			qcom,display-topology = <1 0 1>;
+			qcom,default-topology-index = <0>;
+		};
+	};
+};
+
+&dsi_samsung_fhd_ea8076_f1_cmd {
+	qcom,mdss-dsi-t-clk-post = <0x1A>;
+	qcom,mdss-dsi-t-clk-pre = <0x1E>;
+	qcom,mdss-dsi-display-timings {
+		timing@0{
+			qcom,mdss-dsi-panel-phy-timings = [00 24 0A 0A 26 25 09
+			    0A 06 03 04 00 1E 1A];
+			qcom,display-topology = <1 0 1>;
+			qcom,default-topology-index = <0>;
+		};
+	};
+};
+
+&dsi_samsung_fhd_ea8076_f1mp_cmd {
+	qcom,mdss-dsi-t-clk-post = <0x1A>;
+	qcom,mdss-dsi-t-clk-pre = <0x1E>;
+	qcom,mdss-dsi-display-timings {
+		timing@0{
+			qcom,mdss-dsi-panel-phy-timings = [00 24 0A 0A 26 25 09
+			    0A 06 03 04 00 1E 1A];
+			qcom,display-topology = <1 0 1>;
+			qcom,default-topology-index = <0>;
+		};
+	};
+};
+
+&dsi_samsung_fhd_ea8076_f1p2_cmd {
+	qcom,mdss-dsi-t-clk-post = <0x1A>;
+	qcom,mdss-dsi-t-clk-pre = <0x1E>;
+	qcom,mdss-dsi-display-timings {
+		timing@0{
+			qcom,mdss-dsi-panel-phy-timings = [00 24 0A 0A 26 25 09
+							0A 06 03 04 00 1E 1A];
+			qcom,display-topology = <1 0 1>;
+			qcom,default-topology-index = <0>;
+		};
+	};
+};
+
+&dsi_samsung_fhd_ea8076_f1p2_2_cmd {
+	qcom,mdss-dsi-t-clk-post = <0x1A>;
+	qcom,mdss-dsi-t-clk-pre = <0x1E>;
+	qcom,mdss-dsi-display-timings {
+		timing@0{
+			qcom,mdss-dsi-panel-phy-timings = [00 24 0A 0A 26 25 09
+			    0A 06 03 04 00 1E 1A];
+			qcom,display-topology = <1 0 1>;
+			qcom,default-topology-index = <0>;
+		};
+	};
+};
+
+&dsi_tianma_fhd_nt36672a_video {
+	qcom,mdss-dsi-t-clk-post = <0x18>;
+	qcom,mdss-dsi-t-clk-pre = <0x1B>;
+	qcom,mdss-dsi-display-timings {
+		timing@0{
+			qcom,mdss-dsi-panel-phy-timings = [00 21 08 08 25 22 09
+					08 06 03 04 00 1B 18];
+			qcom,display-topology = <1 0 1>;
+			qcom,default-topology-index = <0>;
+		};
+	};
+};
+
+&dsi_ss_fhd_ea8076_cmd {
+	qcom,mdss-dsi-t-clk-post = <0x0F>;
+	qcom,mdss-dsi-t-clk-pre = <0x37>;
+	qcom,mdss-dsi-display-timings {
+		timing@0{
+			qcom,mdss-dsi-panel-phy-timings = [00 24 0A 0A 26 25 09
+			    0A 06 03 04 00 1E 1A];
+			qcom,display-topology = <1 0 1>;
+			qcom,default-topology-index = <0>;
+		};
+	};
+};
+
+&dsi_visionox_fhd_r66456_f11_cmd {
+	qcom,mdss-dsi-t-clk-post = <0x0F>;
+	qcom,mdss-dsi-t-clk-pre = <0x37>;
+	qcom,mdss-dsi-display-timings {
+		timing@0{
+			qcom,mdss-dsi-panel-phy-timings = [00 24 0A 0A 26 25 09
+				0A 06 03 04 00 1E 1A];
+			qcom,display-topology = <1 0 1>;
+			qcom,default-topology-index = <0>;
+		};
+	};
+};
+
+&dsi_ss_fhd_ea8076_global_cmd {
+	qcom,mdss-dsi-t-clk-post = <0x1A>;
+	qcom,mdss-dsi-t-clk-pre = <0x1E>;
+	qcom,mdss-dsi-display-timings {
+		timing@0{
+			qcom,mdss-dsi-panel-phy-timings = [00 24 0A 0A 26 24 0A
+				0A 06 03 04 00 1E 1A];
+			qcom,display-topology = <1 0 1>;
+			qcom,default-topology-index = <0>;
+		};
+	};
+};
+
+&dsi_samsung_fhd_ea8076_f1s_cmd {
+	qcom,mdss-dsi-t-clk-post = <0x1A>;
+	qcom,mdss-dsi-t-clk-pre = <0x1E>;
+	qcom,mdss-dsi-clk-strength = <0xFF>;
+	qcom,mdss-dsi-display-timings {
+		timing@0{
+			qcom,mdss-dsi-panel-phy-timings = [00 24 0A 0A 26 24 0A
+				0A 06 02 04 00 1E 1A];
+			qcom,display-topology = <1 0 1>;
+			qcom,default-topology-index = <0>;
+		};
+	};
+};
+
+&dsi_j20s_36_02_0a_video {
+	qcom,mdss-dsi-t-clk-post = <0x17>;
+	qcom,mdss-dsi-t-clk-pre = <0x18>;
+	qcom,mdss-dsi-display-timings {
+		/* 60 Hz */
+		timing@0{
+			qcom,mdss-dsi-panel-phy-timings = [00 1C 08 07 23 22 07
+				07 05 02 04 00 18 17];
+			qcom,display-topology = <1 1 1>;
+			qcom,default-topology-index = <0>;
+		};
+	};
+};
+
+&dsi_j20s_42_02_0b_video {
+	qcom,mdss-dsi-t-clk-post = <0x17>;
+	qcom,mdss-dsi-t-clk-pre = <0x18>;
+	qcom,mdss-dsi-display-timings {
+		/* 120 Hz */
+		timing@0{
+			qcom,mdss-dsi-panel-phy-timings = [00 1C 08 07 23 22 07
+				07 05 02 04 00 18 17];
+			qcom,display-topology = <1 1 1>;
+			qcom,default-topology-index = <0>;
+		};
+	};
+};
+
+&dsi_k82_42_02_0a_dual_cphy_video {
+	qcom,mdss-dsi-display-timings {
+		timing@0 {
+			qcom,mdss-dsi-panel-phy-timings = [00 00 00 00 27 2B 0A
+				19 0A 02 04 00 00 00];
+			qcom,display-topology = <2 0 2>;
+			qcom,default-topology-index = <0>;
+		};
+	};
+};
+&dsi_k82_36_02_0b_dual_cphy_video {
+	qcom,mdss-dsi-display-timings {
+		timing@0 {
+			qcom,mdss-dsi-panel-phy-timings = [00 00 00 00 27 2B 0A
+				19 0A 02 04 00 00 00];
+			qcom,display-topology = <2 0 2>;
+			qcom,default-topology-index = <0>;
+		};
+	};
+};

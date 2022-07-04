@@ -1,0 +1,13 @@
+&snd_934x {
+    qcom,msm-mbhc-usbc-audio-supported = <1>;
+};
+
+&snd_934x {
+    /delete-property/ fsa4480-i2c-handle;
+};
+
+/*
+&fsa4480 {
+    reg = <0x42>;
+};
+*/

@@ -561,7 +561,7 @@
 &sde_dp {
 	qcom,dp-usbpd-detection = <&pm8150b_pdphy>;
 	qcom,ext-disp = <&ext_disp>;
-	qcom,dp-aux-switch = <&fsa4480>;
+	/* qcom,dp-aux-switch = <&fsa4480>; */
 
 	qcom,usbplug-cc-gpio = <&tlmm 38 0>;
 

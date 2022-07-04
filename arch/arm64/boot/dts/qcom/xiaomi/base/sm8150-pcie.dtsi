@@ -1,0 +1,5 @@
+&pcie0 {
+    pinctrl-0 = <&pcie0_clkreq_default>;
+    /delete-property/ perst-gpio;
+    /delete-property/ wake-gpio;
+};
