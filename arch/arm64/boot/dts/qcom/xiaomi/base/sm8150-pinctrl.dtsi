@@ -1,0 +1,148 @@
+&ts_int_suspend {
+	config {
+		input-enable;
+	};
+};
+
+&ts_reset_suspend {
+	config {
+		/delete-property/ bias-pull-down;
+		bias-disable;
+		output-low;
+	};
+};
+
+/delete-node/ &pcie0_perst_default;
+/delete-node/ &pcie0_wake_default;
+
+&nfc_enable_active {
+	mux {
+		pins = "gpio41", "gpio48";
+	};
+
+	config {
+		pins = "gpio41", "gpio48";
+	};
+};
+
+&nfc_enable_suspend {
+	mux {
+		pins = "gpio41", "gpio48";
+	};
+
+	config {
+		pins = "gpio41", "gpio48";
+	};
+};
+
+&quat_aux_pcm_sleep {
+	mux {
+		function = "func2";
+	};
+};
+
+&quat_aux_pcm_active {
+	mux {
+		function = "func2";
+	};
+};
+
+&quat_aux_pcm_din_sleep {
+	mux {
+		function = "func2";
+	};
+};
+
+&quat_aux_pcm_din_active {
+	mux {
+		function = "func2";
+	};
+};
+
+&quat_aux_pcm_dout_sleep {
+	mux {
+		function = "func2";
+	};
+};
+
+&quat_aux_pcm_dout_active {
+	mux {
+		function = "func2";
+	};
+};
+
+&tlmm {
+	tert_tdm {
+		cs35l41_int_default: cs35l41_int_default {
+			mux {
+				pins = "gpio10";
+				function = "gpio";
+			};
+			config {
+				pins = "gpio10";
+				bias-pull-up;
+				drive-strength = <8>;
+				input-enable;
+			};
+		};
+	};
+};
+
+&tlmm {
+	/* USB C analog configuration */
+	wcd_usbc_analog_en1 {
+		wcd_usbc_analog_en1_idle: wcd_usbc_ana_en1_idle {
+			mux {
+				pins = "gpio35";
+				function = "gpio";
+			};
+			config {
+				pins = "gpio35";
+				drive-strength = <2>;
+				bias-pull-down;
+				output-low;
+			};
+		};
+
+		wcd_usbc_analog_en1_active: wcd_usbc_ana_en1_active {
+			mux {
+				pins = "gpio35";
+				function = "gpio";
+			};
+			config {
+				pins = "gpio35";
+				drive-strength = <2>;
+				bias-disable;
+				output-high;
+			};
+		};
+	};
+
+	wcd_usbc_analog_en2 {
+		wcd_usbc_analog_en2_idle: wcd_usbc_ana_en2_idle {
+			mux {
+				pins = "gpio58";
+				function = "gpio";
+			};
+			config {
+				pins = "gpio58";
+				drive-strength = <2>;
+				bias-pull-down;
+				output-low;
+			};
+		};
+
+		wcd_usbc_analog_en2_active: wcd_usbc_ana_en2_active {
+			mux {
+				pins = "gpio58";
+				function = "gpio";
+			};
+			config {
+				pins = "gpio58";
+				drive-strength = <2>;
+				bias-disable;
+				output-high;
+			};
+		};
+	};
+};
