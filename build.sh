@@ -13,7 +13,7 @@ tg_sendMessage() {
 
 kmake() {
 	MAKEOPTS="$MAKEOPTS -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=$CROSS/$PRE_64- CROSS_COMPILE_ARM32=$CROSSCOMPAT/$PRE_32-"
-	env PATH="$CROSS:$CROSSCOMPAT:$PATH" make $MAKEOPTS CC="$CCACHE${CROSS}/$CC_CHOICE" "$*"
+	env PATH="$CROSS:$CROSSCOMPAT:$PATH" make $MAKEOPTS CC="$CCACHE${CROSS}/$CC_CHOICE" "$@"
 }
 
 kzip() {
@@ -116,7 +116,11 @@ if [[ ${CI} ]]; then
 	fi
 else
 	MAKE_CMDS=$(echo "$*" | grep -oE "mk_.*\$" | sed "s/mk_//g;s/\\$//g")
-	kmake "$MAKE_CMDS"
+	if [[ ${#MAKE_CMDS} -gt 0 ]]; then
+		kmake "$MAKE_CMDS"
+	else
+		kmake
+	fi
 fi
 
 kzip upload pixeldrain "$*"
