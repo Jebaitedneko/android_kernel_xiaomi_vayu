@@ -230,21 +230,6 @@
 	};
 };
 
-
-&soc {
-	dsi_j20s_36_02_0a_video_display: qcom,dsi-display@36{
-		label = "dsi_j20s_36_02_0a_video_display";
-		qcom,display-type = "primary";
-		qcom,dsi-ctrl-num = <0>;
-		qcom,dsi-phy-num = <0>;
-		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0",
-		"src_byte_clk0", "src_pixel_clk0",
-		"shadow_byte_clk0", "shadow_pixel_clk0";
-		qcom,ulps-enabled;
-		qcom,dsi-panel = <&dsi_j20s_36_02_0a_video>;
-	};
-};
-
 &dsi_j20s_36_02_0a_video {
 	qcom,esd-check-enabled;
 	qcom,mdss-dsi-panel-status-check-mode = "reg_read";
