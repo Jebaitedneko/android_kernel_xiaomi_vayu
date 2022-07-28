@@ -13,7 +13,7 @@ tg_sendMessage() {
 
 kmake() {
 	MAKEOPTS="$MAKEOPTS -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=$CROSS/$PRE_64- CROSS_COMPILE_ARM32=$CROSSCOMPAT/$PRE_32-"
-	env PATH="$CROSS:$CROSSCOMPAT:$PATH" make $MAKEOPTS CC="$CCACHE${CROSS}/$CC_CHOICE" "$@"
+	env PATH="$CROSS:$CROSSCOMPAT:$PATH" make $MAKEOPTS CC="$CCACHE${CROSS}/$CC_CHOICE" "$*"
 }
 
 kzip() {
@@ -52,14 +52,14 @@ kzip() {
 	ZIP_PREFIX_STR="$BLDHST-$DEVICE"
 	ZIP_FMT=${ZIP_PREFIX_STR}_"${ZIP_PREFIX_KVER}"_"${ZIP_POSTFIX_DATE}"
 	( cd out/ak3 && zip -r9 ../"${ZIP_FMT}".zip . -x '*.git*' )
-	if [[ $@ =~ "upload" ]]; then
+	if [[ $* =~ "upload" ]]; then
 		(
-			cd out
-			[[ $@ =~ "tel" ]] && tg_sendDocument "${ZIP_FMT}.zip" "$(md5sum "${ZIP_FMT}.zip" | grep -oE "[0-9a-f]{32}")"
-			[[ $@ =~ "osh" ]] && curl -sF f[]=@${ZIP_FMT}.zip "https://oshi.at" | tee upload.log && tg_sendMessage "$(cat upload.log)"
-			[[ $@ =~ "bas" ]] && curl -sT ${ZIP_FMT}.zip "https://bashupload.com" | tee upload.log && tg_sendMessage "$(cat upload.log | grep wget | cut -c6-)"
-			[[ $@ =~ "tmp" ]] && curl -sF files[]=@${ZIP_FMT}.zip "https://tmp.ninja/upload.php?output=text" | tee upload.log && tg_sendMessage "$(cat upload.log)"
-			[[ $@ =~ "pix" ]] && echo "https://pixeldrain.com/u/$(curl -sF file=@${ZIP_FMT}.zip "https://pixeldrain.com/api/file" | grep -Po '(?<="id":")[^"]*')" | tee upload.log && tg_sendMessage "$(cat upload.log)"
+			cd out || exit
+			[[ $* =~ "tel" ]] && tg_sendDocument "${ZIP_FMT}.zip" "$(md5sum "${ZIP_FMT}.zip" | grep -oE "[0-9a-f]{32}")"
+			[[ $* =~ "osh" ]] && curl -sF f[]=@"${ZIP_FMT}".zip "https://oshi.at" | tee upload.log && tg_sendMessage "$(cat upload.log)"
+			[[ $* =~ "bas" ]] && curl -sT "${ZIP_FMT}".zip "https://bashupload.com" | tee upload.log && tg_sendMessage "$(grep wget upload.log | cut -c6-)"
+			[[ $* =~ "tmp" ]] && curl -sF files[]=@"${ZIP_FMT}".zip "https://tmp.ninja/upload.php?output=text" | tee upload.log && tg_sendMessage "$(cat upload.log)"
+			[[ $* =~ "pix" ]] && echo "https://pixeldrain.com/u/$(curl -sF file=@"${ZIP_FMT}".zip "https://pixeldrain.com/api/file" | grep -Po '(?<="id":")[^"]*')" | tee upload.log && tg_sendMessage "$(cat upload.log)"
 			rm upload.log
 		)
 	fi
@@ -68,13 +68,13 @@ kzip() {
 tg_sendMessage "Build started"
 
 BLDHST="mochi" && DEVICE="vayu"
-if [[ $@ =~ "gcc" ]]; then
+if [[ $* =~ "gcc" ]]; then
 	DOCKER_64=/usr/gcc64 && DOCKER_32=/usr/gcc32
 	LOCAL_64=~/.local/gcc64 && LOCAL_32=~/.local/gcc32
 	PRE_64="aarch64-elf" && PRE_32="arm-eabi"
 	CC_CHOICE="$PRE_64-gcc"
 fi
-if [[ $@ =~ "cla" ]]; then
+if [[ $* =~ "cla" ]]; then
 	DOCKER_64=/usr/clang && DOCKER_32=/usr/clang
 	LOCAL_64=~/.local/clang && LOCAL_32=~/.local/clang
 	PRE_64="aarch64-linux-gnu" && PRE_32="arm-linux-gnueabi"
@@ -88,24 +88,24 @@ export KBUILD_BUILD_HOST="$BLDHST"
 [ -d $DOCKER_64 ] && CROSS=$DOCKER_64/bin || CROSS=$LOCAL_64/bin
 [ -d $DOCKER_32 ] && CROSSCOMPAT=$DOCKER_32/bin || CROSSCOMPAT=$LOCAL_32/bin
 
-[[ $@ =~ "zip" ]] && kzip $@ && exit
+[[ $* =~ "zip" ]] && kzip "$*" && exit
 
 kmake $DEFCONFIG
 
-[[ $@ =~ "llv" ]] && MAKEOPTS="$MAKEOPTS LD=ld.lld AR=llvm-ar NM=llvm-nm STRIP=llvm-strip OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf"
-[[ $@ =~ "reg" ]] && cp out/.config arch/arm64/configs/$DEFCONFIG && exit
-[[ $@ =~ "lld" ]] && MAKEOPTS="$MAKEOPTS LD=ld.lld"
-if [[ $@ =~ "gcc" ]]; then
-	[[ $@ =~ "lto" ]] && echo "CONFIG_LTO_GCC=y" >> out/.config
-	[[ $@ =~ "gra" ]] && echo "CONFIG_GCC_GRAPHITE=y" >> out/.config
+[[ $* =~ "llv" ]] && MAKEOPTS="$MAKEOPTS LD=ld.lld AR=llvm-ar NM=llvm-nm STRIP=llvm-strip OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf"
+[[ $* =~ "reg" ]] && cp out/.config arch/arm64/configs/$DEFCONFIG && exit
+[[ $* =~ "lld" ]] && MAKEOPTS="$MAKEOPTS LD=ld.lld"
+if [[ $* =~ "gcc" ]]; then
+	[[ $* =~ "lto" ]] && echo "CONFIG_LTO_GCC=y" >> out/.config
+	[[ $* =~ "gra" ]] && echo "CONFIG_GCC_GRAPHITE=y" >> out/.config
 fi
-if [[ $@ =~ "cla" ]]; then
-	[[ $@ =~ "lto" ]] && echo -e "CONFIG_LTO_CLANG=y\nCONFIG_THINLTO=n" >> out/.config
-	[[ $@ =~ "thi" ]] && echo "CONFIG_THINLTO=y" >> out/.config
+if [[ $* =~ "cla" ]]; then
+	[[ $* =~ "lto" ]] && echo -e "CONFIG_LTO_CLANG=y\nCONFIG_THINLTO=n" >> out/.config
+	[[ $* =~ "thi" ]] && echo "CONFIG_THINLTO=y" >> out/.config
 	echo "CONFIG_CFI_CLANG=n" >> out/.config
 fi
 
-echo "CONFIG_FORTIFY_SOURCE=n" >> out/.config
+[[ $* =~ "nofort" ]] && echo "CONFIG_FORTIFY_SOURCE=n" >> out/.config
 
 if [[ ${CI} ]]; then
 	kmake &> out/build.log
@@ -115,7 +115,8 @@ if [[ ${CI} ]]; then
 		tg_sendDocument "out/build.log" "Build done"
 	fi
 else
-	kmake
+	MAKE_CMDS=$(echo "$*" | grep -oE "mk_.*\$" | sed "s/mk_//g;s/\\$//g")
+	kmake "$MAKE_CMDS"
 fi
 
-kzip upload pixeldrain $@
+kzip upload pixeldrain "$*"
