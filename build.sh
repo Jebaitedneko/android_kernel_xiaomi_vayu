@@ -69,17 +69,24 @@ tg_sendMessage "Build started"
 
 BLDHST="mochi" && DEVICE="vayu"
 if [[ $* =~ "gcc" ]]; then
+	IS_GCC=1
 	DOCKER_64=/usr/gcc64 && DOCKER_32=/usr/gcc32
 	LOCAL_64=~/.local/gcc64 && LOCAL_32=~/.local/gcc32
 	PRE_64="aarch64-elf" && PRE_32="arm-eabi"
+	if [[ $* =~ "host" ]]; then
+		DOCKER_64=/usr && DOCKER_32=/usr
+		PRE_64="aarch64-linux-gnu" && PRE_32="arm-linux-gnueabi"
+	fi
 	CC_CHOICE="$PRE_64-gcc"
 fi
 if [[ $* =~ "cla" ]]; then
+	IS_GCC=0
 	DOCKER_64=/usr/clang && DOCKER_32=/usr/clang
 	LOCAL_64=~/.local/clang && LOCAL_32=~/.local/clang
 	PRE_64="aarch64-linux-gnu" && PRE_32="arm-linux-gnueabi"
 	CC_CHOICE=clang
 fi
+
 DEFCONFIG="vayu_defconfig"
 export KBUILD_BUILD_USER="$BLDHST"
 export KBUILD_BUILD_HOST="$BLDHST"
@@ -87,6 +94,12 @@ export KBUILD_BUILD_HOST="$BLDHST"
 [[ $(which ccache) ]] && CCACHE="$(which ccache) "
 [ -d $DOCKER_64 ] && CROSS=$DOCKER_64/bin || CROSS=$LOCAL_64/bin
 [ -d $DOCKER_32 ] && CROSSCOMPAT=$DOCKER_32/bin || CROSSCOMPAT=$LOCAL_32/bin
+
+if [ $IS_GCC -eq 1 ]; then
+	echo -e "$($CROSS/$PRE_64-gcc -v)\n$($CROSSCOMPAT/$PRE_32-gcc -v)"
+else
+	echo -e "$($CROSS/$CC_CHOICE -v)"
+fi
 
 [[ $* =~ "zip" ]] && kzip "$*" && exit
 
