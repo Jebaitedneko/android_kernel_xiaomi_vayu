@@ -121,7 +121,12 @@ fi
 [[ $* =~ "nofort" ]] && echo "CONFIG_FORTIFY_SOURCE=n" >> out/.config
 
 if [[ ${CI} ]]; then
-	kmake &> out/build.log
+	if [[ $* =~ "cidebug" ]]; then
+		touch out/build.log
+		kmake
+	else
+		kmake &> out/build.log
+	fi
 	if [ ! -f out/arch/arm64/boot/Image ]; then
 		tg_sendDocument "out/build.log" "Build failed" && exit
 	else
