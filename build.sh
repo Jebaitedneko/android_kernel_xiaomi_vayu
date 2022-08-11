@@ -12,7 +12,7 @@ tg_sendMessage() {
 }
 
 kmake() {
-	MAKEOPTS="$MAKEOPTS -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=$CROSS/$PRE_64- CROSS_COMPILE_ARM32=$CROSSCOMPAT/$PRE_32-"
+	MAKEOPTS="$MAKEOPTS -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=$CROSS/$PRE_64- CROSS_COMPILE_ARM32=$CROSSCOMPAT/$PRE_32- CROSS_COMPILE_COMPAT=$CROSSCOMPAT/$PRE_32-"
 	env PATH="$CROSS:$CROSSCOMPAT:$PATH" make $MAKEOPTS CC="$CCACHE${CROSS}/$CC_CHOICE" "$@"
 }
 
@@ -51,7 +51,11 @@ kzip() {
 	ZIP_POSTFIX_DATE=$(date +%d-%h-%Y-%R:%S | sed "s/:/./g")
 	ZIP_PREFIX_STR="$BLDHST-$DEVICE"
 	ZIP_FMT=${ZIP_PREFIX_STR}_"${ZIP_PREFIX_KVER}"_"${ZIP_POSTFIX_DATE}"
-	( cd out/ak3 && zip -r9 ../"${ZIP_FMT}".zip . -x '*.git*' )
+	if [[ $* =~ "out" ]]; then
+		( cd out && zip -q -0 "${ZIP_FMT}".zip . )
+	else
+		( cd out/ak3 && zip -r9 ../"${ZIP_FMT}".zip . -x '*.git*' )
+	fi
 	if [[ $* =~ "upload" ]]; then
 		(
 			cd out || exit
@@ -131,6 +135,7 @@ if [[ ${CI} ]]; then
 		tg_sendDocument "out/build.log" "Build failed" && exit
 	else
 		tg_sendDocument "out/build.log" "Build done"
+		kzip "$*"
 	fi
 else
 	MAKE_CMDS=$(echo "$*" | grep -oE "mk_.*\$" | sed "s/mk_//g;s/\\$//g")
@@ -140,5 +145,3 @@ else
 		kmake
 	fi
 fi
-
-kzip upload pixeldrain "$*"
